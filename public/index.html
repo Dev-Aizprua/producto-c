@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1a73e8" />
+  <title id="pageTitle">Asistente Virtual</title>
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- ============================================================
+       PRODUCTO C — Chat IA WhatsApp-like
+       Eduardo Aizprua — TechZone Panamá — Junio 2026
+       Stack: Cloudflare Pages + D1 + Groq + Cloudinary
+       URL: /{slug}  →  carga config del negocio desde D1
+  ============================================================ -->
+
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: #e5ddd5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Variables de tema (se sobreescriben desde JS con config del negocio) */
+    :root {
+      --color-primary: #1a73e8;
+      --color-primary-dark: #1557b0;
+      --color-primary-light: #e8f0fe;
+      --color-user-bubble: #dcf8c6;
+      --color-header-text: #ffffff;
+    }
+
+    /* ── Phone wrapper (desktop centering) ───────────────── */
+    .app-wrapper {
+      width: 100%;
+      max-width: 430px;
+      height: 100vh;
+      max-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #f0f2f5;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ── Header ───────────────────────────────────────────── */
+    .chat-header {
+      background: var(--color-primary);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      position: relative;
+      z-index: 10;
+    }
+    .header-back {
+      color: var(--color-header-text);
+      font-size: 22px;
+      cursor: pointer;
+      opacity: 0.9;
+      flex-shrink: 0;
+    }
+    .header-avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .header-avatar img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .header-info { flex: 1; min-width: 0; }
+    .header-biz-name {
+      color: var(--color-header-text);
+      font-weight: 600;
+      font-size: 16px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .header-status {
+      color: rgba(255,255,255,0.85);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 1px;
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #4ade80;
+      flex-shrink: 0;
+    }
+    .header-menu-btn {
+      color: var(--color-header-text);
+      font-size: 22px;
+      cursor: pointer;
+      opacity: 0.9;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    /* ── Dropdown menu ────────────────────────────────────── */
+    .dropdown-menu {
+      position: absolute;
+      top: 56px; right: 12px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      min-width: 180px;
+      z-index: 100;
+      overflow: hidden;
+      display: none;
+    }
+    .dropdown-menu.open { display: block; }
+    .dropdown-item {
+      padding: 12px 16px;
+      font-size: 14px;
+      color: #333;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.15s;
+    }
+    .dropdown-item:hover { background: #f5f5f5; }
+    .dropdown-item i { font-size: 18px; color: #555; }
+
+    /* ── Chat body ────────────────────────────────────────── */
+    .chat-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      scroll-behavior: smooth;
+    }
+    .chat-body::-webkit-scrollbar { width: 3px; }
+    .chat-body::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
+
+    /* ── Date separator ───────────────────────────────────── */
+    .date-separator {
+      text-align: center;
+      margin: 6px 0;
+    }
+    .date-separator span {
+      background: rgba(255,255,255,0.7);
+      color: #777;
+      font-size: 11.5px;
+      padding: 4px 12px;
+      border-radius: 12px;
+    }
+
+    /* ── Messages ─────────────────────────────────────────── */
+    .msg-row { display: flex; flex-direction: column; }
+    .msg-row.bot { align-items: flex-start; }
+    .msg-row.user { align-items: flex-end; }
+
+    .bubble {
+      max-width: 82%;
+      padding: 9px 13px;
+      font-size: 14.5px;
+      line-height: 1.5;
+      position: relative;
+      word-wrap: break-word;
+    }
+    .bubble-bot {
+      background: #ffffff;
+      border-radius: 2px 12px 12px 12px;
+      color: #1a1a1a;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+    }
+    .bubble-user {
+      background: var(--color-user-bubble);
+      border-radius: 12px 2px 12px 12px;
+      color: #1a1a1a;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+    }
+    .msg-time {
+      font-size: 11px;
+      color: #999;
+      margin-top: 3px;
+      padding: 0 4px;
+    }
+    .msg-row.user .msg-time { text-align: right; }
+
+    /* ── Quick reply buttons ──────────────────────────────── */
+    .quick-replies {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      padding: 6px 4px 2px;
+      max-width: 88%;
+    }
+    .quick-btn {
+      background: white;
+      border: 1.5px solid var(--color-primary);
+      color: var(--color-primary);
+      border-radius: 18px;
+      padding: 7px 13px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .quick-btn:hover, .quick-btn:active {
+      background: var(--color-primary);
+      color: white;
+    }
+    .quick-btn i { font-size: 14px; }
+
+    /* ── Typing indicator ─────────────────────────────────── */
+    .typing-bubble {
+      background: white;
+      border-radius: 2px 12px 12px 12px;
+      padding: 11px 14px;
+      display: flex;
+      gap: 4px;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+    }
+    .typing-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #bbb;
+      animation: bounce 1.2s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+      30% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    /* ── Carrusel de servicios ────────────────────────────── */
+    .carousel-wrapper {
+      background: white;
+      border-radius: 2px 12px 12px 12px;
+      padding: 10px 10px 6px;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+      max-width: 92%;
+    }
+    .carousel-scroll {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      scrollbar-width: thin;
+    }
+    .carousel-scroll::-webkit-scrollbar { height: 3px; }
+    .carousel-scroll::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+
+    .service-card {
+      min-width: 120px;
+      max-width: 120px;
+      border: 1.5px solid #e8ecf0;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      flex-shrink: 0;
+      background: white;
+    }
+    .service-card:hover { border-color: var(--color-primary); box-shadow: 0 2px 8px rgba(26,115,232,0.15); }
+    .service-card.selected { border-color: var(--color-primary); border-width: 2px; }
+
+    .service-img-wrap {
+      width: 100%;
+      height: 78px;
+      background: #f0f4ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      overflow: hidden;
+    }
+    .service-img-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .service-info { padding: 7px 8px 4px; }
+    .service-name {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #1a1a1a;
+      line-height: 1.3;
+    }
+    .service-price {
+      font-size: 11px;
+      color: #666;
+      margin-top: 2px;
+    }
+    .service-select-btn {
+      width: 100%;
+      padding: 6px;
+      background: transparent;
+      border: none;
+      border-top: 1px solid #f0f0f0;
+      color: var(--color-primary);
+      font-size: 11.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .service-select-btn:hover { background: var(--color-primary-light); }
+
+    /* ── Tarjeta de resumen + pago ────────────────────────── */
+    .resumen-card {
+      background: white;
+      border-radius: 12px;
+      padding: 14px 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      max-width: 88%;
+      border: 1px solid #e8ecf0;
+    }
+    .resumen-titulo {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--color-primary);
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .resumen-fila {
+      font-size: 13px;
+      color: #444;
+      margin-bottom: 5px;
+      line-height: 1.5;
+    }
+    .resumen-fila strong { color: #1a1a1a; }
+    .pagar-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: background 0.15s;
+    }
+    .pagar-btn:hover { background: var(--color-primary-dark); }
+    .pagar-btn:disabled { background: #aaa; cursor: not-allowed; }
+
+    .pagos-logos {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .visa-logo { font-size: 13px; font-weight: 800; color: #1a1aff; letter-spacing: 1px; }
+    .mc-logo { display: flex; align-items: center; }
+    .mc-logo span:first-child {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #eb001b; display: inline-block; margin-right: -7px;
+    }
+    .mc-logo span:last-child {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #f79e1b; display: inline-block;
+    }
+    .clave-logo { font-size: 13px; font-weight: 800; color: #e85d04; letter-spacing: 1px; }
+
+    /* ── Input bar ────────────────────────────────────────── */
+    .chat-input-bar {
+      background: #f0f2f5;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      border-top: 1px solid #e0e0e0;
+    }
+    .mic-btn {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: white;
+      border: 1px solid #e0e0e0;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      color: #666;
+      font-size: 19px;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .mic-btn:hover { background: #f5f5f5; }
+    .msg-input {
+      flex: 1;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 22px;
+      padding: 10px 16px;
+      font-size: 14.5px;
+      color: #333;
+      outline: none;
+      transition: border-color 0.15s;
+      font-family: inherit;
+    }
+    .msg-input:focus { border-color: var(--color-primary); }
+    .msg-input::placeholder { color: #aaa; }
+    .send-btn {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      border: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      color: white;
+      font-size: 19px;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .send-btn:hover { background: var(--color-primary-dark); }
+
+    /* ── Bottom nav ───────────────────────────────────────── */
+    .bottom-nav {
+      display: flex;
+      background: white;
+      border-top: 1px solid #e8ecf0;
+      flex-shrink: 0;
+    }
+    .nav-item {
+      flex: 1;
+      padding: 8px 4px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 10.5px;
+      color: #888;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      transition: color 0.15s;
+    }
+    .nav-item i { font-size: 21px; }
+    .nav-item.active { color: var(--color-primary); }
+    .nav-badge {
+      background: #e8392e;
+      color: white;
+      font-size: 9px;
+      font-weight: 700;
+      border-radius: 8px;
+      padding: 1px 5px;
+      position: absolute;
+      top: -4px; right: -4px;
+    }
+    .nav-icon-wrap { position: relative; display: inline-block; }
+
+    /* ── Loading screen ───────────────────────────────────── */
+    .loading-screen {
+      position: absolute;
+      inset: 0;
+      background: var(--color-primary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      z-index: 999;
+      transition: opacity 0.4s;
+    }
+    .loading-screen.fade-out { opacity: 0; pointer-events: none; }
+    .loading-logo { font-size: 48px; }
+    .loading-name { color: white; font-size: 22px; font-weight: 600; }
+    .loading-spinner {
+      width: 36px; height: 36px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Error screen ─────────────────────────────────────── */
+    .error-screen {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: #f8f9fa;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      padding: 32px;
+      text-align: center;
+      z-index: 998;
+    }
+    .error-screen.show { display: flex; }
+    .error-screen i { font-size: 48px; color: #ccc; }
+    .error-screen h3 { font-size: 18px; color: #555; }
+    .error-screen p { font-size: 14px; color: #888; line-height: 1.6; }
+
+    /* ── Animaciones entrada de mensajes ─────────────────── */
+    .msg-row { animation: fadeUp 0.22s ease; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Session token banner ─────────────────────────────── */
+    .session-banner {
+      background: #fff3cd;
+      border-bottom: 1px solid #ffc107;
+      padding: 8px 14px;
+      font-size: 12px;
+      color: #856404;
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+    .session-banner.show { display: flex; }
+    .session-banner button {
+      margin-left: auto;
+      background: none; border: none;
+      color: var(--color-primary); font-size: 12px; font-weight: 600; cursor: pointer;
+    }
+  </style>
+
+  <!-- Tabler Icons CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+</head>
+<body>
+
+<div class="app-wrapper" id="appWrapper">
+
+  <!-- Loading screen -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-logo" id="loadingLogo">💬</div>
+    <div class="loading-name" id="loadingName">Cargando...</div>
+    <div class="loading-spinner"></div>
+  </div>
+
+  <!-- Error screen -->
+  <div class="error-screen" id="errorScreen">
+    <i class="ti ti-alert-circle"></i>
+    <h3>Negocio no encontrado</h3>
+    <p id="errorMsg">El enlace que usaste no corresponde a ningún negocio activo. Verifica la URL e intenta de nuevo.</p>
+  </div>
+
+  <!-- Session recovery banner -->
+  <div class="session-banner" id="sessionBanner">
+    <i class="ti ti-clock"></i>
+    <span>Tienes una conversación anterior. ¿Deseas continuar?</span>
+    <button onclick="recoverySession()">Continuar</button>
+  </div>
+
+  <!-- Header -->
+  <div class="chat-header" id="chatHeader" style="display:none">
+    <div class="header-back"><i class="ti ti-arrow-left"></i></div>
+    <div class="header-avatar" id="headerAvatar">💬</div>
+    <div class="header-info">
+      <div class="header-biz-name" id="headerBizName">Asistente Virtual</div>
+      <div class="header-status">
+        <span class="status-dot"></span>
+        <span>Asistente Virtual · En línea</span>
+      </div>
+    </div>
+    <div class="header-menu-btn" onclick="toggleMenu()">
+      <i class="ti ti-dots-vertical"></i>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <div class="dropdown-item" onclick="openConfig()">
+          <i class="ti ti-settings"></i> Configuración
+        </div>
+        <div class="dropdown-item" onclick="openSupport()">
+          <i class="ti ti-headset"></i> Soporte Técnico
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat body -->
+  <div class="chat-body" id="chatBody" style="display:none"></div>
+
+  <!-- Input bar -->
+  <div class="chat-input-bar" id="inputBar" style="display:none">
+    <div class="mic-btn" onclick="toggleVoice()" id="micBtn">
+      <i class="ti ti-microphone" id="micIcon"></i>
+    </div>
+    <input
+      class="msg-input"
+      id="msgInput"
+      type="text"
+      placeholder="Escribe tu mensaje o consulta aquí..."
+      autocomplete="off"
+      onkeydown="handleEnter(event)"
+    />
+    <button class="send-btn" onclick="sendUserMsg()">
+      <i class="ti ti-send"></i>
+    </button>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav" id="bottomNav" style="display:none">
+    <div class="nav-item active" onclick="goSection('inicio')">
+      <i class="ti ti-home"></i>
+      <span>Inicio</span>
+    </div>
+    <div class="nav-item" onclick="goSection('citas')">
+      <div class="nav-icon-wrap">
+        <i class="ti ti-calendar"></i>
+      </div>
+      <span>Mis citas</span>
+    </div>
+    <div class="nav-item" onclick="goSection('mensajes')">
+      <i class="ti ti-message"></i>
+      <span>Mensajes</span>
+    </div>
+    <div class="nav-item" onclick="goSection('perfil')">
+      <i class="ti ti-user"></i>
+      <span>Perfil</span>
+    </div>
+  </div>
+
+</div><!-- /app-wrapper -->
+
+<!-- ============================================================
+     JAVASCRIPT
+============================================================ -->
+<script>
+// ── Config global ────────────────────────────────────────────
+const CONFIG = {
+  slug: null,
+  negocio: null,       // datos del negocio desde D1
+  sessionToken: null,  // localStorage
+  historial: [],       // mensajes en memoria
+};
+
+// ── Helpers de tiempo ────────────────────────────────────────
+function horaActual() {
+  return new Date().toLocaleTimeString('es-PA', { hour: '2-digit', minute: '2-digit' });
+}
+function fechaHoy() {
+  return new Date().toLocaleDateString('es-PA', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+// ── Leer slug de la URL  /dental-abc  →  slug = "dental-abc" ─
+function getSlug() {
+  const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
+  return path || null;
+}
+
+// ── Aplicar tema del negocio ─────────────────────────────────
+function aplicarTema(negocio) {
+  const root = document.documentElement;
+  if (negocio.color_primary) {
+    root.style.setProperty('--color-primary', negocio.color_primary);
+    // Generar variante oscura simple
+    root.style.setProperty('--color-primary-dark', ajustarBrillo(negocio.color_primary, -20));
+    root.style.setProperty('--color-primary-light', negocio.color_primary + '18');
+    // Actualizar meta theme-color
+    document.querySelector('meta[name=theme-color]').content = negocio.color_primary;
+  }
+  // Título de la página
+  document.getElementById('pageTitle').textContent = negocio.nombre || 'Asistente Virtual';
+  // Header
+  document.getElementById('headerBizName').textContent = negocio.nombre || 'Asistente Virtual';
+  // Avatar / logo
+  const avatarEl = document.getElementById('headerAvatar');
+  if (negocio.logo_url) {
+    avatarEl.innerHTML = `<img src="${negocio.logo_url}" alt="${negocio.nombre}" />`;
+  } else {
+    avatarEl.textContent = negocio.icono || '💬';
+  }
+  // Loading
+  document.getElementById('loadingName').textContent = negocio.nombre || 'Cargando...';
+  document.getElementById('loadingLogo').textContent = negocio.icono || '💬';
+}
+
+function ajustarBrillo(hex, amount) {
+  try {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const r = Math.min(255, Math.max(0, (num >> 16) + amount));
+    const g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + amount));
+    const b = Math.min(255, Math.max(0, (num & 0xff) + amount));
+    return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+  } catch { return hex; }
+}
+
+// ── Mostrar UI principal ─────────────────────────────────────
+function mostrarUI() {
+  document.getElementById('chatHeader').style.display = 'flex';
+  document.getElementById('chatBody').style.display = 'flex';
+  document.getElementById('inputBar').style.display = 'flex';
+  document.getElementById('bottomNav').style.display = 'flex';
+  const ls = document.getElementById('loadingScreen');
+  ls.classList.add('fade-out');
+  setTimeout(() => ls.style.display = 'none', 400);
+}
+
+function mostrarError(msg) {
+  document.getElementById('loadingScreen').style.display = 'none';
+  document.getElementById('errorMsg').textContent = msg || '';
+  document.getElementById('errorScreen').classList.add('show');
+}
+
+// ── Session token (localStorage) ────────────────────────────
+function initSession(slug) {
+  const key = `pc_session_${slug}`;
+  let token = localStorage.getItem(key);
+  if (!token) {
+    token = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+    localStorage.setItem(key, token);
+  }
+  CONFIG.sessionToken = token;
+
+  // Historial guardado
+  const histKey = `pc_hist_${slug}`;
+  const saved = localStorage.getItem(histKey);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed && parsed.length > 0) {
+        CONFIG.historial = parsed;
+        document.getElementById('sessionBanner').classList.add('show');
+      }
+    } catch {}
+  }
+}
+
+function guardarHistorial() {
+  if (!CONFIG.slug) return;
+  const key = `pc_hist_${CONFIG.slug}`;
+  localStorage.setItem(key, JSON.stringify(CONFIG.historial.slice(-20)));
+}
+
+function recoverySession() {
+  document.getElementById('sessionBanner').classList.remove('show');
+  // Re-renderizar historial guardado
+  const body = document.getElementById('chatBody');
+  body.innerHTML = '';
+  addDateSeparator(fechaHoy());
+  CONFIG.historial.forEach(m => {
+    if (m.role === 'bot') appendBotBubble(m.text, false);
+    else appendUserBubble(m.text, false);
+  });
+  body.scrollTop = body.scrollHeight;
+}
+
+// ── DOM helpers ──────────────────────────────────────────────
+function addDateSeparator(text) {
+  const body = document.getElementById('chatBody');
+  const div = document.createElement('div');
+  div.className = 'date-separator';
+  div.innerHTML = `<span>${text}</span>`;
+  body.appendChild(div);
+}
+
+function appendTyping() {
+  const body = document.getElementById('chatBody');
+  const row = document.createElement('div');
+  row.className = 'msg-row bot';
+  row.id = 'typingIndicator';
+  row.innerHTML = `<div class="typing-bubble">
+    <div class="typing-dot"></div>
+    <div class="typing-dot"></div>
+    <div class="typing-dot"></div>
+  </div>`;
+  body.appendChild(row);
+  body.scrollTop = body.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+function appendBotBubble(html, animate = true) {
+  const body = document.getElementById('chatBody');
+  const row = document.createElement('div');
+  row.className = 'msg-row bot';
+  row.innerHTML = `
+    <div class="bubble bubble-bot">${html}</div>
+    <div class="msg-time">${horaActual()}</div>
+  `;
+  if (!animate) row.style.animation = 'none';
+  body.appendChild(row);
+  body.scrollTop = body.scrollHeight;
+  return row;
+}
+
+function appendUserBubble(text, animate = true) {
+  const body = document.getElementById('chatBody');
+  const row = document.createElement('div');
+  row.className = 'msg-row user';
+  row.innerHTML = `
+    <div class="bubble bubble-user">${text}</div>
+    <div class="msg-time">${horaActual()}</div>
+  `;
+  if (!animate) row.style.animation = 'none';
+  body.appendChild(row);
+  body.scrollTop = body.scrollHeight;
+}
+
+// ── Carrusel de servicios ────────────────────────────────────
+function appendCarrusel(servicios) {
+  const body = document.getElementById('chatBody');
+  const cards = servicios.map(s => `
+    <div class="service-card" id="sc-${s.id}" onclick="seleccionarServicio(${s.id})">
+      <div class="service-img-wrap">
+        ${s.imagen_url
+          ? `<img src="${s.imagen_url}" alt="${s.nombre}" />`
+          : `<span>${s.icono || '🛎️'}</span>`}
+      </div>
+      <div class="service-info">
+        <div class="service-name">${s.nombre}</div>
+        <div class="service-price">Desde $${s.precio}</div>
+      </div>
+      <button class="service-select-btn">Seleccionar</button>
+    </div>
+  `).join('');
+
+  const row = document.createElement('div');
+  row.className = 'msg-row bot';
+  row.innerHTML = `
+    <div class="carousel-wrapper">
+      <div class="carousel-scroll">${cards}</div>
+    </div>
+    <div class="msg-time">${horaActual()}</div>
+  `;
+  body.appendChild(row);
+  body.scrollTop = body.scrollHeight;
+}
+
+// ── Tarjeta de resumen + pago ────────────────────────────────
+function appendResumen(servicio, fecha) {
+  const body = document.getElementById('chatBody');
+  const row = document.createElement('div');
+  row.className = 'msg-row bot';
+  row.innerHTML = `
+    <div class="resumen-card">
+      <div class="resumen-titulo">
+        <i class="ti ti-clipboard-check" style="font-size:15px"></i>
+        Resumen de Cita
+      </div>
+      <div class="resumen-fila">Servicio: <strong>${servicio.nombre}</strong></div>
+      <div class="resumen-fila">Fecha: <strong>${fecha}</strong></div>
+      <div class="resumen-fila">Total a pagar: <strong>$${servicio.precio} USD</strong></div>
+      <button class="pagar-btn" id="pagarBtn" onclick="iniciarPago('${servicio.id}', '${fecha}', ${servicio.precio})">
+        <i class="ti ti-lock" style="font-size:16px"></i> Pagar Ahora
+      </button>
+      <div class="pagos-logos">
+        <span class="visa-logo">VISA</span>
+        <span class="mc-logo"><span></span><span></span></span>
+        <span class="clave-logo">CLAVE</span>
+      </div>
+    </div>
+    <div class="msg-time">${horaActual()}</div>
+  `;
+  body.appendChild(row);
+  body.scrollTop = body.scrollHeight;
+}
+
+// ── Quick replies ────────────────────────────────────────────
+function appendQuickReplies(opciones) {
+  const body = document.getElementById('chatBody');
+  const div = document.createElement('div');
+  div.className = 'quick-replies';
+  opciones.forEach(op => {
+    const btn = document.createElement('button');
+    btn.className = 'quick-btn';
+    btn.innerHTML = `<i class="ti ${op.icono}"></i> ${op.texto}`;
+    btn.onclick = () => { div.remove(); quickAction(op.accion); };
+    div.appendChild(btn);
+  });
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+
+// ── Mensaje de bienvenida ────────────────────────────────────
+async function mensajeBienvenida() {
+  const negocio = CONFIG.negocio;
+  addDateSeparator(fechaHoy());
+  await delay(300);
+  appendBotBubble(
+    `¡Hola! 👋 Soy el asistente virtual de <strong>${negocio.nombre}</strong>.<br>¿En qué puedo ayudarte hoy?`
+  );
+  await delay(500);
+  appendQuickReplies([
+    { icono: 'ti-calendar', texto: 'Agendar cita',     accion: 'agendar'   },
+    { icono: 'ti-list',     texto: 'Ver servicios',    accion: 'servicios' },
+    { icono: 'ti-tag',      texto: 'Consultar precios',accion: 'precios'   },
+  ]);
+}
+
+// ── Quick actions ────────────────────────────────────────────
+async function quickAction(accion) {
+  if (accion === 'agendar' || accion === 'servicios') {
+    appendUserBubble(accion === 'agendar' ? 'Quiero agendar una cita' : 'Ver servicios disponibles');
+    appendTyping();
+    await delay(700);
+    removeTyping();
+    appendBotBubble('Aquí tienes nuestros servicios disponibles:');
+    appendCarrusel(CONFIG.negocio.servicios || serviciosFallback());
+  } else if (accion === 'precios') {
+    appendUserBubble('Consultar precios');
+    appendTyping();
+    await delay(600);
+    removeTyping();
+    const lista = (CONFIG.negocio.servicios || serviciosFallback())
+      .map(s => `${s.icono || '🛎️'} ${s.nombre} — <strong>$${s.precio}</strong>`)
+      .join('<br>');
+    appendBotBubble(`Nuestros precios actuales:<br><br>${lista}<br><br>¿Te gustaría agendar alguno?`);
+    appendQuickReplies([
+      { icono: 'ti-calendar', texto: 'Sí, agendar', accion: 'agendar' },
+    ]);
+  }
+}
+
+// ── Seleccionar servicio del carrusel ────────────────────────
+function seleccionarServicio(id) {
+  const servicios = CONFIG.negocio.servicios || serviciosFallback();
+  const s = servicios.find(x => x.id === id);
+  if (!s) return;
+  CONFIG.servicioSeleccionado = s;
+
+  document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
+  const card = document.getElementById('sc-' + id);
+  if (card) card.classList.add('selected');
+
+  appendUserBubble(`Elijo ${s.nombre}`);
+
+  setTimeout(async () => {
+    appendTyping();
+    await delay(600);
+    removeTyping();
+    appendBotBubble(`Excelente elección 🎉 <strong>${s.nombre}</strong> — duracion aprox. ${s.duracion || '45 min'}.<br>Te muestro el resumen de tu reserva:`);
+    const fechaCita = proximaFecha();
+    await delay(400);
+    appendResumen(s, fechaCita);
+  }, 200);
+}
+
+// ── Iniciar pago (Páguelo Fácil — próxima fase) ──────────────
+async function iniciarPago(servicioId, fecha, total) {
+  const btn = document.getElementById('pagarBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader" style="animation:spin 0.8s linear infinite;font-size:16px"></i> Procesando...'; }
+
+  try {
+    // TODO Fase 4: integrar Páguelo Fácil
+    // const res = await fetch(`/api/pago/crear`, {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ slug: CONFIG.slug, servicioId, fecha, total, sessionToken: CONFIG.sessionToken })
+    // });
+    // const data = await res.json();
+    // if (data.checkout_url) window.location.href = data.checkout_url;
+
+    // Placeholder hasta Fase 4
+    await delay(1200);
+    appendBotBubble('✅ Procesando tu pago de forma segura con <strong>Páguelo Fácil</strong>.<br>Serás redirigido en un momento...');
+  } catch (err) {
+    appendBotBubble('❌ Hubo un error al procesar el pago. Por favor intenta de nuevo.');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-lock" style="font-size:16px"></i> Pagar Ahora'; }
+  }
+}
+
+// ── Enviar mensaje del usuario ───────────────────────────────
+async function sendUserMsg() {
+  const input = document.getElementById('msgInput');
+  const texto = input.value.trim();
+  if (!texto) return;
+  input.value = '';
+  appendUserBubble(texto);
+  CONFIG.historial.push({ role: 'user', text: texto });
+  guardarHistorial();
+  await procesarRespuesta(texto);
+}
+
+function handleEnter(e) {
+  if (e.key === 'Enter') sendUserMsg();
+}
+
+// ── Procesar respuesta IA ────────────────────────────────────
+async function procesarRespuesta(texto) {
+  appendTyping();
+  await delay(200);
+
+  try {
+    // Llamada al worker de IA
+    const res = await fetch(`/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        slug: CONFIG.slug,
+        mensaje: texto,
+        sessionToken: CONFIG.sessionToken,
+        historial: CONFIG.historial.slice(-6),
+      }),
+    });
+
+    if (!res.ok) throw new Error('Error en respuesta');
+    const data = await res.json();
+    removeTyping();
+
+    if (data.respuesta) {
+      appendBotBubble(data.respuesta);
+      CONFIG.historial.push({ role: 'bot', text: data.respuesta });
+      guardarHistorial();
+    }
+    // Si el worker retorna servicios para mostrar
+    if (data.mostrar_servicios) {
+      await delay(300);
+      appendCarrusel(data.servicios || CONFIG.negocio.servicios || serviciosFallback());
+    }
+    // Si retorna resumen de cita
+    if (data.mostrar_resumen && data.servicio) {
+      await delay(300);
+      appendResumen(data.servicio, data.fecha || proximaFecha());
+    }
+
+  } catch {
+    // Fallback local si no hay backend aún
+    removeTyping();
+    const t = texto.toLowerCase();
+    if (t.includes('cita') || t.includes('agendar') || t.includes('reservar')) {
+      appendBotBubble('Con gusto te ayudo a agendar. Aquí están nuestros servicios:');
+      appendCarrusel(CONFIG.negocio?.servicios || serviciosFallback());
+    } else if (t.includes('precio') || t.includes('costo') || t.includes('cuánto')) {
+      await quickAction('precios');
+    } else if (t.includes('hola') || t.includes('buenos') || t.includes('buenas')) {
+      appendBotBubble(`¡Hola! Bienvenido a <strong>${CONFIG.negocio?.nombre || 'nuestro negocio'}</strong>. ¿En qué puedo ayudarte?`);
+    } else if (t.includes('gracias')) {
+      appendBotBubble('¡Con mucho gusto! Cualquier otra consulta estoy aquí para ayudarte. 😊');
+    } else {
+      appendBotBubble('Entendido. ¿Te puedo ayudar con agendar una cita o consultar nuestros servicios?');
+      appendQuickReplies([
+        { icono: 'ti-calendar', texto: 'Agendar cita',  accion: 'agendar'   },
+        { icono: 'ti-list',     texto: 'Ver servicios', accion: 'servicios' },
+      ]);
+    }
+  }
+}
+
+// ── Cargar config del negocio desde D1 ──────────────────────
+async function cargarNegocio(slug) {
+  try {
+    const res = await fetch(`/api/negocio/${slug}`);
+    if (!res.ok) throw new Error('not found');
+    const data = await res.json();
+    if (!data.success || !data.negocio) throw new Error('no data');
+    return data.negocio;
+  } catch {
+    return null;
+  }
+}
+
+// ── Fallback de datos de demo ────────────────────────────────
+function negocioDemo(slug) {
+  return {
+    nombre: 'Clínica Dental AI',
+    slug: slug || 'demo',
+    color_primary: '#1a73e8',
+    icono: '🦷',
+    logo_url: null,
+    whatsapp_destino: '50799999999',
+    servicios: serviciosFallback(),
+  };
+}
+
+function serviciosFallback() {
+  return [
+    { id: 1, nombre: 'Limpieza Dental',    precio: '30',  icono: '🪥', duracion: '45 min', imagen_url: null },
+    { id: 2, nombre: 'Blanqueamiento',     precio: '80',  icono: '✨', duracion: '60 min', imagen_url: null },
+    { id: 3, nombre: 'Implante Dental',    precio: '250', icono: '🦷', duracion: '90 min', imagen_url: null },
+    { id: 4, nombre: 'Ortodoncia',         precio: '500', icono: '😁', duracion: '120 min',imagen_url: null },
+  ];
+}
+
+function proximaFecha() {
+  const d = new Date();
+  d.setDate(d.getDate() + 2);
+  return d.toLocaleDateString('es-PA', { day: 'numeric', month: 'long' }) + ', 3:00 PM';
+}
+
+// ── Menú dropdown ────────────────────────────────────────────
+function toggleMenu() {
+  document.getElementById('dropdownMenu').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.header-menu-btn')) {
+    document.getElementById('dropdownMenu')?.classList.remove('open');
+  }
+});
+function openConfig()  { appendBotBubble('Para cambiar la configuración de tu cuenta contacta al administrador.'); }
+function openSupport() {
+  window.open('https://onyx-agente-ia.pages.dev/agente-ia.html?contexto=tienda', '_blank');
+}
+
+// ── Voz (placeholder) ────────────────────────────────────────
+let recording = false;
+function toggleVoice() {
+  recording = !recording;
+  const icon = document.getElementById('micIcon');
+  icon.className = recording ? 'ti ti-microphone-off' : 'ti ti-microphone';
+  if (recording) appendBotBubble('Funcionalidad de voz próximamente disponible 🎙️');
+}
+
+// ── Navegación bottom ────────────────────────────────────────
+function goSection(section) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  if (section !== 'inicio') {
+    appendBotBubble(`Sección <strong>${section}</strong> próximamente disponible.`);
+  }
+}
+
+// ── Utilidad delay ───────────────────────────────────────────
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── INIT ─────────────────────────────────────────────────────
+async function init() {
+  const slug = getSlug();
+  CONFIG.slug = slug;
+
+  if (!slug) {
+    mostrarError('No se especificó ningún negocio en la URL. Ejemplo: tunegocio.com/mi-tienda');
+    return;
+  }
+
+  initSession(slug);
+
+  // Cargar negocio desde API
+  let negocio = await cargarNegocio(slug);
+
+  // Si no hay backend aún, usar demo
+  if (!negocio) {
+    negocio = negocioDemo(slug);
+  }
+
+  CONFIG.negocio = negocio;
+  aplicarTema(negocio);
+  mostrarUI();
+
+  // Mostrar bienvenida solo si no hay sesión guardada
+  if (CONFIG.historial.length === 0) {
+    await delay(400);
+    await mensajeBienvenida();
+  }
+}
+
+init();
+</script>
+
+</body>
+</html>
