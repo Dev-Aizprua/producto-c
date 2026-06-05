@@ -551,10 +551,13 @@ const STATE = {
   negocio: null,
 };
 
-// ── Leer slug de la URL  /panel/dental-demo ──────────────────
+// ── Leer slug de la URL  /panel/dental-demo  o  ?slug=dental-demo ──
 function getSlug() {
+  // Primero busca ?slug=dental-demo en la URL
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('slug')) return params.get('slug');
+  // Si no, lee del path /panel/dental-demo
   const parts = window.location.pathname.replace(/^\/+|\/+$/g, '').split('/');
-  // /panel/dental-demo → parts = ['panel','dental-demo']
   return parts.length >= 2 ? parts[parts.length - 1] : null;
 }
 
