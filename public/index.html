@@ -48,45 +48,196 @@
       --color-header-text: #ffffff;
     }
 
-    /* ── Desktop: contenedor centrado con sombra ─────────── */
+    /* ══════════════════════════════════════════════════════
+       LAYOUT MÓVIL — pantalla completa
+    ══════════════════════════════════════════════════════ */
     .desktop-frame {
       position: relative;
       z-index: 1;
       width: 100%;
-      max-width: 420px;
       height: 100vh;
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      align-items: stretch;
     }
 
-    /* En desktop real le damos altura fija y bordes redondeados */
-    @media (min-width: 600px) and (min-height: 600px) {
-      body { overflow: auto; padding: 24px; }
-      .desktop-frame {
-        height: auto;
-        max-height: calc(100vh - 48px);
-      }
-      .app-wrapper {
-        border-radius: 20px !important;
-        box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06) !important;
-        height: min(780px, calc(100vh - 48px)) !important;
-        max-height: none !important;
-      }
-    }
-
-    /* ── Phone wrapper ────────────────────────────────────── */
     .app-wrapper {
       width: 100%;
-      max-width: 420px;
       height: 100vh;
-      max-height: 100vh;
       display: flex;
       flex-direction: column;
       background: #f0f2f5;
       position: relative;
       overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    /* Panel derecho — oculto en móvil */
+    .side-panel {
+      display: none;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       LAYOUT DESKTOP — dos columnas
+    ══════════════════════════════════════════════════════ */
+    @media (min-width: 860px) {
+      html, body { overflow: hidden; }
+
+      .desktop-frame {
+        max-width: 1100px;
+        margin: 0 auto;
+        height: 100vh;
+        padding: 28px;
+        gap: 20px;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Columna izquierda — el chat */
+      .app-wrapper {
+        width: 400px;
+        min-width: 400px;
+        height: min(780px, calc(100vh - 56px));
+        border-radius: 20px;
+        box-shadow: 0 24px 64px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.07);
+      }
+
+      /* Columna derecha — servicios + resumen */
+      .side-panel {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        height: min(780px, calc(100vh - 56px));
+        gap: 16px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+      }
+      .side-panel::-webkit-scrollbar { width: 4px; }
+      .side-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+      /* Tarjeta genérica del panel derecho */
+      .sp-card {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 16px;
+        padding: 20px;
+        backdrop-filter: blur(12px);
+        flex-shrink: 0;
+      }
+      .sp-card-title {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.45);
+        margin-bottom: 14px;
+      }
+
+      /* Info del negocio */
+      .sp-biz-name {
+        font-size: 22px;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 4px;
+      }
+      .sp-biz-desc {
+        font-size: 13px;
+        color: rgba(255,255,255,0.55);
+        line-height: 1.5;
+      }
+      .sp-online {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 10px;
+        background: rgba(74,222,128,0.15);
+        border: 1px solid rgba(74,222,128,0.3);
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 12px;
+        color: #4ade80;
+        font-weight: 500;
+      }
+      .sp-online-dot {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        background: #4ade80;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+      }
+
+      /* Grid de servicios */
+      .sp-services-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .sp-service-item {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 12px;
+        padding: 14px;
+        cursor: pointer;
+        transition: all 0.18s;
+      }
+      .sp-service-item:hover {
+        background: rgba(26,115,232,0.2);
+        border-color: rgba(26,115,232,0.5);
+        transform: translateY(-1px);
+      }
+      .sp-service-icon { font-size: 24px; margin-bottom: 8px; }
+      .sp-service-name { font-size: 13px; font-weight: 600; color: white; line-height: 1.3; }
+      .sp-service-price { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 3px; }
+
+      /* Resumen de cita en panel derecho */
+      .sp-resumen {
+        display: none;
+      }
+      .sp-resumen.visible { display: block; }
+      .sp-resumen-servicio { font-size: 17px; font-weight: 700; color: white; margin-bottom: 6px; }
+      .sp-resumen-detalle { font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 4px; }
+      .sp-resumen-total { font-size: 22px; font-weight: 800; color: white; margin: 12px 0; }
+      .sp-pagar-btn {
+        width: 100%;
+        padding: 13px;
+        background: var(--color-primary);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: background 0.15s, transform 0.1s;
+      }
+      .sp-pagar-btn:hover { background: var(--color-primary-dark); transform: translateY(-1px); }
+      .sp-pagos-logos {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        margin-top: 12px;
+      }
+      .sp-visa  { font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.7); letter-spacing: 1px; }
+      .sp-mc    { display: flex; align-items: center; }
+      .sp-mc span:first-child  { width: 20px; height: 20px; border-radius: 50%; background: #eb001b; margin-right: -7px; display: inline-block; }
+      .sp-mc span:last-child   { width: 20px; height: 20px; border-radius: 50%; background: #f79e1b; display: inline-block; opacity: 0.9; }
+      .sp-clave { font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.7); letter-spacing: 1px; }
+
+      /* Tip de uso */
+      .sp-tip {
+        font-size: 12px;
+        color: rgba(255,255,255,0.3);
+        text-align: center;
+        line-height: 1.6;
+        padding: 4px 0;
+      }
+      .sp-tip i { font-size: 14px; vertical-align: -2px; margin-right: 4px; }
     }
 
     /* ── Header ───────────────────────────────────────────── */
@@ -678,6 +829,51 @@
   </div>
 
 </div><!-- /app-wrapper -->
+
+<!-- ══════════════════════════════════════════════════════
+     PANEL DERECHO — solo visible en desktop
+══════════════════════════════════════════════════════ -->
+<div class="side-panel" id="sidePanel">
+
+  <!-- Info del negocio -->
+  <div class="sp-card" id="spBizCard">
+    <div class="sp-card-title">Negocio</div>
+    <div class="sp-biz-name" id="spBizName">Cargando...</div>
+    <div class="sp-biz-desc" id="spBizDesc">Asistente Virtual disponible 24/7</div>
+    <div class="sp-online"><span class="sp-online-dot"></span> En línea ahora</div>
+  </div>
+
+  <!-- Servicios disponibles -->
+  <div class="sp-card" id="spServiciosCard">
+    <div class="sp-card-title">Servicios disponibles</div>
+    <div class="sp-services-grid" id="spServiciosGrid">
+      <!-- Se llena desde JS con los servicios del negocio -->
+    </div>
+  </div>
+
+  <!-- Resumen de cita (aparece cuando el cliente selecciona un servicio) -->
+  <div class="sp-card sp-resumen" id="spResumen">
+    <div class="sp-card-title">Resumen de tu cita</div>
+    <div class="sp-resumen-servicio" id="spResumenServicio">—</div>
+    <div class="sp-resumen-detalle" id="spResumenFecha">📅 Fecha: —</div>
+    <div class="sp-resumen-total" id="spResumenTotal">$0.00</div>
+    <button class="sp-pagar-btn" onclick="iniciarPagoDesktop()">
+      <i class="ti ti-lock"></i> Pagar Ahora
+    </button>
+    <div class="sp-pagos-logos">
+      <span class="sp-visa">VISA</span>
+      <span class="sp-mc"><span></span><span></span></span>
+      <span class="sp-clave">CLAVE</span>
+    </div>
+  </div>
+
+  <!-- Tip -->
+  <div class="sp-tip">
+    <i class="ti ti-shield-check"></i>
+    Pago 100% seguro · Sin comisiones para el cliente
+  </div>
+
+</div><!-- /side-panel -->
 </div><!-- /desktop-frame -->
 
 <!-- ============================================================
@@ -711,26 +907,53 @@ function aplicarTema(negocio) {
   const root = document.documentElement;
   if (negocio.color_primary) {
     root.style.setProperty('--color-primary', negocio.color_primary);
-    // Generar variante oscura simple
     root.style.setProperty('--color-primary-dark', ajustarBrillo(negocio.color_primary, -20));
     root.style.setProperty('--color-primary-light', negocio.color_primary + '18');
-    // Actualizar meta theme-color
     document.querySelector('meta[name=theme-color]').content = negocio.color_primary;
   }
-  // Título de la página
-  document.getElementById('pageTitle').textContent = negocio.nombre || 'Asistente Virtual';
-  // Header
+  // Título y header del chat
+  document.getElementById('pageTitle').textContent    = negocio.nombre || 'Asistente Virtual';
   document.getElementById('headerBizName').textContent = negocio.nombre || 'Asistente Virtual';
-  // Avatar / logo
   const avatarEl = document.getElementById('headerAvatar');
   if (negocio.logo_url) {
     avatarEl.innerHTML = `<img src="${negocio.logo_url}" alt="${negocio.nombre}" />`;
   } else {
     avatarEl.textContent = negocio.icono || '💬';
   }
-  // Loading
   document.getElementById('loadingName').textContent = negocio.nombre || 'Cargando...';
   document.getElementById('loadingLogo').textContent = negocio.icono || '💬';
+
+  // ── Panel derecho (desktop) ──────────────────────────────
+  document.getElementById('spBizName').textContent = negocio.nombre || 'Negocio';
+  document.getElementById('spBizDesc').textContent = negocio.descripcion || 'Asistente Virtual disponible 24/7';
+
+  // Grid de servicios en el panel derecho
+  const grid = document.getElementById('spServiciosGrid');
+  if (grid && negocio.servicios?.length) {
+    grid.innerHTML = negocio.servicios.map(s => `
+      <div class="sp-service-item" onclick="seleccionarServicio(${s.id})">
+        <div class="sp-service-icon">${s.icono || '🛎️'}</div>
+        <div class="sp-service-name">${s.nombre}</div>
+        <div class="sp-service-price">Desde $${s.precio} USD</div>
+      </div>
+    `).join('');
+  }
+}
+
+// ── Actualizar resumen en panel derecho ──────────────────────
+function actualizarResumenDesktop(servicio, fecha) {
+  const card = document.getElementById('spResumen');
+  if (!card) return;
+  document.getElementById('spResumenServicio').textContent = servicio.nombre;
+  document.getElementById('spResumenFecha').textContent    = '📅 ' + fecha;
+  document.getElementById('spResumenTotal').textContent    = '$' + servicio.precio + ' USD';
+  card.classList.add('visible');
+}
+
+function iniciarPagoDesktop() {
+  if (CONFIG.servicioSeleccionado) {
+    iniciarPago(CONFIG.servicioSeleccionado.id, proximaFecha(), CONFIG.servicioSeleccionado.precio);
+  }
 }
 
 function ajustarBrillo(hex, amount) {
@@ -980,18 +1203,21 @@ function seleccionarServicio(id) {
   if (!s) return;
   CONFIG.servicioSeleccionado = s;
 
-  document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.service-card, .sp-service-item').forEach(c => c.classList.remove('selected'));
   const card = document.getElementById('sc-' + id);
   if (card) card.classList.add('selected');
 
   appendUserBubble(`Elijo ${s.nombre}`);
+  const fechaCita = proximaFecha();
+
+  // Actualizar panel derecho desktop inmediatamente
+  actualizarResumenDesktop(s, fechaCita);
 
   setTimeout(async () => {
     appendTyping();
     await delay(600);
     removeTyping();
-    appendBotBubble(`Excelente elección 🎉 <strong>${s.nombre}</strong> — duracion aprox. ${s.duracion || '45 min'}.<br>Te muestro el resumen de tu reserva:`);
-    const fechaCita = proximaFecha();
+    appendBotBubble(`Excelente elección 🎉 <strong>${s.nombre}</strong> — duración aprox. ${s.duracion || '45 min'}.<br>Te muestro el resumen de tu reserva:`);
     await delay(400);
     appendResumen(s, fechaCita);
   }, 200);
