@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Control</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <style>
+    /* ── Reset ──────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: -apple-system, 'Segoe UI', sans-serif; background: #f4f6f9; color: #1a1a2e; }
+
+    /* ── Variables ──────────────────────────────────────────── */
+    :root {
+      --primary: #1a73e8;
+      --primary-dark: #1557b0;
+      --primary-light: #e8f0fe;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --sidebar-w: 220px;
+      --header-h: 60px;
+    }
+
+    /* ════════════════════════════════════════════════════════
+       LOGIN
+    ════════════════════════════════════════════════════════ */
+    .login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    }
+    .login-card {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+    }
+    .login-logo { font-size: 40px; text-align: center; margin-bottom: 8px; }
+    .login-title { font-size: 22px; font-weight: 700; text-align: center; color: #1a1a2e; margin-bottom: 4px; }
+    .login-sub { font-size: 13px; color: #888; text-align: center; margin-bottom: 28px; }
+    .login-slug { background: #f4f6f9; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #555; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+    .login-slug i { color: var(--primary); }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-input {
+      width: 100%; padding: 11px 14px; border: 1.5px solid #e0e0e0; border-radius: 10px;
+      font-size: 14px; color: #1a1a2e; outline: none; transition: border-color 0.15s;
+      font-family: inherit;
+    }
+    .form-input:focus { border-color: var(--primary); }
+    .login-btn {
+      width: 100%; padding: 13px; background: var(--primary); color: white; border: none;
+      border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+      transition: background 0.15s; margin-top: 4px;
+    }
+    .login-btn:hover { background: var(--primary-dark); }
+    .login-btn:disabled { background: #aaa; cursor: not-allowed; }
+    .login-error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 12px; display: none; }
+    .login-error.show { display: block; }
+
+    /* ════════════════════════════════════════════════════════
+       LAYOUT PANEL
+    ════════════════════════════════════════════════════════ */
+    .panel-layout { display: none; min-height: 100vh; }
+    .panel-layout.visible { display: flex; }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: #1a1a2e;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+    .sidebar-header {
+      padding: 20px 16px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .sidebar-biz { font-size: 15px; font-weight: 700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-slug { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+    .sidebar-nav { flex: 1; padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; }
+    .nav-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px;
+      font-size: 14px; color: rgba(255,255,255,0.6);
+      cursor: pointer; transition: all 0.15s; text-decoration: none;
+    }
+    .nav-link i { font-size: 18px; }
+    .nav-link:hover { background: rgba(255,255,255,0.07); color: white; }
+    .nav-link.active { background: var(--primary); color: white; }
+    .sidebar-footer { padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.08); }
+    .logout-btn {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px;
+      font-size: 14px; color: rgba(255,255,255,0.5);
+      cursor: pointer; transition: all 0.15s; width: 100%; background: none; border: none;
+    }
+    .logout-btn:hover { background: rgba(220,38,38,0.15); color: #f87171; }
+    .logout-btn i { font-size: 18px; }
+
+    /* Main */
+    .main-content {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .main-header {
+      height: var(--header-h);
+      background: white;
+      border-bottom: 1px solid #e8ecf0;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 12px;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .main-header-title { font-size: 18px; font-weight: 700; color: #1a1a2e; flex: 1; }
+    .main-body { padding: 24px; flex: 1; }
+
+    /* ════════════════════════════════════════════════════════
+       TABS / SECCIONES
+    ════════════════════════════════════════════════════════ */
+    .tab-section { display: none; }
+    .tab-section.active { display: block; }
+
+    /* ── Cards ──────────────────────────────────────────────── */
+    .card {
+      background: white; border-radius: 14px;
+      border: 1px solid #e8ecf0; padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title { font-size: 15px; font-weight: 700; color: #1a1a2e; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+    .card-title i { font-size: 18px; color: var(--primary); }
+
+    /* ── Form ───────────────────────────────────────────────── */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .form-row.full { grid-template-columns: 1fr; }
+    .field-label { font-size: 12px; font-weight: 600; color: #666; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; display: block; }
+    .field-input, .field-select, .field-textarea {
+      width: 100%; padding: 10px 13px; border: 1.5px solid #e0e0e0; border-radius: 9px;
+      font-size: 14px; color: #1a1a2e; outline: none; transition: border-color 0.15s;
+      font-family: inherit; background: white;
+    }
+    .field-input:focus, .field-select:focus, .field-textarea:focus { border-color: var(--primary); }
+    .field-textarea { resize: vertical; min-height: 80px; }
+    .color-preview { display: flex; align-items: center; gap: 10px; }
+    .color-preview input[type=color] { width: 44px; height: 38px; padding: 2px; border: 1.5px solid #e0e0e0; border-radius: 8px; cursor: pointer; }
+
+    /* ── Buttons ────────────────────────────────────────────── */
+    .btn {
+      padding: 10px 18px; border-radius: 9px; font-size: 14px; font-weight: 600;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
+      transition: all 0.15s; border: none;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: #15803d; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-outline { background: white; color: #555; border: 1.5px solid #e0e0e0; }
+    .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-sm { padding: 7px 13px; font-size: 13px; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* ── Toast ──────────────────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: #1a1a2e; color: white;
+      padding: 13px 18px; border-radius: 12px;
+      font-size: 14px; display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      z-index: 9999; transform: translateY(80px); opacity: 0;
+      transition: all 0.3s; pointer-events: none;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success i { color: #4ade80; }
+    .toast.error i { color: #f87171; }
+
+    /* ── Servicios grid ─────────────────────────────────────── */
+    .servicios-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .servicio-card {
+      background: white; border: 1.5px solid #e8ecf0; border-radius: 14px;
+      overflow: hidden; transition: box-shadow 0.15s;
+    }
+    .servicio-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    .servicio-img {
+      width: 100%; height: 140px; object-fit: cover;
+      background: #f0f4ff; display: flex; align-items: center; justify-content: center;
+      font-size: 48px;
+    }
+    .servicio-img img { width: 100%; height: 100%; object-fit: cover; }
+    .servicio-body { padding: 14px; }
+    .servicio-nombre { font-size: 15px; font-weight: 700; color: #1a1a2e; }
+    .servicio-precio { font-size: 18px; font-weight: 800; color: var(--primary); margin: 4px 0; }
+    .servicio-duracion { font-size: 12px; color: #888; }
+    .servicio-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .servicio-inactive { opacity: 0.5; }
+
+    /* ── Modal ──────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      display: none; align-items: center; justify-content: center;
+      z-index: 200; padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white; border-radius: 18px; padding: 28px;
+      width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+    }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .modal-title { font-size: 17px; font-weight: 700; color: #1a1a2e; }
+    .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #888; padding: 4px; }
+
+    /* ── Upload imagen ──────────────────────────────────────── */
+    .upload-zone {
+      border: 2px dashed #e0e0e0; border-radius: 12px;
+      padding: 24px; text-align: center; cursor: pointer;
+      transition: border-color 0.15s; position: relative;
+    }
+    .upload-zone:hover { border-color: var(--primary); }
+    .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-zone i { font-size: 32px; color: #ccc; margin-bottom: 8px; display: block; }
+    .upload-zone p { font-size: 13px; color: #888; }
+    .upload-preview { width: 100%; max-height: 160px; object-fit: cover; border-radius: 10px; margin-top: 12px; display: none; }
+
+    /* ── Tabla ──────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    thead th { padding: 11px 14px; background: #f8f9fb; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #888; text-align: left; border-bottom: 1px solid #e8ecf0; }
+    tbody td { padding: 13px 14px; border-bottom: 1px solid #f0f0f0; color: #333; vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #fafbfc; }
+
+    /* ── Badge ──────────────────────────────────────────────── */
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .badge-success { background: #dcfce7; color: #16a34a; }
+    .badge-warning { background: #fef3c7; color: #d97706; }
+    .badge-danger  { background: #fee2e2; color: #dc2626; }
+    .badge-gray    { background: #f1f5f9; color: #64748b; }
+
+    /* ── Empty state ────────────────────────────────────────── */
+    .empty-state { text-align: center; padding: 48px 24px; color: #aaa; }
+    .empty-state i { font-size: 48px; margin-bottom: 12px; display: block; }
+    .empty-state p { font-size: 14px; }
+
+    /* ── Chat viewer ────────────────────────────────────────── */
+    .chat-list { display: flex; flex-direction: column; gap: 10px; }
+    .chat-item {
+      background: white; border: 1px solid #e8ecf0; border-radius: 12px;
+      padding: 16px; cursor: pointer; transition: all 0.15s;
+    }
+    .chat-item:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(26,115,232,0.1); }
+    .chat-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .chat-item-id { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+    .chat-item-fecha { font-size: 11px; color: #aaa; }
+    .chat-item-preview { font-size: 13px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chat-bubble-list { display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; padding: 12px 0; }
+    .chat-bub { max-width: 80%; padding: 9px 13px; border-radius: 12px; font-size: 13.5px; line-height: 1.5; }
+    .chat-bub.bot { background: #f0f2f5; border-radius: 2px 12px 12px 12px; align-self: flex-start; color: #1a1a2e; }
+    .chat-bub.user { background: var(--primary-light); border-radius: 12px 2px 12px 12px; align-self: flex-end; color: #1a1a2e; }
+
+    /* ── Responsive ─────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    /* ── Loading spinner ────────────────────────────────────── */
+    .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .section-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .section-actions h2 { font-size: 16px; font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     LOGIN
+══════════════════════════════════════════════════════ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">🏢</div>
+    <div class="login-title">Panel de Control</div>
+    <div class="login-sub">Accede para administrar tu negocio</div>
+
+    <div class="login-slug">
+      <i class="ti ti-building-store"></i>
+      <span id="loginSlugLabel">Cargando...</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Usuario</label>
+      <input class="form-input" id="loginUsuario" type="text" placeholder="tu usuario" autocomplete="username" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Contraseña</label>
+      <input class="form-input" id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
+    </div>
+
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">
+      Ingresar al Panel
+    </button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PANEL LAYOUT
+══════════════════════════════════════════════════════ -->
+<div class="panel-layout" id="panelLayout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-biz" id="sidebarBiz">Mi Negocio</div>
+      <div class="sidebar-slug" id="sidebarSlug"></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-link active" onclick="showTab('negocio')">
+        <i class="ti ti-building-store"></i> Mi Negocio
+      </a>
+      <a class="nav-link" onclick="showTab('servicios')">
+        <i class="ti ti-list-details"></i> Servicios
+      </a>
+      <a class="nav-link" onclick="showTab('citas')">
+        <i class="ti ti-calendar-check"></i> Citas
+      </a>
+      <a class="nav-link" onclick="showTab('chats')">
+        <i class="ti ti-message-dots"></i> Chats
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="doLogout()">
+        <i class="ti ti-logout"></i> Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <header class="main-header">
+      <div class="main-header-title" id="mainTitle">Mi Negocio</div>
+      <a href="#" id="verChatLink" target="_blank" style="text-decoration:none">
+        <button class="btn btn-outline btn-sm"><i class="ti ti-external-link"></i> Ver chat</button>
+      </a>
+    </header>
+
+    <div class="main-body">
+
+      <!-- ── TAB: Negocio ───────────────────────────────── -->
+      <section class="tab-section active" id="tab-negocio">
+        <div class="card">
+          <div class="card-title"><i class="ti ti-building-store"></i> Información del Negocio</div>
+          <div class="form-row">
+            <div>
+              <label class="field-label">Nombre del negocio</label>
+              <input class="field-input" id="negNombre" type="text" placeholder="Ej: Clínica Dental AI" />
+            </div>
+            <div>
+              <label class="field-label">Ícono (emoji)</label>
+              <input class="field-input" id="negIcono" type="text" placeholder="🦷" maxlength="4" />
+            </div>
+          </div>
+          <div class="form-row full">
+            <div>
+              <label class="field-label">Descripción</label>
+              <textarea class="field-textarea" id="negDescripcion" placeholder="Describe brevemente tu negocio..."></textarea>
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label class="field-label">WhatsApp (con código de país)</label>
+              <input class="field-input" id="negWhatsapp" type="text" placeholder="50799999999" />
+            </div>
+            <div>
+              <label class="field-label">Color principal</label>
+              <div class="color-preview">
+                <input type="color" id="negColorPicker" value="#1a73e8" oninput="document.getElementById('negColor').value=this.value" />
+                <input class="field-input" id="negColor" type="text" value="#1a73e8" placeholder="#1a73e8" oninput="document.getElementById('negColorPicker').value=this.value" style="flex:1" />
+              </div>
+            </div>
+          </div>
+          <div class="form-row full">
+            <div>
+              <label class="field-label">Logo URL (Cloudinary)</label>
+              <input class="field-input" id="negLogo" type="text" placeholder="https://res.cloudinary.com/..." />
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; margin-top:8px">
+            <button class="btn btn-primary" onclick="guardarNegocio()">
+              <i class="ti ti-device-floppy"></i> Guardar cambios
+            </button>
+            <button class="btn btn-outline" onclick="cargarNegocio()">
+              <i class="ti ti-refresh"></i> Recargar
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── TAB: Servicios ────────────────────────────── -->
+      <section class="tab-section" id="tab-servicios">
+        <div class="section-actions">
+          <h2>Servicios</h2>
+          <button class="btn btn-primary" onclick="abrirModalServicio()">
+            <i class="ti ti-plus"></i> Nuevo servicio
+          </button>
+        </div>
+        <div class="servicios-grid" id="serviciosGrid">
+          <div class="empty-state"><i class="ti ti-loader" style="animation:spin 1s linear infinite"></i><p>Cargando servicios...</p></div>
+        </div>
+      </section>
+
+      <!-- ── TAB: Citas ─────────────────────────────────── -->
+      <section class="tab-section" id="tab-citas">
+        <div class="card">
+          <div class="card-title"><i class="ti ti-calendar-check"></i> Citas recibidas</div>
+          <div class="table-wrap">
+            <table id="citasTable">
+              <thead>
+                <tr>
+                  <th>Cliente</th><th>Teléfono</th><th>Servicio</th>
+                  <th>Fecha cita</th><th>Total</th><th>Pago</th><th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody id="citasTbody">
+                <tr><td colspan="7" style="text-align:center;color:#aaa;padding:32px">Cargando citas...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── TAB: Chats ─────────────────────────────────── -->
+      <section class="tab-section" id="tab-chats">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+          <div class="card" style="margin:0">
+            <div class="card-title"><i class="ti ti-message-dots"></i> Conversaciones</div>
+            <div class="chat-list" id="chatList">
+              <div class="empty-state"><i class="ti ti-loader" style="animation:spin 1s linear infinite"></i><p>Cargando chats...</p></div>
+            </div>
+          </div>
+          <div class="card" style="margin:0" id="chatViewer">
+            <div class="card-title"><i class="ti ti-messages"></i> Detalle de conversación</div>
+            <div class="empty-state"><i class="ti ti-arrow-left"></i><p>Selecciona una conversación</p></div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /main-body -->
+  </main>
+</div><!-- /panel-layout -->
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL: Crear / Editar Servicio
+══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalServicio">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalServicioTitle">Nuevo Servicio</div>
+      <button class="modal-close" onclick="cerrarModalServicio()"><i class="ti ti-x"></i></button>
+    </div>
+
+    <input type="hidden" id="svcId" />
+
+    <div class="form-row">
+      <div>
+        <label class="field-label">Nombre del servicio</label>
+        <input class="field-input" id="svcNombre" type="text" placeholder="Ej: Limpieza Dental" />
+      </div>
+      <div>
+        <label class="field-label">Ícono (emoji)</label>
+        <input class="field-input" id="svcIcono" type="text" placeholder="🦷" maxlength="4" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label class="field-label">Precio (USD)</label>
+        <input class="field-input" id="svcPrecio" type="number" placeholder="30" min="0" />
+      </div>
+      <div>
+        <label class="field-label">Duración</label>
+        <input class="field-input" id="svcDuracion" type="text" placeholder="45 min" />
+      </div>
+    </div>
+    <div class="form-row full">
+      <div>
+        <label class="field-label">Descripción</label>
+        <textarea class="field-textarea" id="svcDescripcion" placeholder="Describe el servicio..."></textarea>
+      </div>
+    </div>
+    <div class="form-row full">
+      <div>
+        <label class="field-label">Orden (posición en el carrusel)</label>
+        <input class="field-input" id="svcOrden" type="number" placeholder="1" min="1" />
+      </div>
+    </div>
+
+    <!-- Upload imagen -->
+    <label class="field-label" style="margin-bottom:8px">Imagen del servicio</label>
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" accept="image/*" onchange="subirImagen(this)" />
+      <i class="ti ti-cloud-upload"></i>
+      <p>Haz clic o arrastra una imagen aquí</p>
+    </div>
+    <img id="uploadPreview" class="upload-preview" />
+    <input type="hidden" id="svcImagenUrl" />
+
+    <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="cerrarModalServicio()">Cancelar</button>
+      <button class="btn btn-primary" id="svcGuardarBtn" onclick="guardarServicio()">
+        <i class="ti ti-device-floppy"></i> Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toastMsg"></span></div>
+
+<!-- ══════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════ -->
+<script>
+// ── Estado global ────────────────────────────────────────────
+const STATE = {
+  slug: null,
+  token: null,
+  negocio: null,
+};
+
+// ── Leer slug de la URL  /panel/dental-demo ──────────────────
+function getSlug() {
+  const parts = window.location.pathname.replace(/^\/+|\/+$/g, '').split('/');
+  // /panel/dental-demo → parts = ['panel','dental-demo']
+  return parts.length >= 2 ? parts[parts.length - 1] : null;
+}
+
+// ── SHA-256 en browser ───────────────────────────────────────
+async function sha256(text) {
+  const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ── Toast ────────────────────────────────────────────────────
+function showToast(msg, tipo = 'success') {
+  const t = document.getElementById('toast');
+  const icon = t.querySelector('i');
+  document.getElementById('toastMsg').textContent = msg;
+  t.className = `toast ${tipo}`;
+  icon.className = tipo === 'success' ? 'ti ti-check' : 'ti ti-alert-circle';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── API helper ───────────────────────────────────────────────
+async function api(method, path, body = null) {
+  const opts = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${STATE.token}`,
+    },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(path, opts);
+  return res.json();
+}
+
+// ── LOGIN ────────────────────────────────────────────────────
+async function doLogin() {
+  const usuario  = document.getElementById('loginUsuario').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errorEl  = document.getElementById('loginError');
+  const btn      = document.getElementById('loginBtn');
+
+  if (!usuario || !password) {
+    errorEl.textContent = 'Ingresa usuario y contraseña.';
+    errorEl.classList.add('show'); return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Ingresando...';
+  errorEl.classList.remove('show');
+
+  try {
+    const data = await fetch('/api/panel/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug: STATE.slug, usuario, password }),
+    }).then(r => r.json());
+
+    if (!data.success) throw new Error(data.error || 'Error de acceso');
+
+    STATE.token   = data.token;
+    STATE.negocio = data.negocio;
+    localStorage.setItem(`pc_panel_token_${STATE.slug}`, data.token);
+
+    mostrarPanel();
+  } catch (err) {
+    errorEl.textContent = err.message;
+    errorEl.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = 'Ingresar al Panel';
+  }
+}
+
+// ── Mostrar panel ────────────────────────────────────────────
+function mostrarPanel() {
+  document.getElementById('loginScreen').style.display  = 'none';
+  document.getElementById('panelLayout').classList.add('visible');
+  document.getElementById('sidebarBiz').textContent = STATE.negocio?.nombre || 'Mi Negocio';
+  document.getElementById('sidebarSlug').textContent = STATE.slug;
+  document.getElementById('verChatLink').href = `/${STATE.slug}`;
+  cargarNegocio();
+  cargarServicios();
+  cargarCitas();
+  cargarChats();
+}
+
+// ── Logout ───────────────────────────────────────────────────
+function doLogout() {
+  localStorage.removeItem(`pc_panel_token_${STATE.slug}`);
+  STATE.token = null;
+  document.getElementById('panelLayout').classList.remove('visible');
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginPassword').value = '';
+}
+
+// ── Tabs ─────────────────────────────────────────────────────
+function showTab(tab) {
+  document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  event.currentTarget.classList.add('active');
+  const titles = { negocio: 'Mi Negocio', servicios: 'Servicios', citas: 'Citas', chats: 'Chats' };
+  document.getElementById('mainTitle').textContent = titles[tab] || tab;
+}
+
+// ══════════════════════════════════════════════════════════════
+// TAB NEGOCIO
+// ══════════════════════════════════════════════════════════════
+async function cargarNegocio() {
+  try {
+    const data = await api('GET', '/api/panel/negocio');
+    if (!data.success) throw new Error(data.error);
+    const n = data.negocio;
+    document.getElementById('negNombre').value      = n.nombre || '';
+    document.getElementById('negIcono').value       = n.icono || '';
+    document.getElementById('negDescripcion').value = n.descripcion || '';
+    document.getElementById('negWhatsapp').value    = n.whatsapp_destino || '';
+    document.getElementById('negColor').value       = n.color_primary || '#1a73e8';
+    document.getElementById('negColorPicker').value = n.color_primary || '#1a73e8';
+    document.getElementById('negLogo').value        = n.logo_url || '';
+  } catch (err) {
+    showToast('Error al cargar negocio: ' + err.message, 'error');
+  }
+}
+
+async function guardarNegocio() {
+  try {
+    const data = await api('PUT', '/api/panel/negocio', {
+      nombre:           document.getElementById('negNombre').value.trim(),
+      descripcion:      document.getElementById('negDescripcion').value.trim(),
+      logo_url:         document.getElementById('negLogo').value.trim(),
+      icono:            document.getElementById('negIcono').value.trim(),
+      color_primary:    document.getElementById('negColor').value.trim(),
+      whatsapp_destino: document.getElementById('negWhatsapp').value.trim(),
+    });
+    if (!data.success) throw new Error(data.error);
+    showToast('Negocio actualizado correctamente');
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// TAB SERVICIOS
+// ══════════════════════════════════════════════════════════════
+async function cargarServicios() {
+  const grid = document.getElementById('serviciosGrid');
+  try {
+    const data = await api('GET', '/api/panel/servicios');
+    if (!data.success) throw new Error(data.error);
+
+    if (!data.servicios.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-list-details"></i><p>No hay servicios. Crea el primero.</p></div>`;
+      return;
+    }
+
+    grid.innerHTML = data.servicios.map(s => `
+      <div class="servicio-card ${s.activo ? '' : 'servicio-inactive'}">
+        <div class="servicio-img">
+          ${s.imagen_url ? `<img src="${s.imagen_url}" alt="${s.nombre}" />` : s.icono || '🛎️'}
+        </div>
+        <div class="servicio-body">
+          <div class="servicio-nombre">${s.nombre}</div>
+          <div class="servicio-precio">$${s.precio} USD</div>
+          <div class="servicio-duracion"><i class="ti ti-clock" style="font-size:12px"></i> ${s.duracion || '—'}</div>
+          <div class="servicio-actions">
+            <button class="btn btn-outline btn-sm" onclick="editarServicio(${s.id})">
+              <i class="ti ti-edit"></i> Editar
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="eliminarServicio(${s.id}, '${s.nombre}')">
+              <i class="ti ti-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-alert-circle"></i><p>${err.message}</p></div>`;
+  }
+}
+
+// Datos temporales del modal
+let _servicios = [];
+
+function abrirModalServicio(servicio = null) {
+  document.getElementById('modalServicioTitle').textContent = servicio ? 'Editar Servicio' : 'Nuevo Servicio';
+  document.getElementById('svcId').value          = servicio?.id || '';
+  document.getElementById('svcNombre').value      = servicio?.nombre || '';
+  document.getElementById('svcIcono').value       = servicio?.icono || '🛎️';
+  document.getElementById('svcPrecio').value      = servicio?.precio || '';
+  document.getElementById('svcDuracion').value    = servicio?.duracion || '45 min';
+  document.getElementById('svcDescripcion').value = servicio?.descripcion || '';
+  document.getElementById('svcOrden').value       = servicio?.orden || 1;
+  document.getElementById('svcImagenUrl').value   = servicio?.imagen_url || '';
+  const preview = document.getElementById('uploadPreview');
+  if (servicio?.imagen_url) { preview.src = servicio.imagen_url; preview.style.display = 'block'; }
+  else { preview.style.display = 'none'; preview.src = ''; }
+  document.getElementById('modalServicio').classList.add('open');
+}
+
+function cerrarModalServicio() {
+  document.getElementById('modalServicio').classList.remove('open');
+}
+
+async function editarServicio(id) {
+  const data = await api('GET', '/api/panel/servicios');
+  const s = data.servicios?.find(x => x.id === id);
+  if (s) abrirModalServicio(s);
+}
+
+async function guardarServicio() {
+  const btn = document.getElementById('svcGuardarBtn');
+  const id  = document.getElementById('svcId').value;
+  const body = {
+    nombre:      document.getElementById('svcNombre').value.trim(),
+    icono:       document.getElementById('svcIcono').value.trim(),
+    precio:      parseFloat(document.getElementById('svcPrecio').value),
+    duracion:    document.getElementById('svcDuracion').value.trim(),
+    descripcion: document.getElementById('svcDescripcion').value.trim(),
+    orden:       parseInt(document.getElementById('svcOrden').value) || 1,
+    imagen_url:  document.getElementById('svcImagenUrl').value.trim(),
+    activo:      1,
+  };
+
+  if (!body.nombre || !body.precio) { showToast('Nombre y precio son requeridos', 'error'); return; }
+
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Guardando...';
+  try {
+    const data = id
+      ? await api('PUT', `/api/panel/servicios?id=${id}`, body)
+      : await api('POST', '/api/panel/servicios', body);
+
+    if (!data.success) throw new Error(data.error);
+    showToast(id ? 'Servicio actualizado' : 'Servicio creado');
+    cerrarModalServicio();
+    cargarServicios();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="ti ti-device-floppy"></i> Guardar';
+  }
+}
+
+async function eliminarServicio(id, nombre) {
+  if (!confirm(`¿Eliminar "${nombre}"?`)) return;
+  try {
+    const data = await api('DELETE', `/api/panel/servicios?id=${id}`);
+    if (!data.success) throw new Error(data.error);
+    showToast('Servicio eliminado');
+    cargarServicios();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+// ── Upload imagen a Cloudinary ───────────────────────────────
+async function subirImagen(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const preview = document.getElementById('uploadPreview');
+  const zone    = document.getElementById('uploadZone');
+
+  zone.querySelector('p').textContent = 'Subiendo imagen...';
+
+  try {
+    // 1. Pedir firma al backend
+    const signData = await api('POST', '/api/panel/cloudinary', { folder: 'producto-c' });
+    if (!signData.success) throw new Error(signData.error);
+
+    // 2. Subir a Cloudinary
+    const form = new FormData();
+    form.append('file', file);
+    form.append('api_key', signData.api_key);
+    form.append('timestamp', signData.timestamp);
+    form.append('signature', signData.signature);
+    form.append('folder', signData.folder);
+
+    const res  = await fetch(signData.upload_url, { method: 'POST', body: form });
+    const cData = await res.json();
+
+    if (!cData.secure_url) throw new Error('Error en Cloudinary');
+
+    document.getElementById('svcImagenUrl').value = cData.secure_url;
+    preview.src = cData.secure_url;
+    preview.style.display = 'block';
+    zone.querySelector('p').textContent = '✅ Imagen subida correctamente';
+    showToast('Imagen subida');
+  } catch (err) {
+    zone.querySelector('p').textContent = 'Haz clic o arrastra una imagen aquí';
+    showToast('Error subiendo imagen: ' + err.message, 'error');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// TAB CITAS
+// ══════════════════════════════════════════════════════════════
+async function cargarCitas() {
+  const tbody = document.getElementById('citasTbody');
+  try {
+    const data = await api('GET', '/api/panel/citas');
+    if (!data.success) throw new Error(data.error);
+
+    if (!data.citas.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#aaa;padding:32px">No hay citas registradas aún</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.citas.map(c => `
+      <tr>
+        <td><strong>${c.cliente_nombre || '—'}</strong></td>
+        <td>${c.cliente_tel || '—'}</td>
+        <td>${c.servicio_nombre || '—'}</td>
+        <td>${c.fecha_cita || '—'}</td>
+        <td><strong>$${c.total || 0}</strong></td>
+        <td>${badgePago(c.estado_pago)}</td>
+        <td style="color:#aaa;font-size:12px">${formatFecha(c.created_at)}</td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#e00;padding:32px">${err.message}</td></tr>`;
+  }
+}
+
+function badgePago(estado) {
+  const map = { pagado: 'success', pendiente: 'warning', cancelado: 'danger' };
+  const cls = map[estado] || 'gray';
+  return `<span class="badge badge-${cls}">${estado || 'pendiente'}</span>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// TAB CHATS
+// ══════════════════════════════════════════════════════════════
+async function cargarChats() {
+  const list = document.getElementById('chatList');
+  try {
+    const data = await api('GET', '/api/panel/chats');
+    if (!data.success) throw new Error(data.error);
+
+    if (!data.chats.length) {
+      list.innerHTML = `<div class="empty-state"><i class="ti ti-message-dots"></i><p>No hay conversaciones aún</p></div>`;
+      return;
+    }
+
+    list.innerHTML = data.chats.map(c => {
+      const ultimo = c.historial?.slice(-1)[0]?.text || 'Sin mensajes';
+      return `
+        <div class="chat-item" onclick="verChat(${JSON.stringify(c).replace(/"/g, '&quot;')})">
+          <div class="chat-item-header">
+            <div class="chat-item-id">
+              <i class="ti ti-message" style="font-size:13px;color:var(--primary)"></i>
+              ${c.cliente_nombre || 'Cliente anónimo'}
+              <span style="font-size:11px;color:#aaa;margin-left:4px">(${c.total_mensajes} msgs)</span>
+            </div>
+            <div class="chat-item-fecha">${formatFecha(c.fecha)}</div>
+          </div>
+          <div class="chat-item-preview">${ultimo}</div>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    list.innerHTML = `<div class="empty-state"><i class="ti ti-alert-circle"></i><p>${err.message}</p></div>`;
+  }
+}
+
+function verChat(chat) {
+  const viewer = document.getElementById('chatViewer');
+  const bubbles = chat.historial.map(m => `
+    <div class="chat-bub ${m.role}">${m.text}</div>
+  `).join('');
+
+  viewer.innerHTML = `
+    <div class="card-title"><i class="ti ti-messages"></i> ${chat.cliente_nombre || 'Cliente anónimo'}</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:12px">${formatFecha(chat.fecha)} · ${chat.total_mensajes} mensajes</div>
+    <div class="chat-bubble-list">${bubbles || '<div class="empty-state"><p>Sin mensajes</p></div>'}</div>
+  `;
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+function formatFecha(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('es-PA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+function init() {
+  const slug = getSlug();
+  STATE.slug = slug;
+
+  if (!slug || slug === 'panel') {
+    document.getElementById('loginSlugLabel').textContent = 'URL inválida — accede desde /panel/tu-negocio';
+    return;
+  }
+
+  document.getElementById('loginSlugLabel').textContent = slug;
+
+  // Verificar sesión guardada
+  const savedToken = localStorage.getItem(`pc_panel_token_${slug}`);
+  if (savedToken) {
+    STATE.token = savedToken;
+    STATE.negocio = { slug };
+    mostrarPanel();
+  }
+}
+
+init();
+</script>
+</body>
+</html>
