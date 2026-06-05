@@ -72,90 +72,95 @@
     }
 
     /* Panel derecho — oculto en móvil */
-    .side-panel {
-      display: none;
-    }
+    .side-panel { display: none; }
 
     /* ══════════════════════════════════════════════════════
-       LAYOUT DESKTOP — dos columnas
+       LAYOUT DESKTOP — dos columnas 45% / 55%
     ══════════════════════════════════════════════════════ */
     @media (min-width: 860px) {
       html, body { overflow: hidden; }
 
       .desktop-frame {
-        max-width: 1100px;
+        max-width: 1200px;
+        width: 100%;
         margin: 0 auto;
         height: 100vh;
-        padding: 28px;
-        gap: 20px;
+        padding: 28px 32px;
+        gap: 24px;
         align-items: center;
         justify-content: center;
       }
 
-      /* Columna izquierda — el chat */
+      /* Columna izquierda — chat 45% */
       .app-wrapper {
-        width: 400px;
-        min-width: 400px;
-        height: min(780px, calc(100vh - 56px));
-        border-radius: 20px;
-        box-shadow: 0 24px 64px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.07);
+        flex: 45;
+        min-width: 340px;
+        max-width: 480px;
+        height: min(800px, calc(100vh - 56px));
+        border-radius: 22px;
+        box-shadow: 0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08);
       }
 
-      /* Columna derecha — servicios + resumen */
+      /* Columna derecha — panel 55% */
       .side-panel {
         display: flex;
         flex-direction: column;
-        flex: 1;
-        height: min(780px, calc(100vh - 56px));
-        gap: 16px;
+        flex: 55;
+        max-width: 560px;
+        height: min(800px, calc(100vh - 56px));
+        gap: 14px;
         overflow-y: auto;
         scrollbar-width: thin;
       }
-      .side-panel::-webkit-scrollbar { width: 4px; }
-      .side-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+      .side-panel::-webkit-scrollbar { width: 3px; }
+      .side-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 2px; }
 
-      /* Tarjeta genérica del panel derecho */
+      /* ── Tarjeta base ────────────────────────────────── */
       .sp-card {
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 16px;
-        padding: 20px;
-        backdrop-filter: blur(12px);
+        background: rgba(255,255,255,0.09);
+        border: 1px solid rgba(255,255,255,0.16);
+        border-radius: 18px;
+        padding: 22px;
+        backdrop-filter: blur(16px);
         flex-shrink: 0;
+        transition: background 0.2s;
       }
       .sp-card-title {
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.08em;
+        font-size: 10.5px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
         text-transform: uppercase;
-        color: rgba(255,255,255,0.45);
+        color: rgba(255,255,255,0.55);
         margin-bottom: 14px;
       }
 
-      /* Info del negocio */
+      /* ── Info del negocio ────────────────────────────── */
       .sp-biz-name {
-        font-size: 22px;
-        font-weight: 700;
-        color: white;
-        margin-bottom: 4px;
+        font-size: 24px;
+        font-weight: 800;
+        color: #ffffff;
+        margin-bottom: 5px;
+        text-shadow: 0 1px 8px rgba(0,0,0,0.3);
+        letter-spacing: -0.3px;
       }
       .sp-biz-desc {
-        font-size: 13px;
-        color: rgba(255,255,255,0.55);
-        line-height: 1.5;
+        font-size: 13.5px;
+        color: rgba(255,255,255,0.7);
+        line-height: 1.55;
+        font-weight: 400;
       }
       .sp-online {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        margin-top: 10px;
-        background: rgba(74,222,128,0.15);
-        border: 1px solid rgba(74,222,128,0.3);
+        margin-top: 12px;
+        background: rgba(74,222,128,0.18);
+        border: 1px solid rgba(74,222,128,0.4);
         border-radius: 20px;
-        padding: 4px 12px;
-        font-size: 12px;
-        color: #4ade80;
-        font-weight: 500;
+        padding: 5px 14px;
+        font-size: 12.5px;
+        color: #6ee7a0;
+        font-weight: 600;
       }
       .sp-online-dot {
         width: 7px; height: 7px;
@@ -163,81 +168,217 @@
         background: #4ade80;
         animation: pulse 2s infinite;
       }
-      @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.4; }
-      }
+      @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
 
-      /* Grid de servicios */
+      /* ── Grid de servicios ───────────────────────────── */
       .sp-services-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 10px;
       }
       .sp-service-item {
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 12px;
-        padding: 14px;
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.13);
+        border-radius: 14px;
+        padding: 16px 14px;
         cursor: pointer;
         transition: all 0.18s;
+        position: relative;
+        overflow: hidden;
       }
-      .sp-service-item:hover {
-        background: rgba(26,115,232,0.2);
-        border-color: rgba(26,115,232,0.5);
-        transform: translateY(-1px);
+      .sp-service-item::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, var(--color-primary) 0%, transparent 100%);
+        opacity: 0;
+        transition: opacity 0.18s;
+        border-radius: 14px;
       }
-      .sp-service-icon { font-size: 24px; margin-bottom: 8px; }
-      .sp-service-name { font-size: 13px; font-weight: 600; color: white; line-height: 1.3; }
-      .sp-service-price { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 3px; }
+      .sp-service-item:hover::before,
+      .sp-service-item.active::before { opacity: 0.18; }
+      .sp-service-item:hover,
+      .sp-service-item.active {
+        border-color: rgba(26,115,232,0.6);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      }
+      .sp-service-item.active { border-color: var(--color-primary); }
+      .sp-service-icon { font-size: 26px; margin-bottom: 10px; position: relative; }
+      .sp-service-name {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #ffffff;
+        line-height: 1.3;
+        position: relative;
+      }
+      .sp-service-price {
+        font-size: 12px;
+        color: rgba(255,255,255,0.6);
+        margin-top: 4px;
+        font-weight: 500;
+        position: relative;
+      }
 
-      /* Resumen de cita en panel derecho */
-      .sp-resumen {
+      /* ── Panel de detalle reactivo ───────────────────── */
+      .sp-detalle {
         display: none;
+        animation: slideIn 0.25s ease;
       }
-      .sp-resumen.visible { display: block; }
-      .sp-resumen-servicio { font-size: 17px; font-weight: 700; color: white; margin-bottom: 6px; }
-      .sp-resumen-detalle { font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 4px; }
-      .sp-resumen-total { font-size: 22px; font-weight: 800; color: white; margin: 12px 0; }
-      .sp-pagar-btn {
+      .sp-detalle.visible { display: block; }
+      @keyframes slideIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Header del detalle */
+      .sp-det-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+      .sp-det-icon {
+        font-size: 36px;
+        width: 60px; height: 60px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 16px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+      }
+      .sp-det-titulo {
+        font-size: 20px;
+        font-weight: 800;
+        color: #ffffff;
+        letter-spacing: -0.2px;
+      }
+      .sp-det-precio-tag {
+        display: inline-block;
+        background: rgba(26,115,232,0.25);
+        border: 1px solid rgba(26,115,232,0.5);
+        color: #7eb8ff;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 8px;
+        margin-top: 4px;
+      }
+
+      /* Descripción */
+      .sp-det-desc {
+        font-size: 13.5px;
+        color: rgba(255,255,255,0.65);
+        line-height: 1.65;
+        margin-bottom: 16px;
+      }
+
+      /* Filas de info */
+      .sp-det-info {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 18px;
+      }
+      .sp-det-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        color: rgba(255,255,255,0.75);
+      }
+      .sp-det-row i {
+        font-size: 16px;
+        color: rgba(255,255,255,0.4);
+        width: 20px;
+        flex-shrink: 0;
+      }
+      .sp-det-row strong { color: white; font-weight: 600; }
+
+      /* Beneficios */
+      .sp-det-beneficios {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 20px;
+      }
+      .sp-det-ben-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: rgba(255,255,255,0.7);
+      }
+      .sp-det-ben-item i {
+        font-size: 14px;
+        color: #4ade80;
+        flex-shrink: 0;
+      }
+
+      /* Botón agendar en detalle */
+      .sp-agendar-btn {
         width: 100%;
-        padding: 13px;
+        padding: 14px;
         background: var(--color-primary);
         color: white;
         border: none;
-        border-radius: 10px;
+        border-radius: 12px;
         font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.18s;
+        margin-bottom: 10px;
+      }
+      .sp-agendar-btn:hover {
+        background: var(--color-primary-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 8px 24px rgba(26,115,232,0.4);
+      }
+      .sp-pagar-btn {
+        width: 100%;
+        padding: 13px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.2);
+        color: rgba(255,255,255,0.8);
+        border-radius: 12px;
+        font-size: 14px;
         font-weight: 600;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 8px;
-        transition: background 0.15s, transform 0.1s;
+        transition: all 0.18s;
+        margin-bottom: 12px;
       }
-      .sp-pagar-btn:hover { background: var(--color-primary-dark); transform: translateY(-1px); }
+      .sp-pagar-btn:hover {
+        background: rgba(255,255,255,0.14);
+        transform: translateY(-1px);
+      }
       .sp-pagos-logos {
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 14px;
-        margin-top: 12px;
       }
-      .sp-visa  { font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.7); letter-spacing: 1px; }
+      .sp-visa  { font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.8); letter-spacing: 1px; }
       .sp-mc    { display: flex; align-items: center; }
       .sp-mc span:first-child  { width: 20px; height: 20px; border-radius: 50%; background: #eb001b; margin-right: -7px; display: inline-block; }
-      .sp-mc span:last-child   { width: 20px; height: 20px; border-radius: 50%; background: #f79e1b; display: inline-block; opacity: 0.9; }
-      .sp-clave { font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.7); letter-spacing: 1px; }
+      .sp-mc span:last-child   { width: 20px; height: 20px; border-radius: 50%; background: #f79e1b; display: inline-block; }
+      .sp-clave { font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.8); letter-spacing: 1px; }
 
-      /* Tip de uso */
+      /* Tip */
       .sp-tip {
-        font-size: 12px;
-        color: rgba(255,255,255,0.3);
+        font-size: 11.5px;
+        color: rgba(255,255,255,0.28);
         text-align: center;
         line-height: 1.6;
-        padding: 4px 0;
+        padding: 2px 0 4px;
       }
-      .sp-tip i { font-size: 14px; vertical-align: -2px; margin-right: 4px; }
+      .sp-tip i { font-size: 13px; vertical-align: -2px; margin-right: 3px; }
     }
 
     /* ── Header ───────────────────────────────────────────── */
@@ -836,30 +977,58 @@
 <div class="side-panel" id="sidePanel">
 
   <!-- Info del negocio -->
-  <div class="sp-card" id="spBizCard">
+  <div class="sp-card">
     <div class="sp-card-title">Negocio</div>
     <div class="sp-biz-name" id="spBizName">Cargando...</div>
     <div class="sp-biz-desc" id="spBizDesc">Asistente Virtual disponible 24/7</div>
     <div class="sp-online"><span class="sp-online-dot"></span> En línea ahora</div>
   </div>
 
-  <!-- Servicios disponibles -->
+  <!-- Grid de servicios (vista inicial) -->
   <div class="sp-card" id="spServiciosCard">
-    <div class="sp-card-title">Servicios disponibles</div>
-    <div class="sp-services-grid" id="spServiciosGrid">
-      <!-- Se llena desde JS con los servicios del negocio -->
-    </div>
+    <div class="sp-card-title">Servicios disponibles — selecciona uno para ver detalle</div>
+    <div class="sp-services-grid" id="spServiciosGrid"></div>
   </div>
 
-  <!-- Resumen de cita (aparece cuando el cliente selecciona un servicio) -->
-  <div class="sp-card sp-resumen" id="spResumen">
-    <div class="sp-card-title">Resumen de tu cita</div>
-    <div class="sp-resumen-servicio" id="spResumenServicio">—</div>
-    <div class="sp-resumen-detalle" id="spResumenFecha">📅 Fecha: —</div>
-    <div class="sp-resumen-total" id="spResumenTotal">$0.00</div>
-    <button class="sp-pagar-btn" onclick="iniciarPagoDesktop()">
-      <i class="ti ti-lock"></i> Pagar Ahora
+  <!-- Detalle reactivo (aparece al seleccionar un servicio) -->
+  <div class="sp-card sp-detalle" id="spDetalle">
+    <div class="sp-card-title">Detalle del servicio</div>
+
+    <div class="sp-det-header">
+      <div class="sp-det-icon" id="spDetIcon">🛎️</div>
+      <div>
+        <div class="sp-det-titulo" id="spDetTitulo">—</div>
+        <span class="sp-det-precio-tag" id="spDetPrecio">$0 USD</span>
+      </div>
+    </div>
+
+    <div class="sp-det-desc" id="spDetDesc"></div>
+
+    <div class="sp-det-info">
+      <div class="sp-det-row">
+        <i class="ti ti-clock"></i>
+        <span>Duración: <strong id="spDetDuracion">—</strong></span>
+      </div>
+      <div class="sp-det-row">
+        <i class="ti ti-calendar"></i>
+        <span>Próxima disponibilidad: <strong id="spDetFecha">—</strong></span>
+      </div>
+      <div class="sp-det-row">
+        <i class="ti ti-shield-check"></i>
+        <span>Pago 100% seguro con confirmación inmediata</span>
+      </div>
+    </div>
+
+    <div class="sp-det-beneficios" id="spDetBeneficios"></div>
+
+    <button class="sp-agendar-btn" onclick="agendarDesdePanel()">
+      <i class="ti ti-calendar-plus"></i> Agendar este servicio
     </button>
+
+    <button class="sp-pagar-btn" onclick="iniciarPagoDesktop()">
+      <i class="ti ti-lock"></i> Reservar y Pagar Ahora
+    </button>
+
     <div class="sp-pagos-logos">
       <span class="sp-visa">VISA</span>
       <span class="sp-mc"><span></span><span></span></span>
@@ -931,7 +1100,7 @@ function aplicarTema(negocio) {
   const grid = document.getElementById('spServiciosGrid');
   if (grid && negocio.servicios?.length) {
     grid.innerHTML = negocio.servicios.map(s => `
-      <div class="sp-service-item" onclick="seleccionarServicio(${s.id})">
+      <div class="sp-service-item" data-id="${s.id}" onclick="seleccionarServicioDesktop(${s.id})">
         <div class="sp-service-icon">${s.icono || '🛎️'}</div>
         <div class="sp-service-name">${s.nombre}</div>
         <div class="sp-service-price">Desde $${s.precio} USD</div>
@@ -940,14 +1109,74 @@ function aplicarTema(negocio) {
   }
 }
 
-// ── Actualizar resumen en panel derecho ──────────────────────
+// ── Beneficios por tipo de servicio (enriquece la UI) ────────
+function beneficiosPorServicio(nombre) {
+  const n = nombre.toLowerCase();
+  if (n.includes('limpieza'))      return ['Elimina sarro y placa bacteriana', 'Revisión general incluida', 'Resultado inmediato'];
+  if (n.includes('blanquea'))      return ['Dientes hasta 8 tonos más blancos', 'Tratamiento profesional en clínica', 'Resultados duraderos'];
+  if (n.includes('implante'))      return ['Titanio de alta durabilidad', 'Se integra naturalmente al hueso', 'Solución permanente'];
+  if (n.includes('orto'))          return ['Corrección progresiva y precisa', 'Brackets o alineadores invisibles', 'Seguimiento personalizado'];
+  if (n.includes('cambio') || n.includes('aceite')) return ['Prolonga la vida del motor', 'Aceite de alta calidad', 'Inspección incluida'];
+  if (n.includes('aline') || n.includes('balanc'))  return ['Mejora el manejo y estabilidad', 'Reduce el desgaste de llantas', 'Diagnóstico computarizado'];
+  if (n.includes('revisión') || n.includes('general')) return ['Inspección de 50+ puntos', 'Reporte detallado', 'Técnicos certificados'];
+  return ['Atención profesional', 'Servicio garantizado', 'Reserva en minutos'];
+}
+
+// ── Mostrar detalle reactivo en panel derecho ─────────────────
+function mostrarDetalleDesktop(servicio) {
+  const detalle = document.getElementById('spDetalle');
+  if (!detalle) return;
+
+  // Marcar servicio activo en el grid
+  document.querySelectorAll('.sp-service-item').forEach(el => el.classList.remove('active'));
+  const itemActivo = document.querySelector(`.sp-service-item[data-id="${servicio.id}"]`);
+  if (itemActivo) itemActivo.classList.add('active');
+
+  // Llenar datos
+  document.getElementById('spDetIcon').textContent    = servicio.icono || '🛎️';
+  document.getElementById('spDetTitulo').textContent  = servicio.nombre;
+  document.getElementById('spDetPrecio').textContent  = `Desde $${servicio.precio} USD`;
+  document.getElementById('spDetDuracion').textContent = servicio.duracion || '45 min';
+  document.getElementById('spDetFecha').textContent   = proximaFecha();
+  document.getElementById('spDetDesc').textContent    = servicio.descripcion || `Servicio profesional de ${servicio.nombre.toLowerCase()} con atención personalizada.`;
+
+  // Beneficios
+  const bens = beneficiosPorServicio(servicio.nombre);
+  document.getElementById('spDetBeneficios').innerHTML = bens.map(b =>
+    `<div class="sp-det-ben-item"><i class="ti ti-check"></i>${b}</div>`
+  ).join('');
+
+  // Mostrar con animación
+  detalle.classList.add('visible');
+  detalle.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
 function actualizarResumenDesktop(servicio, fecha) {
-  const card = document.getElementById('spResumen');
-  if (!card) return;
-  document.getElementById('spResumenServicio').textContent = servicio.nombre;
-  document.getElementById('spResumenFecha').textContent    = '📅 ' + fecha;
-  document.getElementById('spResumenTotal').textContent    = '$' + servicio.precio + ' USD';
-  card.classList.add('visible');
+  mostrarDetalleDesktop(servicio);
+}
+
+// ── Click en panel derecho — solo muestra detalle, no toca el chat
+function seleccionarServicioDesktop(id) {
+  const servicios = CONFIG.negocio?.servicios || serviciosFallback();
+  const s = servicios.find(x => x.id === id);
+  if (!s) return;
+  CONFIG.servicioSeleccionado = s;
+  mostrarDetalleDesktop(s);
+}
+
+function agendarDesdePanel() {
+  if (!CONFIG.servicioSeleccionado) return;
+  // Simula click en el chat — lleva al resumen en el chat también
+  appendUserBubble(`Quiero agendar ${CONFIG.servicioSeleccionado.nombre}`);
+  setTimeout(async () => {
+    appendTyping();
+    await delay(600);
+    removeTyping();
+    const fecha = proximaFecha();
+    appendBotBubble(`Perfecto, aquí está tu resumen para <strong>${CONFIG.servicioSeleccionado.nombre}</strong>:`);
+    await delay(300);
+    appendResumen(CONFIG.servicioSeleccionado, fecha);
+  }, 200);
 }
 
 function iniciarPagoDesktop() {
