@@ -1105,15 +1105,85 @@ function appendQuickReplies(opciones){
 }
 
 async function mensajeBienvenida(){
+  const negocio = CONFIG.negocio;
+  const tipo = detectarTipoNegocio(negocio.nombre);
+
   addDateSep(fechaHoy());
-  await delay(300);
-  appendBotBubble(`¡Hola! 👋 Soy el asistente virtual de <strong>${CONFIG.negocio.nombre}</strong>.<br>¿En qué puedo ayudarte hoy?`);
-  await delay(500);
+  await delay(350);
+
+  // Mensaje 1 — bienvenida comercial
+  appendBotBubble(`👋 <strong>Bienvenido a ${negocio.nombre}</strong><br><br>
+Estoy aquí para ayudarte a encontrar el tratamiento adecuado y reservar tu cita <strong>sin llamadas ni esperas</strong>.<br><br>
+<span style="display:flex;flex-direction:column;gap:5px;margin-top:4px">
+  <span style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:#444"><span style="color:var(--primary);font-size:15px">✓</span> Agendar citas en segundos</span>
+  <span style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:#444"><span style="color:var(--primary);font-size:15px">✓</span> Ver tratamientos disponibles</span>
+  <span style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:#444"><span style="color:var(--primary);font-size:15px">✓</span> Consultar precios al instante</span>
+  <span style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:#444"><span style="color:var(--primary);font-size:15px">✓</span> Resolver cualquier duda</span>
+</span>`);
+
+  await delay(400);
+
+  // Botones de acción rápida
   appendQuickReplies([
-    {icono:'ti-calendar',texto:'Agendar cita',accion:'agendar'},
-    {icono:'ti-list',texto:'Ver servicios',accion:'servicios'},
-    {icono:'ti-tag',texto:'Consultar precios',accion:'precios'},
+    {icono:'ti-calendar',texto:'📅 Agendar cita',accion:'agendar'},
+    {icono:'ti-list',texto:'🦷 Ver tratamientos',accion:'servicios'},
+    {icono:'ti-tag',texto:'💰 Consultar precios',accion:'precios'},
   ]);
+
+  await delay(600);
+
+  // Mensaje 2 — servicios destacados directamente
+  const servicios = negocio.servicios || serviciosFallback();
+  const destacados = servicios.slice(0,2);
+  const tipo2 = tipo;
+
+  const cards = destacados.map((s,i) => {
+    const foto = s.imagen_url || getFotoServicio(s.nombre, tipo2);
+    return `
+    <div onclick="seleccionarServicio(${s.id})" style="
+      display:flex;align-items:center;gap:12px;
+      background:#f8f9ff;border:1.5px solid #e8ecf0;
+      border-radius:14px;padding:10px 12px;cursor:pointer;
+      transition:all 0.18s;margin-bottom:${i===0?'10px':'0'}
+    " onmouseover="this.style.borderColor='var(--primary)';this.style.background='#f0f5ff'"
+       onmouseout="this.style.borderColor='#e8ecf0';this.style.background='#f8f9ff'">
+      <div style="width:56px;height:56px;border-radius:10px;overflow:hidden;flex-shrink:0;background:#e8ecf0;display:flex;align-items:center;justify-content:center;font-size:24px">
+        ${foto ? `<img src="${foto}" style="width:100%;height:100%;object-fit:cover" />` : (s.icono||'🛎️')}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13.5px;font-weight:700;color:#1a1a2e">${s.nombre}</div>
+        <div style="font-size:12px;color:#888;margin-top:2px">${s.descripcion||s.duracion||'Servicio profesional'}</div>
+        <div style="font-size:13px;font-weight:800;color:var(--primary);margin-top:3px">Desde $${s.precio} USD</div>
+      </div>
+      <div style="color:var(--primary);font-size:18px;flex-shrink:0">›</div>
+    </div>`;
+  }).join('');
+
+  const body = document.getElementById('chatBody');
+  const row = document.createElement('div');
+  row.className = 'msg-row bot';
+  const av = CONFIG.negocio?.logo_url
+    ? `<img src="${CONFIG.negocio.logo_url}" />`
+    : (CONFIG.negocio?.icono || '💬');
+  row.innerHTML = `<div class="msg-with-avatar">
+    <div class="msg-avatar">${av}</div>
+    <div style="max-width:85%">
+      <div class="bubble bubble-bot" style="padding:14px 16px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#aaa;margin-bottom:12px;display:flex;align-items:center;gap:6px">
+          <span style="color:#f59e0b;font-size:13px">⭐</span> Más solicitados
+        </div>
+        ${cards}
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f0f0f0;text-align:center">
+          <span onclick="quickAction('servicios')" style="font-size:12.5px;color:var(--primary);font-weight:600;cursor:pointer">
+            Ver todos los servicios →
+          </span>
+        </div>
+      </div>
+      <div class="msg-time">${hora()}</div>
+    </div>
+  </div>`;
+  body.appendChild(row);
+  body.scrollTop = body.scrollHeight;
 }
 
 async function quickAction(accion){
