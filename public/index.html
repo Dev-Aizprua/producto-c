@@ -5,1663 +5,1283 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#1a73e8" />
   <title id="pageTitle">Asistente Virtual</title>
-  <link rel="manifest" href="/manifest.json" />
-
-  <!-- ============================================================
-       PRODUCTO C — Chat IA WhatsApp-like
-       Eduardo Aizprua — TechZone Panamá — Junio 2026
-       Stack: Cloudflare Pages + D1 + Groq + Cloudinary
-       URL: /{slug}  →  carga config del negocio desde D1
-  ============================================================ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
 
   <style>
-    /* ── Reset & Base ─────────────────────────────────────── */
+    /* ══════════════════════════════════════════════════════
+       RESET & BASE
+    ══════════════════════════════════════════════════════ */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; overflow: hidden; }
+    html, body { height: 100%; font-family: 'Inter', -apple-system, sans-serif; }
 
     body {
-      font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
-      background: #1a1a2e;
+      background: #0f1117;
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
     }
 
-    /* ── Fondo desktop con patrón sutil ──────────────────── */
     body::before {
       content: '';
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background:
-        radial-gradient(ellipse at 20% 50%, rgba(26,115,232,0.12) 0%, transparent 60%),
-        radial-gradient(ellipse at 80% 20%, rgba(26,115,232,0.08) 0%, transparent 50%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* ── Variables de tema ────────────────────────────────── */
-    :root {
-      --color-primary: #1a73e8;
-      --color-primary-dark: #1557b0;
-      --color-primary-light: #e8f0fe;
-      --color-user-bubble: #dcf8c6;
-      --color-header-text: #ffffff;
+        radial-gradient(ellipse at 15% 50%, rgba(99,102,241,0.12) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 20%, rgba(26,115,232,0.10) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 90%, rgba(16,185,129,0.06) 0%, transparent 50%);
+      pointer-events: none; z-index: 0;
     }
 
     /* ══════════════════════════════════════════════════════
-       LAYOUT MÓVIL — pantalla completa
+       CSS VARIABLES (se sobreescriben por negocio)
+    ══════════════════════════════════════════════════════ */
+    :root {
+      --primary: #1a73e8;
+      --primary-dark: #1557b0;
+      --primary-rgb: 26, 115, 232;
+      --bubble-user: #e8f0fe;
+      --bubble-user-text: #1a1a2e;
+      --bg-chat: #f7f9fc;
+      --bg-body: #eef2f7;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       LAYOUT DESKTOP — dos columnas
     ══════════════════════════════════════════════════════ */
     .desktop-frame {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      height: 100vh;
-      display: flex;
-      align-items: stretch;
+      position: relative; z-index: 1;
+      width: 100%; height: 100vh;
+      display: flex; align-items: center; justify-content: center;
     }
 
     .app-wrapper {
-      width: 100%;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      background: #f0f2f5;
-      position: relative;
-      overflow: hidden;
-      flex-shrink: 0;
+      width: 100%; height: 100vh;
+      display: flex; flex-direction: column;
+      background: var(--bg-chat);
+      position: relative; overflow: hidden; flex-shrink: 0;
     }
 
-    /* Panel derecho — oculto en móvil */
     .side-panel { display: none; }
 
-    /* ══════════════════════════════════════════════════════
-       LAYOUT DESKTOP — dos columnas 45% / 55%
-    ══════════════════════════════════════════════════════ */
-    @media (min-width: 860px) {
+    @media (min-width: 900px) {
       html, body { overflow: hidden; }
 
       .desktop-frame {
-        max-width: 1200px;
-        width: 100%;
-        margin: 0 auto;
-        height: 100vh;
-        padding: 28px 32px;
-        gap: 24px;
-        align-items: center;
-        justify-content: center;
+        max-width: 1280px; margin: 0 auto;
+        height: 100vh; padding: 28px 32px; gap: 24px;
       }
 
-      /* Columna izquierda — chat 45% */
       .app-wrapper {
-        flex: 45;
-        min-width: 340px;
-        max-width: 480px;
-        height: min(800px, calc(100vh - 56px));
-        border-radius: 22px;
-        box-shadow: 0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08);
+        flex: 45; min-width: 360px; max-width: 460px;
+        height: min(820px, calc(100vh - 56px));
+        border-radius: 24px;
+        box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
       }
 
-      /* Columna derecha — panel 55% */
       .side-panel {
-        display: flex;
-        flex-direction: column;
-        flex: 55;
-        max-width: 560px;
-        height: min(800px, calc(100vh - 56px));
-        gap: 14px;
-        overflow-y: auto;
+        display: flex; flex-direction: column;
+        flex: 55; max-width: 580px;
+        height: min(820px, calc(100vh - 56px));
+        gap: 14px; overflow-y: auto;
         scrollbar-width: thin;
       }
       .side-panel::-webkit-scrollbar { width: 3px; }
-      .side-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 2px; }
-
-      /* ── Tarjeta base ────────────────────────────────── */
-      .sp-card {
-        background: rgba(255,255,255,0.09);
-        border: 1px solid rgba(255,255,255,0.16);
-        border-radius: 18px;
-        padding: 22px;
-        backdrop-filter: blur(16px);
-        flex-shrink: 0;
-        transition: background 0.2s;
-      }
-      .sp-card-title {
-        font-size: 10.5px;
-        font-weight: 800;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: rgba(255,255,255,0.55);
-        margin-bottom: 14px;
-      }
-
-      /* ── Info del negocio ────────────────────────────── */
-      .sp-biz-name {
-        font-size: 24px;
-        font-weight: 800;
-        color: #ffffff;
-        margin-bottom: 5px;
-        text-shadow: 0 1px 8px rgba(0,0,0,0.3);
-        letter-spacing: -0.3px;
-      }
-      .sp-biz-desc {
-        font-size: 13.5px;
-        color: rgba(255,255,255,0.7);
-        line-height: 1.55;
-        font-weight: 400;
-      }
-      .sp-online {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        margin-top: 12px;
-        background: rgba(74,222,128,0.18);
-        border: 1px solid rgba(74,222,128,0.4);
-        border-radius: 20px;
-        padding: 5px 14px;
-        font-size: 12.5px;
-        color: #6ee7a0;
-        font-weight: 600;
-      }
-      .sp-online-dot {
-        width: 7px; height: 7px;
-        border-radius: 50%;
-        background: #4ade80;
-        animation: pulse 2s infinite;
-      }
-      @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
-
-      /* ── Grid de servicios ───────────────────────────── */
-      .sp-services-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-      }
-      .sp-service-item {
-        background: rgba(255,255,255,0.07);
-        border: 1px solid rgba(255,255,255,0.13);
-        border-radius: 14px;
-        padding: 16px 14px;
-        cursor: pointer;
-        transition: all 0.18s;
-        position: relative;
-        overflow: hidden;
-      }
-      .sp-service-item::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(135deg, var(--color-primary) 0%, transparent 100%);
-        opacity: 0;
-        transition: opacity 0.18s;
-        border-radius: 14px;
-      }
-      .sp-service-item:hover::before,
-      .sp-service-item.active::before { opacity: 0.18; }
-      .sp-service-item:hover,
-      .sp-service-item.active {
-        border-color: rgba(26,115,232,0.6);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-      }
-      .sp-service-item.active { border-color: var(--color-primary); }
-      .sp-service-icon { font-size: 26px; margin-bottom: 10px; position: relative; }
-      .sp-service-name {
-        font-size: 13.5px;
-        font-weight: 700;
-        color: #ffffff;
-        line-height: 1.3;
-        position: relative;
-      }
-      .sp-service-price {
-        font-size: 12px;
-        color: rgba(255,255,255,0.6);
-        margin-top: 4px;
-        font-weight: 500;
-        position: relative;
-      }
-
-      /* ── Panel de detalle reactivo ───────────────────── */
-      .sp-detalle {
-        display: none;
-        animation: slideIn 0.25s ease;
-      }
-      .sp-detalle.visible { display: block; }
-      @keyframes slideIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to   { opacity: 1; transform: translateY(0); }
-      }
-
-      /* Header del detalle */
-      .sp-det-header {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        margin-bottom: 18px;
-      }
-      .sp-det-icon {
-        font-size: 36px;
-        width: 60px; height: 60px;
-        background: rgba(255,255,255,0.1);
-        border-radius: 16px;
-        display: flex; align-items: center; justify-content: center;
-        flex-shrink: 0;
-      }
-      .sp-det-titulo {
-        font-size: 20px;
-        font-weight: 800;
-        color: #ffffff;
-        letter-spacing: -0.2px;
-      }
-      .sp-det-precio-tag {
-        display: inline-block;
-        background: rgba(26,115,232,0.25);
-        border: 1px solid rgba(26,115,232,0.5);
-        color: #7eb8ff;
-        font-size: 13px;
-        font-weight: 700;
-        padding: 3px 10px;
-        border-radius: 8px;
-        margin-top: 4px;
-      }
-
-      /* Descripción */
-      .sp-det-desc {
-        font-size: 13.5px;
-        color: rgba(255,255,255,0.65);
-        line-height: 1.65;
-        margin-bottom: 16px;
-      }
-
-      /* Filas de info */
-      .sp-det-info {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        margin-bottom: 18px;
-      }
-      .sp-det-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 13px;
-        color: rgba(255,255,255,0.75);
-      }
-      .sp-det-row i {
-        font-size: 16px;
-        color: rgba(255,255,255,0.4);
-        width: 20px;
-        flex-shrink: 0;
-      }
-      .sp-det-row strong { color: white; font-weight: 600; }
-
-      /* Beneficios */
-      .sp-det-beneficios {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        margin-bottom: 20px;
-      }
-      .sp-det-ben-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 13px;
-        color: rgba(255,255,255,0.7);
-      }
-      .sp-det-ben-item i {
-        font-size: 14px;
-        color: #4ade80;
-        flex-shrink: 0;
-      }
-
-      /* Botón agendar en detalle */
-      .sp-agendar-btn {
-        width: 100%;
-        padding: 14px;
-        background: var(--color-primary);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-size: 15px;
-        font-weight: 700;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        transition: all 0.18s;
-        margin-bottom: 10px;
-      }
-      .sp-agendar-btn:hover {
-        background: var(--color-primary-dark);
-        transform: translateY(-1px);
-        box-shadow: 0 8px 24px rgba(26,115,232,0.4);
-      }
-      .sp-pagar-btn {
-        width: 100%;
-        padding: 13px;
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(255,255,255,0.2);
-        color: rgba(255,255,255,0.8);
-        border-radius: 12px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        transition: all 0.18s;
-        margin-bottom: 12px;
-      }
-      .sp-pagar-btn:hover {
-        background: rgba(255,255,255,0.14);
-        transform: translateY(-1px);
-      }
-      .sp-pagos-logos {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 14px;
-      }
-      .sp-visa  { font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.8); letter-spacing: 1px; }
-      .sp-mc    { display: flex; align-items: center; }
-      .sp-mc span:first-child  { width: 20px; height: 20px; border-radius: 50%; background: #eb001b; margin-right: -7px; display: inline-block; }
-      .sp-mc span:last-child   { width: 20px; height: 20px; border-radius: 50%; background: #f79e1b; display: inline-block; }
-      .sp-clave { font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.8); letter-spacing: 1px; }
-
-      /* Tip */
-      .sp-tip {
-        font-size: 11.5px;
-        color: rgba(255,255,255,0.28);
-        text-align: center;
-        line-height: 1.6;
-        padding: 2px 0 4px;
-      }
-      .sp-tip i { font-size: 13px; vertical-align: -2px; margin-right: 3px; }
+      .side-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
     }
 
-    /* ── Header ───────────────────────────────────────────── */
+    /* ══════════════════════════════════════════════════════
+       CHAT HEADER — premium
+    ══════════════════════════════════════════════════════ */
     .chat-header {
-      background: var(--color-primary);
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      background: var(--primary);
+      padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
       flex-shrink: 0;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-      position: relative;
-      z-index: 10;
+      position: relative; z-index: 10;
+      box-shadow: 0 2px 12px rgba(var(--primary-rgb), 0.4);
     }
-    .header-back {
-      color: var(--color-header-text);
-      font-size: 22px;
-      cursor: pointer;
-      opacity: 0.9;
-      flex-shrink: 0;
-    }
+
+    .header-back { color: white; font-size: 22px; cursor: pointer; opacity: 0.85; flex-shrink: 0; }
+
     .header-avatar {
-      width: 42px; height: 42px;
-      border-radius: 50%;
+      width: 44px; height: 44px; border-radius: 50%;
       background: rgba(255,255,255,0.2);
       display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .header-avatar img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-    }
-    .header-info { flex: 1; min-width: 0; }
-    .header-biz-name {
-      color: var(--color-header-text);
-      font-weight: 600;
-      font-size: 16px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .header-status {
-      color: rgba(255,255,255,0.85);
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      margin-top: 1px;
-    }
-    .status-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: #4ade80;
-      flex-shrink: 0;
-    }
-    .header-menu-btn {
-      color: var(--color-header-text);
-      font-size: 22px;
-      cursor: pointer;
-      opacity: 0.9;
-      flex-shrink: 0;
+      font-size: 22px; overflow: hidden; flex-shrink: 0;
+      border: 2px solid rgba(255,255,255,0.3);
       position: relative;
     }
-
-    /* ── Dropdown menu ────────────────────────────────────── */
-    .dropdown-menu {
-      position: absolute;
-      top: 56px; right: 12px;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-      min-width: 180px;
-      z-index: 100;
-      overflow: hidden;
-      display: none;
+    .header-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .header-avatar-online {
+      position: absolute; bottom: 1px; right: 1px;
+      width: 11px; height: 11px; border-radius: 50%;
+      background: #4ade80; border: 2px solid var(--primary);
     }
-    .dropdown-menu.open { display: block; }
-    .dropdown-item {
-      padding: 12px 16px;
-      font-size: 14px;
-      color: #333;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+
+    .header-info { flex: 1; min-width: 0; }
+    .header-biz-name {
+      color: white; font-weight: 700; font-size: 15.5px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .header-verified { color: #60a5fa; font-size: 14px; }
+    .header-meta {
+      display: flex; align-items: center; gap: 10px; margin-top: 2px;
+    }
+    .header-status {
+      color: rgba(255,255,255,0.85); font-size: 11.5px;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; flex-shrink: 0; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    .header-rating {
+      display: flex; align-items: center; gap: 3px;
+      background: rgba(255,255,255,0.15); border-radius: 10px;
+      padding: 2px 7px; font-size: 11px; color: white; font-weight: 600;
+    }
+    .header-rating i { color: #fbbf24; font-size: 11px; }
+
+    .header-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .header-action-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(255,255,255,0.1); border: none;
+      color: white; font-size: 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
       transition: background 0.15s;
     }
-    .dropdown-item:hover { background: #f5f5f5; }
-    .dropdown-item i { font-size: 18px; color: #555; }
+    .header-action-btn:hover { background: rgba(255,255,255,0.2); }
 
-    /* ── Chat body ────────────────────────────────────────── */
+    /* Dropdown */
+    .dropdown-menu {
+      position: absolute; top: 62px; right: 12px;
+      background: white; border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+      min-width: 190px; z-index: 100; overflow: hidden; display: none;
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+    .dropdown-menu.open { display: block; animation: dropIn 0.18s ease; }
+    @keyframes dropIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+    .dropdown-item {
+      padding: 12px 16px; font-size: 13.5px; color: #333;
+      cursor: pointer; display: flex; align-items: center; gap: 10px;
+      transition: background 0.12s;
+    }
+    .dropdown-item:hover { background: #f5f7ff; }
+    .dropdown-item i { font-size: 17px; color: #666; }
+
+    /* ══════════════════════════════════════════════════════
+       CHAT BODY
+    ══════════════════════════════════════════════════════ */
     .chat-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+      flex: 1; overflow-y: auto;
+      padding: 16px 12px;
+      display: flex; flex-direction: column; gap: 8px;
+      background: linear-gradient(180deg, #f7f9fc 0%, #eef2f7 100%);
       scroll-behavior: smooth;
     }
     .chat-body::-webkit-scrollbar { width: 3px; }
     .chat-body::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
 
-    /* ── Date separator ───────────────────────────────────── */
-    .date-separator {
-      text-align: center;
-      margin: 6px 0;
-    }
-    .date-separator span {
-      background: rgba(255,255,255,0.7);
-      color: #777;
-      font-size: 11.5px;
-      padding: 4px 12px;
-      border-radius: 12px;
+    /* Date separator */
+    .date-sep { text-align: center; margin: 8px 0 4px; }
+    .date-sep span {
+      background: rgba(255,255,255,0.8); color: #888;
+      font-size: 11.5px; padding: 4px 14px; border-radius: 20px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     }
 
-    /* ── Messages ─────────────────────────────────────────── */
-    .msg-row { display: flex; flex-direction: column; }
+    /* ══════════════════════════════════════════════════════
+       MENSAJES
+    ══════════════════════════════════════════════════════ */
+    .msg-row { display: flex; flex-direction: column; animation: msgIn 0.25s ease; }
     .msg-row.bot { align-items: flex-start; }
     .msg-row.user { align-items: flex-end; }
+    @keyframes msgIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+    .msg-with-avatar { display: flex; align-items: flex-end; gap: 8px; }
+    .msg-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--primary); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0; overflow: hidden;
+      box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.3);
+    }
+    .msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
     .bubble {
-      max-width: 82%;
-      padding: 9px 13px;
-      font-size: 14.5px;
-      line-height: 1.5;
-      position: relative;
-      word-wrap: break-word;
+      max-width: 80%; padding: 12px 16px;
+      font-size: 14.5px; line-height: 1.55;
+      word-wrap: break-word; position: relative;
     }
     .bubble-bot {
-      background: #ffffff;
-      border-radius: 2px 12px 12px 12px;
-      color: #1a1a1a;
-      box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+      background: white;
+      border-radius: 4px 20px 20px 20px;
+      color: #1a1a2e;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
     }
     .bubble-user {
-      background: var(--color-user-bubble);
-      border-radius: 12px 2px 12px 12px;
-      color: #1a1a1a;
-      box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+      background: var(--primary);
+      border-radius: 20px 4px 20px 20px;
+      color: white;
+      box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.35);
     }
     .msg-time {
-      font-size: 11px;
-      color: #999;
-      margin-top: 3px;
-      padding: 0 4px;
+      font-size: 10.5px; color: #aaa;
+      margin-top: 4px; padding: 0 6px;
+      display: flex; align-items: center; gap: 4px;
     }
-    .msg-row.user .msg-time { text-align: right; }
+    .msg-row.user .msg-time { justify-content: flex-end; color: rgba(255,255,255,0.6); }
+    .msg-row.user .msg-time { color: #aaa; }
 
-    /* ── Quick reply buttons ──────────────────────────────── */
-    .quick-replies {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 7px;
-      padding: 6px 4px 2px;
-      max-width: 88%;
-    }
-    .quick-btn {
-      background: white;
-      border: 1.5px solid var(--color-primary);
-      color: var(--color-primary);
-      border-radius: 18px;
-      padding: 7px 13px;
-      font-size: 13px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-    .quick-btn:hover, .quick-btn:active {
-      background: var(--color-primary);
-      color: white;
-    }
-    .quick-btn i { font-size: 14px; }
-
-    /* ── Typing indicator ─────────────────────────────────── */
+    /* ══════════════════════════════════════════════════════
+       TYPING INDICATOR
+    ══════════════════════════════════════════════════════ */
+    .typing-wrap { display: flex; align-items: flex-end; gap: 8px; }
     .typing-bubble {
-      background: white;
-      border-radius: 2px 12px 12px 12px;
-      padding: 11px 14px;
-      display: flex;
-      gap: 4px;
-      box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+      background: white; border-radius: 4px 20px 20px 20px;
+      padding: 14px 18px; display: flex; gap: 5px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
     }
     .typing-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: #bbb;
-      animation: bounce 1.2s infinite;
+      width: 7px; height: 7px; border-radius: 50%; background: #c0c8d8;
+      animation: tdot 1.2s infinite;
     }
-    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes bounce {
-      0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
-      30% { transform: translateY(-5px); opacity: 1; }
-    }
+    .typing-dot:nth-child(2){animation-delay:.2s}
+    .typing-dot:nth-child(3){animation-delay:.4s}
+    @keyframes tdot { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-6px);opacity:1} }
 
-    /* ── Carrusel de servicios ────────────────────────────── */
+    /* ══════════════════════════════════════════════════════
+       QUICK REPLIES
+    ══════════════════════════════════════════════════════ */
+    .quick-replies {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      padding: 4px 6px 2px; max-width: 88%;
+    }
+    .quick-btn {
+      background: white; border: 1.5px solid var(--primary);
+      color: var(--primary); border-radius: 20px;
+      padding: 8px 15px; font-size: 13px; font-weight: 500;
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+      transition: all 0.15s; white-space: nowrap;
+      box-shadow: 0 2px 6px rgba(var(--primary-rgb), 0.12);
+      font-family: inherit;
+    }
+    .quick-btn:hover, .quick-btn:active { background: var(--primary); color: white; }
+    .quick-btn i { font-size: 14px; }
+
+    /* ══════════════════════════════════════════════════════
+       CARRUSEL DE SERVICIOS — premium
+    ══════════════════════════════════════════════════════ */
     .carousel-wrapper {
-      background: white;
-      border-radius: 2px 12px 12px 12px;
-      padding: 10px 10px 6px;
-      box-shadow: 0 1px 1px rgba(0,0,0,0.08);
-      max-width: 92%;
+      background: white; border-radius: 4px 20px 20px 20px;
+      padding: 12px 12px 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      max-width: 95%;
+    }
+    .carousel-label {
+      font-size: 11px; font-weight: 700; color: #888;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 10px; padding-left: 2px;
     }
     .carousel-scroll {
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      padding-bottom: 6px;
+      display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;
       scrollbar-width: thin;
     }
     .carousel-scroll::-webkit-scrollbar { height: 3px; }
-    .carousel-scroll::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+    .carousel-scroll::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 2px; }
 
     .service-card {
-      min-width: 120px;
-      max-width: 120px;
-      border: 1.5px solid #e8ecf0;
-      border-radius: 10px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: border-color 0.15s, box-shadow 0.15s;
-      flex-shrink: 0;
-      background: white;
+      min-width: 160px; max-width: 160px;
+      border: 1.5px solid #f0f0f0; border-radius: 16px;
+      overflow: hidden; cursor: pointer; flex-shrink: 0;
+      transition: all 0.2s; background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
-    .service-card:hover { border-color: var(--color-primary); box-shadow: 0 2px 8px rgba(26,115,232,0.15); }
-    .service-card.selected { border-color: var(--color-primary); border-width: 2px; }
+    .service-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(var(--primary-rgb), 0.15); }
+    .service-card.selected { border-color: var(--primary); border-width: 2px; }
 
     .service-img-wrap {
-      width: 100%;
-      height: 78px;
-      background: #f0f4ff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      overflow: hidden;
-    }
-    .service-img-wrap img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-    }
-    .service-info { padding: 7px 8px 4px; }
-    .service-name {
-      font-size: 11.5px;
-      font-weight: 600;
-      color: #1a1a1a;
-      line-height: 1.3;
-    }
-    .service-price {
-      font-size: 11px;
-      color: #666;
-      margin-top: 2px;
-    }
-    .service-select-btn {
-      width: 100%;
-      padding: 6px;
-      background: transparent;
-      border: none;
-      border-top: 1px solid #f0f0f0;
-      color: var(--color-primary);
-      font-size: 11.5px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .service-select-btn:hover { background: var(--color-primary-light); }
-
-    /* ── Tarjeta de resumen + pago ────────────────────────── */
-    .resumen-card {
-      background: white;
-      border-radius: 12px;
-      padding: 14px 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      max-width: 88%;
-      border: 1px solid #e8ecf0;
-    }
-    .resumen-titulo {
-      font-size: 13.5px;
-      font-weight: 600;
-      color: var(--color-primary);
-      margin-bottom: 10px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #f0f0f0;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .resumen-fila {
-      font-size: 13px;
-      color: #444;
-      margin-bottom: 5px;
-      line-height: 1.5;
-    }
-    .resumen-fila strong { color: #1a1a1a; }
-    .pagar-btn {
-      width: 100%;
-      padding: 12px;
-      background: var(--color-primary);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      transition: background 0.15s;
-    }
-    .pagar-btn:hover { background: var(--color-primary-dark); }
-    .pagar-btn:disabled { background: #aaa; cursor: not-allowed; }
-
-    .pagos-logos {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      margin-top: 10px;
-    }
-    .visa-logo { font-size: 13px; font-weight: 800; color: #1a1aff; letter-spacing: 1px; }
-    .mc-logo { display: flex; align-items: center; }
-    .mc-logo span:first-child {
-      width: 20px; height: 20px; border-radius: 50%;
-      background: #eb001b; display: inline-block; margin-right: -7px;
-    }
-    .mc-logo span:last-child {
-      width: 20px; height: 20px; border-radius: 50%;
-      background: #f79e1b; display: inline-block;
-    }
-    .clave-logo { font-size: 13px; font-weight: 800; color: #e85d04; letter-spacing: 1px; }
-
-    /* ── Input bar ────────────────────────────────────────── */
-    .chat-input-bar {
-      background: #f0f2f5;
-      padding: 10px 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
-      border-top: 1px solid #e0e0e0;
-    }
-    .mic-btn {
-      width: 40px; height: 40px;
-      border-radius: 50%;
-      background: white;
-      border: 1px solid #e0e0e0;
+      width: 100%; height: 100px; overflow: hidden;
+      background: linear-gradient(135deg, #e8f0fe, #f0f4ff);
       display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      color: #666;
-      font-size: 19px;
-      flex-shrink: 0;
-      transition: background 0.15s;
+      font-size: 36px; position: relative;
     }
-    .mic-btn:hover { background: #f5f5f5; }
-    .msg-input {
-      flex: 1;
-      background: white;
-      border: 1px solid #e0e0e0;
-      border-radius: 22px;
-      padding: 10px 16px;
-      font-size: 14.5px;
-      color: #333;
-      outline: none;
-      transition: border-color 0.15s;
+    .service-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    .service-badge {
+      position: absolute; top: 7px; left: 7px;
+      background: var(--primary); color: white;
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      padding: 2px 7px; border-radius: 8px; letter-spacing: 0.04em;
+    }
+    .service-badge.popular { background: #f59e0b; }
+    .service-badge.nuevo { background: #10b981; }
+
+    .service-info { padding: 10px 11px 4px; }
+    .service-name { font-size: 12.5px; font-weight: 700; color: #1a1a2e; line-height: 1.3; }
+    .service-desc { font-size: 11px; color: #888; margin-top: 2px; line-height: 1.4; }
+    .service-price { font-size: 13px; font-weight: 800; color: var(--primary); margin-top: 4px; }
+    .service-duration { font-size: 10.5px; color: #aaa; display: flex; align-items: center; gap: 3px; margin-top: 1px; }
+
+    .service-select-btn {
+      width: 100%; padding: 8px;
+      background: transparent; border: none;
+      border-top: 1px solid #f5f5f5;
+      color: var(--primary); font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: background 0.15s;
       font-family: inherit;
     }
-    .msg-input:focus { border-color: var(--color-primary); }
-    .msg-input::placeholder { color: #aaa; }
-    .send-btn {
-      width: 40px; height: 40px;
-      border-radius: 50%;
-      background: var(--color-primary);
-      border: none;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      color: white;
-      font-size: 19px;
-      flex-shrink: 0;
-      transition: background 0.15s;
-    }
-    .send-btn:hover { background: var(--color-primary-dark); }
+    .service-select-btn:hover { background: rgba(var(--primary-rgb), 0.06); }
 
-    /* ── Bottom nav ───────────────────────────────────────── */
+    /* ══════════════════════════════════════════════════════
+       RESUMEN DE CITA — premium
+    ══════════════════════════════════════════════════════ */
+    .resumen-card {
+      background: white; border-radius: 20px;
+      padding: 18px; max-width: 88%;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      border: 1px solid rgba(var(--primary-rgb), 0.12);
+    }
+    .resumen-header {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+      padding-bottom: 12px; border-bottom: 1px solid #f0f0f0;
+    }
+    .resumen-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: rgba(var(--primary-rgb), 0.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .resumen-titulo { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+    .resumen-subtitulo { font-size: 11.5px; color: #888; margin-top: 1px; }
+
+    .resumen-fila {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; color: #444; margin-bottom: 8px;
+    }
+    .resumen-fila i { font-size: 15px; color: var(--primary); width: 18px; flex-shrink: 0; }
+    .resumen-fila strong { color: #1a1a2e; font-weight: 600; }
+
+    .resumen-total {
+      background: rgba(var(--primary-rgb), 0.06);
+      border-radius: 12px; padding: 12px 14px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin: 14px 0 14px;
+    }
+    .resumen-total-label { font-size: 12px; color: #888; font-weight: 500; }
+    .resumen-total-amount { font-size: 22px; font-weight: 800; color: var(--primary); }
+
+    .pagar-btn {
+      width: 100%; padding: 14px;
+      background: var(--primary); color: white; border: none;
+      border-radius: 14px; font-size: 15px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all 0.18s; font-family: inherit;
+      box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.4);
+    }
+    .pagar-btn:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(var(--primary-rgb), 0.45); }
+    .pagar-btn:disabled { background: #aaa; box-shadow: none; cursor: not-allowed; transform: none; }
+
+    .pagos-logos {
+      display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 12px;
+    }
+    .visa-logo { font-size: 12px; font-weight: 900; color: #1a1aff; letter-spacing: 1.5px; }
+    .mc-logo { display: flex; align-items: center; }
+    .mc-logo span:first-child { width: 21px; height: 21px; border-radius: 50%; background: #eb001b; margin-right: -8px; display: inline-block; }
+    .mc-logo span:last-child  { width: 21px; height: 21px; border-radius: 50%; background: #f79e1b; display: inline-block; }
+    .clave-logo { font-size: 12px; font-weight: 900; color: #e85d04; letter-spacing: 1.5px; }
+    .pagos-secure { font-size: 10.5px; color: #aaa; text-align: center; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+    .pagos-secure i { font-size: 12px; color: #10b981; }
+
+    /* ══════════════════════════════════════════════════════
+       INPUT BAR — premium
+    ══════════════════════════════════════════════════════ */
+    .chat-input-bar {
+      background: white; padding: 12px 14px;
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+      border-top: 1px solid rgba(0,0,0,0.06);
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.04);
+    }
+    .attach-btn {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: #f5f7ff; border: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: #888; font-size: 18px; flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .attach-btn:hover { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
+    .msg-input {
+      flex: 1; background: #f5f7ff; border: 1.5px solid transparent;
+      border-radius: 24px; padding: 10px 18px; font-size: 14.5px;
+      color: #1a1a2e; outline: none; transition: all 0.18s; font-family: inherit;
+    }
+    .msg-input:focus { background: white; border-color: rgba(var(--primary-rgb), 0.3); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.08); }
+    .msg-input::placeholder { color: #b0b8c8; }
+    .emoji-btn {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: none; border: none; color: #888; font-size: 20px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; flex-shrink: 0;
+    }
+    .emoji-btn:hover { color: #f59e0b; transform: scale(1.1); }
+    .send-btn {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: var(--primary); border: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: white; font-size: 18px; flex-shrink: 0;
+      transition: all 0.18s;
+      box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.4);
+    }
+    .send-btn:hover { background: var(--primary-dark); transform: scale(1.05); }
+
+    /* ══════════════════════════════════════════════════════
+       BOTTOM NAV
+    ══════════════════════════════════════════════════════ */
     .bottom-nav {
-      display: flex;
-      background: white;
-      border-top: 1px solid #e8ecf0;
-      flex-shrink: 0;
+      display: flex; background: white;
+      border-top: 1px solid rgba(0,0,0,0.06); flex-shrink: 0;
+      padding-bottom: env(safe-area-inset-bottom);
     }
     .nav-item {
-      flex: 1;
-      padding: 8px 4px;
-      text-align: center;
-      cursor: pointer;
-      font-size: 10.5px;
-      color: #888;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      transition: color 0.15s;
+      flex: 1; padding: 8px 4px; text-align: center; cursor: pointer;
+      font-size: 10.5px; color: #aaa;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      transition: color 0.15s; font-weight: 500;
     }
-    .nav-item i { font-size: 21px; }
-    .nav-item.active { color: var(--color-primary); }
-    .nav-badge {
-      background: #e8392e;
-      color: white;
-      font-size: 9px;
-      font-weight: 700;
-      border-radius: 8px;
-      padding: 1px 5px;
-      position: absolute;
-      top: -4px; right: -4px;
-    }
-    .nav-icon-wrap { position: relative; display: inline-block; }
+    .nav-item i { font-size: 22px; }
+    .nav-item.active { color: var(--primary); }
+    .nav-item.active i { filter: drop-shadow(0 2px 4px rgba(var(--primary-rgb),0.3)); }
 
-    /* ── Loading screen ───────────────────────────────────── */
+    /* ══════════════════════════════════════════════════════
+       LOADING SCREEN
+    ══════════════════════════════════════════════════════ */
     .loading-screen {
-      position: absolute;
-      inset: 0;
-      background: var(--color-primary);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      z-index: 999;
-      transition: opacity 0.4s;
+      position: absolute; inset: 0;
+      background: var(--primary);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 16px;
+      z-index: 999; transition: opacity 0.4s;
+      border-radius: inherit;
     }
     .loading-screen.fade-out { opacity: 0; pointer-events: none; }
-    .loading-logo { font-size: 48px; }
-    .loading-name { color: white; font-size: 22px; font-weight: 600; }
+    .loading-logo { font-size: 52px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2)); }
+    .loading-name { color: white; font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+    .loading-tagline { color: rgba(255,255,255,0.7); font-size: 13px; margin-top: -8px; }
     .loading-spinner {
-      width: 36px; height: 36px;
-      border: 3px solid rgba(255,255,255,0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      width: 36px; height: 36px; margin-top: 8px;
+      border: 3px solid rgba(255,255,255,0.25); border-top-color: white;
+      border-radius: 50%; animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Error screen ─────────────────────────────────────── */
+    /* ══════════════════════════════════════════════════════
+       ERROR SCREEN
+    ══════════════════════════════════════════════════════ */
     .error-screen {
-      display: none;
-      position: absolute;
-      inset: 0;
-      background: #f8f9fa;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 12px;
-      padding: 32px;
-      text-align: center;
-      z-index: 998;
+      display: none; position: absolute; inset: 0;
+      background: #f8f9fa; align-items: center; justify-content: center;
+      flex-direction: column; gap: 12px; padding: 32px; text-align: center; z-index: 998;
+      border-radius: inherit;
     }
     .error-screen.show { display: flex; }
-    .error-screen i { font-size: 48px; color: #ccc; }
+    .error-screen i { font-size: 48px; color: #ddd; }
     .error-screen h3 { font-size: 18px; color: #555; }
-    .error-screen p { font-size: 14px; color: #888; line-height: 1.6; }
+    .error-screen p { font-size: 14px; color: #999; line-height: 1.6; }
 
-    /* ── Animaciones entrada de mensajes ─────────────────── */
-    .msg-row { animation: fadeUp 0.22s ease; }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── Session token banner ─────────────────────────────── */
+    /* ══════════════════════════════════════════════════════
+       SESSION BANNER
+    ══════════════════════════════════════════════════════ */
     .session-banner {
-      background: #fff3cd;
-      border-bottom: 1px solid #ffc107;
-      padding: 8px 14px;
-      font-size: 12px;
-      color: #856404;
-      display: none;
-      align-items: center;
-      gap: 8px;
+      background: #fffbeb; border-bottom: 1px solid #fde68a;
+      padding: 10px 16px; font-size: 12.5px; color: #92400e;
+      display: none; align-items: center; gap: 10px;
     }
     .session-banner.show { display: flex; }
     .session-banner button {
-      margin-left: auto;
-      background: none; border: none;
-      color: var(--color-primary); font-size: 12px; font-weight: 600; cursor: pointer;
+      margin-left: auto; background: none; border: none;
+      color: var(--primary); font-size: 12.5px; font-weight: 700; cursor: pointer;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       SIDE PANEL — premium
+    ══════════════════════════════════════════════════════ */
+    @media (min-width: 900px) {
+
+      /* Tarjeta base */
+      .sp-card {
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 20px; padding: 22px;
+        backdrop-filter: blur(16px); flex-shrink: 0;
+      }
+      .sp-card-label {
+        font-size: 10px; font-weight: 800; letter-spacing: 0.12em;
+        text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 14px;
+      }
+
+      /* Negocio card */
+      .sp-cover {
+        width: 100%; height: 130px; border-radius: 14px;
+        object-fit: cover; margin-bottom: 14px;
+        background: linear-gradient(135deg, rgba(var(--primary-rgb),0.3), rgba(var(--primary-rgb),0.1));
+        display: flex; align-items: center; justify-content: center; font-size: 48px;
+        overflow: hidden;
+      }
+      .sp-cover img { width: 100%; height: 100%; object-fit: cover; }
+
+      .sp-biz-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+      .sp-biz-avatar {
+        width: 52px; height: 52px; border-radius: 14px;
+        background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.2);
+        display: flex; align-items: center; justify-content: center; font-size: 26px; overflow: hidden; flex-shrink: 0;
+      }
+      .sp-biz-avatar img { width: 100%; height: 100%; object-fit: cover; }
+      .sp-biz-name {
+        font-size: 20px; font-weight: 800; color: white; letter-spacing: -0.3px;
+        display: flex; align-items: center; gap: 6px;
+      }
+      .sp-biz-verified { color: #60a5fa; font-size: 16px; }
+      .sp-biz-desc { font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.5; margin-top: 2px; }
+
+      .sp-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+      .sp-badge {
+        display: flex; align-items: center; gap: 5px;
+        background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 20px; padding: 5px 12px; font-size: 12px; color: rgba(255,255,255,0.75);
+      }
+      .sp-badge i { font-size: 13px; color: rgba(255,255,255,0.5); }
+
+      .sp-rating-row {
+        display: flex; align-items: center; gap: 10px; margin-top: 12px;
+      }
+      .sp-rating {
+        display: flex; align-items: center; gap: 4px;
+        background: rgba(251,191,36,0.15); border: 1px solid rgba(251,191,36,0.3);
+        border-radius: 20px; padding: 5px 12px;
+      }
+      .sp-rating-stars { color: #fbbf24; font-size: 12px; letter-spacing: 1px; }
+      .sp-rating-num { font-size: 13px; font-weight: 700; color: white; }
+      .sp-online-badge {
+        display: flex; align-items: center; gap: 6px;
+        background: rgba(74,222,128,0.15); border: 1px solid rgba(74,222,128,0.3);
+        border-radius: 20px; padding: 5px 13px; font-size: 12px; color: #6ee7a0; font-weight: 600;
+      }
+      .sp-online-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; animation: pulse 2s infinite; }
+
+      /* Servicios grid */
+      .sp-services-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .sp-service-item {
+        background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.1);
+        border-radius: 14px; overflow: hidden; cursor: pointer; transition: all 0.2s;
+      }
+      .sp-service-item:hover, .sp-service-item.active {
+        border-color: rgba(var(--primary-rgb), 0.6);
+        transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        background: rgba(var(--primary-rgb), 0.1);
+      }
+      .sp-service-item.active { border-color: var(--primary); }
+      .sp-service-photo {
+        width: 100%; height: 80px; overflow: hidden;
+        background: rgba(255,255,255,0.05);
+        display: flex; align-items: center; justify-content: center; font-size: 30px;
+      }
+      .sp-service-photo img { width: 100%; height: 100%; object-fit: cover; }
+      .sp-service-info { padding: 10px 11px; }
+      .sp-service-name { font-size: 12.5px; font-weight: 700; color: white; line-height: 1.3; }
+      .sp-service-price { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 3px; font-weight: 500; }
+      .sp-service-dur { font-size: 10.5px; color: rgba(255,255,255,0.35); margin-top: 2px; display: flex; align-items: center; gap: 3px; }
+
+      /* Detalle reactivo */
+      .sp-detalle { display: none; animation: slideIn 0.25s ease; }
+      .sp-detalle.visible { display: block; }
+      @keyframes slideIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+      .sp-det-cover {
+        width: 100%; height: 160px; border-radius: 14px; overflow: hidden;
+        background: rgba(255,255,255,0.06); margin-bottom: 16px;
+        display: flex; align-items: center; justify-content: center; font-size: 56px;
+      }
+      .sp-det-cover img { width: 100%; height: 100%; object-fit: cover; }
+
+      .sp-det-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 14px; }
+      .sp-det-icon {
+        font-size: 32px; width: 56px; height: 56px; border-radius: 14px;
+        background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      }
+      .sp-det-titulo { font-size: 19px; font-weight: 800; color: white; letter-spacing: -0.2px; }
+      .sp-det-precio { display: inline-block; background: rgba(var(--primary-rgb),0.25); border: 1px solid rgba(var(--primary-rgb),0.5); color: #7eb8ff; font-size: 13.5px; font-weight: 700; padding: 4px 11px; border-radius: 8px; margin-top: 5px; }
+
+      .sp-det-desc { font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.65; margin-bottom: 14px; }
+
+      .sp-det-info { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+      .sp-det-row { display: flex; align-items: center; gap: 10px; font-size: 13px; color: rgba(255,255,255,0.7); }
+      .sp-det-row i { font-size: 15px; color: rgba(255,255,255,0.35); width: 18px; flex-shrink: 0; }
+      .sp-det-row strong { color: white; font-weight: 600; }
+
+      .sp-det-bens { display: flex; flex-direction: column; gap: 7px; margin-bottom: 18px; }
+      .sp-det-ben { display: flex; align-items: center; gap: 9px; font-size: 13px; color: rgba(255,255,255,0.7); }
+      .sp-det-ben i { font-size: 14px; color: #4ade80; flex-shrink: 0; }
+
+      .sp-agendar-btn {
+        width: 100%; padding: 14px; background: var(--primary); color: white;
+        border: none; border-radius: 12px; font-size: 14.5px; font-weight: 700;
+        cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+        transition: all 0.18s; margin-bottom: 10px; font-family: inherit;
+        box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.4);
+      }
+      .sp-agendar-btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
+      .sp-pagar-btn {
+        width: 100%; padding: 12px; background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.8);
+        border-radius: 12px; font-size: 14px; font-weight: 600;
+        cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+        transition: all 0.18s; margin-bottom: 12px; font-family: inherit;
+      }
+      .sp-pagar-btn:hover { background: rgba(255,255,255,0.12); transform: translateY(-1px); }
+
+      .sp-pagos { display: flex; align-items: center; justify-content: center; gap: 14px; }
+      .sp-visa  { font-size: 12px; font-weight: 900; color: rgba(255,255,255,0.75); letter-spacing: 1.5px; }
+      .sp-mc    { display: flex; }
+      .sp-mc span:first-child { width: 20px; height: 20px; border-radius: 50%; background: #eb001b; margin-right: -7px; display: inline-block; }
+      .sp-mc span:last-child  { width: 20px; height: 20px; border-radius: 50%; background: #f79e1b; display: inline-block; }
+      .sp-clave { font-size: 12px; font-weight: 900; color: rgba(255,255,255,0.75); letter-spacing: 1.5px; }
+
+      .sp-tip { font-size: 11.5px; color: rgba(255,255,255,0.25); text-align: center; line-height: 1.6; padding: 2px 0 4px; }
+      .sp-tip i { font-size: 12px; vertical-align: -2px; margin-right: 3px; }
+      .sp-powered { font-size: 11px; color: rgba(255,255,255,0.2); text-align: center; padding-top: 4px; }
+      .sp-powered span { color: rgba(255,255,255,0.4); font-weight: 600; }
     }
   </style>
-
-  <!-- Tabler Icons CDN -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
 </head>
 <body>
 
 <div class="desktop-frame">
+
+<!-- ══════════════════════════════════════════════════════
+     CHAT — columna izquierda
+══════════════════════════════════════════════════════ -->
 <div class="app-wrapper" id="appWrapper">
 
-  <!-- Loading screen -->
   <div class="loading-screen" id="loadingScreen">
     <div class="loading-logo" id="loadingLogo">💬</div>
     <div class="loading-name" id="loadingName">Cargando...</div>
+    <div class="loading-tagline" id="loadingTagline">Asistente Virtual · 24/7</div>
     <div class="loading-spinner"></div>
   </div>
 
-  <!-- Error screen -->
   <div class="error-screen" id="errorScreen">
     <i class="ti ti-alert-circle"></i>
     <h3>Negocio no encontrado</h3>
-    <p id="errorMsg">El enlace que usaste no corresponde a ningún negocio activo. Verifica la URL e intenta de nuevo.</p>
+    <p id="errorMsg">El enlace que usaste no corresponde a ningún negocio activo.</p>
   </div>
 
-  <!-- Session recovery banner -->
   <div class="session-banner" id="sessionBanner">
     <i class="ti ti-clock"></i>
-    <span>Tienes una conversación anterior. ¿Deseas continuar?</span>
+    <span>Tienes una conversación anterior.</span>
     <button onclick="recoverySession()">Continuar</button>
   </div>
 
   <!-- Header -->
   <div class="chat-header" id="chatHeader" style="display:none">
     <div class="header-back"><i class="ti ti-arrow-left"></i></div>
-    <div class="header-avatar" id="headerAvatar">💬</div>
+    <div class="header-avatar" id="headerAvatar">
+      💬
+      <div class="header-avatar-online"></div>
+    </div>
     <div class="header-info">
-      <div class="header-biz-name" id="headerBizName">Asistente Virtual</div>
-      <div class="header-status">
-        <span class="status-dot"></span>
-        <span>Asistente Virtual · En línea</span>
+      <div class="header-biz-name">
+        <span id="headerBizName">Asistente Virtual</span>
+        <i class="ti ti-rosette-discount-check header-verified"></i>
+      </div>
+      <div class="header-meta">
+        <div class="header-status"><span class="status-dot"></span> En línea</div>
+        <div class="header-rating"><i class="ti ti-star-filled"></i> <span id="headerRating">4.9</span></div>
       </div>
     </div>
-    <div class="header-menu-btn" onclick="toggleMenu()">
-      <i class="ti ti-dots-vertical"></i>
-      <div class="dropdown-menu" id="dropdownMenu">
-        <div class="dropdown-item" onclick="openConfig()">
-          <i class="ti ti-settings"></i> Configuración
+    <div class="header-actions">
+      <button class="header-action-btn" onclick="toggleMenu()">
+        <i class="ti ti-dots-vertical"></i>
+        <div class="dropdown-menu" id="dropdownMenu">
+          <div class="dropdown-item" onclick="openConfig()"><i class="ti ti-settings"></i> Configuración</div>
+          <div class="dropdown-item" onclick="openSupport()"><i class="ti ti-headset"></i> Soporte Técnico</div>
         </div>
-        <div class="dropdown-item" onclick="openSupport()">
-          <i class="ti ti-headset"></i> Soporte Técnico
-        </div>
-      </div>
+      </button>
     </div>
   </div>
 
   <!-- Chat body -->
   <div class="chat-body" id="chatBody" style="display:none"></div>
 
-  <!-- Input bar -->
+  <!-- Input -->
   <div class="chat-input-bar" id="inputBar" style="display:none">
-    <div class="mic-btn" onclick="toggleVoice()" id="micBtn">
-      <i class="ti ti-microphone" id="micIcon"></i>
-    </div>
-    <input
-      class="msg-input"
-      id="msgInput"
-      type="text"
+    <button class="attach-btn"><i class="ti ti-paperclip"></i></button>
+    <input class="msg-input" id="msgInput" type="text"
       placeholder="Escribe tu mensaje o consulta aquí..."
-      autocomplete="off"
-      onkeydown="handleEnter(event)"
-    />
-    <button class="send-btn" onclick="sendUserMsg()">
-      <i class="ti ti-send"></i>
-    </button>
+      autocomplete="off" onkeydown="handleEnter(event)" />
+    <button class="emoji-btn"><i class="ti ti-mood-smile"></i></button>
+    <button class="send-btn" onclick="sendUserMsg()"><i class="ti ti-send"></i></button>
   </div>
 
   <!-- Bottom nav -->
   <div class="bottom-nav" id="bottomNav" style="display:none">
-    <div class="nav-item active" onclick="goSection('inicio')">
-      <i class="ti ti-home"></i>
-      <span>Inicio</span>
-    </div>
-    <div class="nav-item" onclick="goSection('citas')">
-      <div class="nav-icon-wrap">
-        <i class="ti ti-calendar"></i>
-      </div>
-      <span>Mis citas</span>
-    </div>
-    <div class="nav-item" onclick="goSection('mensajes')">
-      <i class="ti ti-message"></i>
-      <span>Mensajes</span>
-    </div>
-    <div class="nav-item" onclick="goSection('perfil')">
-      <i class="ti ti-user"></i>
-      <span>Perfil</span>
-    </div>
+    <div class="nav-item active" onclick="navClick(this,'inicio')"><i class="ti ti-home"></i><span>Inicio</span></div>
+    <div class="nav-item" onclick="navClick(this,'citas')"><i class="ti ti-calendar"></i><span>Mis citas</span></div>
+    <div class="nav-item" onclick="navClick(this,'mensajes')"><i class="ti ti-message"></i><span>Mensajes</span></div>
+    <div class="nav-item" onclick="navClick(this,'perfil')"><i class="ti ti-user"></i><span>Perfil</span></div>
   </div>
 
 </div><!-- /app-wrapper -->
 
 <!-- ══════════════════════════════════════════════════════
-     PANEL DERECHO — solo visible en desktop
+     SIDE PANEL — columna derecha (desktop)
 ══════════════════════════════════════════════════════ -->
 <div class="side-panel" id="sidePanel">
 
-  <!-- Info del negocio -->
+  <!-- Perfil del negocio -->
   <div class="sp-card">
-    <div class="sp-card-title">Negocio</div>
-    <div class="sp-biz-name" id="spBizName">Cargando...</div>
-    <div class="sp-biz-desc" id="spBizDesc">Asistente Virtual disponible 24/7</div>
-    <div class="sp-online"><span class="sp-online-dot"></span> En línea ahora</div>
+    <div class="sp-card-label">Negocio</div>
+    <div class="sp-cover" id="spCover">🏥</div>
+    <div class="sp-biz-row">
+      <div class="sp-biz-avatar" id="spAvatar">💬</div>
+      <div>
+        <div class="sp-biz-name">
+          <span id="spBizName">Cargando...</span>
+          <i class="ti ti-rosette-discount-check sp-biz-verified"></i>
+        </div>
+        <div class="sp-biz-desc" id="spBizDesc">Asistente Virtual disponible 24/7</div>
+      </div>
+    </div>
+    <div class="sp-rating-row">
+      <div class="sp-rating">
+        <span class="sp-rating-stars">★★★★★</span>
+        <span class="sp-rating-num">4.9</span>
+        <span style="font-size:11px;color:rgba(255,255,255,0.4);margin-left:2px">(1,248)</span>
+      </div>
+      <div class="sp-online-badge"><span class="sp-online-dot"></span> En línea ahora</div>
+    </div>
+    <div class="sp-badges" id="spBadges">
+      <div class="sp-badge"><i class="ti ti-clock"></i> Atención 24/7</div>
+      <div class="sp-badge"><i class="ti ti-shield-check"></i> Pago seguro</div>
+      <div class="sp-badge"><i class="ti ti-star"></i> Altamente calificado</div>
+    </div>
   </div>
 
-  <!-- Grid de servicios (vista inicial) -->
-  <div class="sp-card" id="spServiciosCard">
-    <div class="sp-card-title">Servicios disponibles — selecciona uno para ver detalle</div>
+  <!-- Servicios -->
+  <div class="sp-card">
+    <div class="sp-card-label">Servicios disponibles — selecciona para ver detalle</div>
     <div class="sp-services-grid" id="spServiciosGrid"></div>
   </div>
 
-  <!-- Detalle reactivo (aparece al seleccionar un servicio) -->
+  <!-- Detalle reactivo -->
   <div class="sp-card sp-detalle" id="spDetalle">
-    <div class="sp-card-title">Detalle del servicio</div>
-
+    <div class="sp-card-label">Detalle del servicio</div>
+    <div class="sp-det-cover" id="spDetCover">🛎️</div>
     <div class="sp-det-header">
       <div class="sp-det-icon" id="spDetIcon">🛎️</div>
       <div>
         <div class="sp-det-titulo" id="spDetTitulo">—</div>
-        <span class="sp-det-precio-tag" id="spDetPrecio">$0 USD</span>
+        <span class="sp-det-precio" id="spDetPrecio">$0 USD</span>
       </div>
     </div>
-
     <div class="sp-det-desc" id="spDetDesc"></div>
-
     <div class="sp-det-info">
-      <div class="sp-det-row">
-        <i class="ti ti-clock"></i>
-        <span>Duración: <strong id="spDetDuracion">—</strong></span>
-      </div>
-      <div class="sp-det-row">
-        <i class="ti ti-calendar"></i>
-        <span>Próxima disponibilidad: <strong id="spDetFecha">—</strong></span>
-      </div>
-      <div class="sp-det-row">
-        <i class="ti ti-shield-check"></i>
-        <span>Pago 100% seguro con confirmación inmediata</span>
-      </div>
+      <div class="sp-det-row"><i class="ti ti-clock"></i><span>Duración: <strong id="spDetDur">—</strong></span></div>
+      <div class="sp-det-row"><i class="ti ti-calendar"></i><span>Próxima disponibilidad: <strong id="spDetFecha">—</strong></span></div>
+      <div class="sp-det-row"><i class="ti ti-shield-check"></i><span>Confirmación inmediata al pagar</span></div>
     </div>
-
-    <div class="sp-det-beneficios" id="spDetBeneficios"></div>
-
+    <div class="sp-det-bens" id="spDetBens"></div>
     <button class="sp-agendar-btn" onclick="agendarDesdePanel()">
       <i class="ti ti-calendar-plus"></i> Agendar este servicio
     </button>
-
     <button class="sp-pagar-btn" onclick="iniciarPagoDesktop()">
       <i class="ti ti-lock"></i> Reservar y Pagar Ahora
     </button>
-
-    <div class="sp-pagos-logos">
+    <div class="sp-pagos">
       <span class="sp-visa">VISA</span>
       <span class="sp-mc"><span></span><span></span></span>
       <span class="sp-clave">CLAVE</span>
     </div>
   </div>
 
-  <!-- Tip -->
-  <div class="sp-tip">
-    <i class="ti ti-shield-check"></i>
-    Pago 100% seguro · Sin comisiones para el cliente
-  </div>
+  <div class="sp-tip"><i class="ti ti-shield-check"></i>Pago 100% seguro · Sin comisiones para el cliente</div>
+  <div class="sp-powered">Impulsado por <span>TechZone Panamá IA</span></div>
 
 </div><!-- /side-panel -->
+
 </div><!-- /desktop-frame -->
 
-<!-- ============================================================
+<!-- ══════════════════════════════════════════════════════
      JAVASCRIPT
-============================================================ -->
+══════════════════════════════════════════════════════ -->
 <script>
-// ── Config global ────────────────────────────────────────────
-const CONFIG = {
-  slug: null,
-  negocio: null,       // datos del negocio desde D1
-  sessionToken: null,  // localStorage
-  historial: [],       // mensajes en memoria
+const CONFIG = { slug:null, negocio:null, sessionToken:null, historial:[], servicioSeleccionado:null };
+
+// Fotos reales por categoría (Pexels — libres de uso comercial)
+const FOTOS = {
+  dental: {
+    cover: 'https://images.pexels.com/photos/3845741/pexels-photo-3845741.jpeg?w=800&auto=compress',
+    limpieza:     'https://images.pexels.com/photos/6627483/pexels-photo-6627483.jpeg?w=400&auto=compress',
+    blanqueamiento:'https://images.pexels.com/photos/3762453/pexels-photo-3762453.jpeg?w=400&auto=compress',
+    implante:     'https://images.pexels.com/photos/6627540/pexels-photo-6627540.jpeg?w=400&auto=compress',
+    ortodoncia:   'https://images.pexels.com/photos/5355830/pexels-photo-5355830.jpeg?w=400&auto=compress',
+  },
+  taller: {
+    cover: 'https://images.pexels.com/photos/3807517/pexels-photo-3807517.jpeg?w=800&auto=compress',
+    aceite:       'https://images.pexels.com/photos/279949/pexels-photo-279949.jpeg?w=400&auto=compress',
+    alineacion:   'https://images.pexels.com/photos/3807386/pexels-photo-3807386.jpeg?w=400&auto=compress',
+    revision:     'https://images.pexels.com/photos/1409999/pexels-photo-1409999.jpeg?w=400&auto=compress',
+  },
+  spa: {
+    cover: 'https://images.pexels.com/photos/3985360/pexels-photo-3985360.jpeg?w=800&auto=compress',
+  },
 };
 
-// ── Helpers de tiempo ────────────────────────────────────────
-function horaActual() {
-  return new Date().toLocaleTimeString('es-PA', { hour: '2-digit', minute: '2-digit' });
-}
-function fechaHoy() {
-  return new Date().toLocaleDateString('es-PA', { weekday: 'long', day: 'numeric', month: 'long' });
+function getFotoServicio(nombre, negocioTipo) {
+  const n = nombre.toLowerCase();
+  const f = FOTOS[negocioTipo] || FOTOS.dental;
+  if (n.includes('limpieza'))   return f.limpieza || null;
+  if (n.includes('blanquea'))   return f.blanqueamiento || null;
+  if (n.includes('implante'))   return f.implante || null;
+  if (n.includes('orto'))       return f.ortodoncia || null;
+  if (n.includes('aceite'))     return f.aceite || null;
+  if (n.includes('aline') || n.includes('balanc')) return f.alineacion || null;
+  if (n.includes('revisi'))     return f.revision || null;
+  return null;
 }
 
-// ── Leer slug de la URL  /dental-abc  →  slug = "dental-abc" ─
+function detectarTipoNegocio(nombre) {
+  const n = (nombre || '').toLowerCase();
+  if (n.includes('dental') || n.includes('dent') || n.includes('clínica')) return 'dental';
+  if (n.includes('taller') || n.includes('auto') || n.includes('mecáni')) return 'taller';
+  if (n.includes('spa') || n.includes('esté') || n.includes('belleza')) return 'spa';
+  return 'dental';
+}
+
+function hora() { return new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'}); }
+function fechaHoy() { return new Date().toLocaleDateString('es-PA',{weekday:'long',day:'numeric',month:'long'}); }
+function proximaFecha() {
+  const d = new Date(); d.setDate(d.getDate()+2);
+  return d.toLocaleDateString('es-PA',{day:'numeric',month:'long'})+', 3:00 PM';
+}
+function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
 function getSlug() {
-  const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
-  return path || null;
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('slug')) return p.get('slug');
+  return window.location.pathname.replace(/^\/+|\/+$/g,'') || null;
 }
 
-// ── Aplicar tema del negocio ─────────────────────────────────
 function aplicarTema(negocio) {
   const root = document.documentElement;
   if (negocio.color_primary) {
-    root.style.setProperty('--color-primary', negocio.color_primary);
-    root.style.setProperty('--color-primary-dark', ajustarBrillo(negocio.color_primary, -20));
-    root.style.setProperty('--color-primary-light', negocio.color_primary + '18');
+    root.style.setProperty('--primary', negocio.color_primary);
+    root.style.setProperty('--primary-dark', ajustarBrillo(negocio.color_primary,-20));
+    const hex = negocio.color_primary.replace('#','');
+    const r=parseInt(hex.slice(0,2),16), g=parseInt(hex.slice(2,4),16), b=parseInt(hex.slice(4,6),16);
+    root.style.setProperty('--primary-rgb',`${r},${g},${b}`);
     document.querySelector('meta[name=theme-color]').content = negocio.color_primary;
   }
-  // Título y header del chat
-  document.getElementById('pageTitle').textContent    = negocio.nombre || 'Asistente Virtual';
+  document.getElementById('pageTitle').textContent = negocio.nombre || 'Asistente Virtual';
   document.getElementById('headerBizName').textContent = negocio.nombre || 'Asistente Virtual';
-  const avatarEl = document.getElementById('headerAvatar');
-  if (negocio.logo_url) {
-    avatarEl.innerHTML = `<img src="${negocio.logo_url}" alt="${negocio.nombre}" />`;
-  } else {
-    avatarEl.textContent = negocio.icono || '💬';
-  }
   document.getElementById('loadingName').textContent = negocio.nombre || 'Cargando...';
+
+  const avatarEl = document.getElementById('headerAvatar');
+  if (negocio.logo_url) avatarEl.innerHTML = `<img src="${negocio.logo_url}" alt="${negocio.nombre}" /><div class="header-avatar-online"></div>`;
+  else { avatarEl.innerHTML = ''; avatarEl.textContent = negocio.icono || '💬'; avatarEl.insertAdjacentHTML('beforeend','<div class="header-avatar-online"></div>'); }
+
   document.getElementById('loadingLogo').textContent = negocio.icono || '💬';
 
-  // ── Panel derecho (desktop) ──────────────────────────────
-  document.getElementById('spBizName').textContent = negocio.nombre || 'Negocio';
+  // Panel derecho
+  const tipo = detectarTipoNegocio(negocio.nombre);
+  document.getElementById('spBizName').textContent = negocio.nombre || 'Mi Negocio';
   document.getElementById('spBizDesc').textContent = negocio.descripcion || 'Asistente Virtual disponible 24/7';
 
-  // Grid de servicios en el panel derecho
+  // Avatar panel
+  const spAv = document.getElementById('spAvatar');
+  if (negocio.logo_url) spAv.innerHTML = `<img src="${negocio.logo_url}" alt="${negocio.nombre}" />`;
+  else spAv.textContent = negocio.icono || '💬';
+
+  // Cover foto real
+  const cover = document.getElementById('spCover');
+  const coverUrl = FOTOS[tipo]?.cover;
+  if (coverUrl) cover.innerHTML = `<img src="${coverUrl}" alt="${negocio.nombre}" />`;
+  else cover.textContent = negocio.icono || '🏥';
+
+  // Grid servicios
   const grid = document.getElementById('spServiciosGrid');
   if (grid && negocio.servicios?.length) {
-    grid.innerHTML = negocio.servicios.map(s => `
-      <div class="sp-service-item" data-id="${s.id}" onclick="seleccionarServicioDesktop(${s.id})">
-        <div class="sp-service-icon">${s.icono || '🛎️'}</div>
-        <div class="sp-service-name">${s.nombre}</div>
-        <div class="sp-service-price">Desde $${s.precio} USD</div>
-      </div>
-    `).join('');
+    grid.innerHTML = negocio.servicios.map((s,i) => {
+      const foto = s.imagen_url || getFotoServicio(s.nombre, tipo);
+      const badge = i===0?'popular':i===1?'elegido':'';
+      return `
+        <div class="sp-service-item" data-id="${s.id}" onclick="seleccionarServicioDesktop(${s.id})">
+          <div class="sp-service-photo">
+            ${foto ? `<img src="${foto}" alt="${s.nombre}" />` : s.icono || '🛎️'}
+          </div>
+          <div class="sp-service-info">
+            <div class="sp-service-name">${s.nombre}</div>
+            <div class="sp-service-price">Desde $${s.precio} USD</div>
+            <div class="sp-service-dur"><i class="ti ti-clock" style="font-size:10px"></i>${s.duracion||'45 min'}</div>
+          </div>
+        </div>`;
+    }).join('');
   }
 }
 
-// ── Beneficios por tipo de servicio (enriquece la UI) ────────
-function beneficiosPorServicio(nombre) {
-  const n = nombre.toLowerCase();
-  if (n.includes('limpieza'))      return ['Elimina sarro y placa bacteriana', 'Revisión general incluida', 'Resultado inmediato'];
-  if (n.includes('blanquea'))      return ['Dientes hasta 8 tonos más blancos', 'Tratamiento profesional en clínica', 'Resultados duraderos'];
-  if (n.includes('implante'))      return ['Titanio de alta durabilidad', 'Se integra naturalmente al hueso', 'Solución permanente'];
-  if (n.includes('orto'))          return ['Corrección progresiva y precisa', 'Brackets o alineadores invisibles', 'Seguimiento personalizado'];
-  if (n.includes('cambio') || n.includes('aceite')) return ['Prolonga la vida del motor', 'Aceite de alta calidad', 'Inspección incluida'];
-  if (n.includes('aline') || n.includes('balanc'))  return ['Mejora el manejo y estabilidad', 'Reduce el desgaste de llantas', 'Diagnóstico computarizado'];
-  if (n.includes('revisión') || n.includes('general')) return ['Inspección de 50+ puntos', 'Reporte detallado', 'Técnicos certificados'];
-  return ['Atención profesional', 'Servicio garantizado', 'Reserva en minutos'];
+function ajustarBrillo(hex,amt){
+  try{
+    const n=parseInt(hex.replace('#',''),16);
+    const r=Math.min(255,Math.max(0,(n>>16)+amt));
+    const g=Math.min(255,Math.max(0,((n>>8)&0xff)+amt));
+    const b=Math.min(255,Math.max(0,(n&0xff)+amt));
+    return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+  }catch{return hex;}
 }
 
-// ── Mostrar detalle reactivo en panel derecho ─────────────────
-function mostrarDetalleDesktop(servicio) {
-  const detalle = document.getElementById('spDetalle');
-  if (!detalle) return;
-
-  // Marcar servicio activo en el grid
-  document.querySelectorAll('.sp-service-item').forEach(el => el.classList.remove('active'));
-  const itemActivo = document.querySelector(`.sp-service-item[data-id="${servicio.id}"]`);
-  if (itemActivo) itemActivo.classList.add('active');
-
-  // Llenar datos
-  document.getElementById('spDetIcon').textContent    = servicio.icono || '🛎️';
-  document.getElementById('spDetTitulo').textContent  = servicio.nombre;
-  document.getElementById('spDetPrecio').textContent  = `Desde $${servicio.precio} USD`;
-  document.getElementById('spDetDuracion').textContent = servicio.duracion || '45 min';
-  document.getElementById('spDetFecha').textContent   = proximaFecha();
-  document.getElementById('spDetDesc').textContent    = servicio.descripcion || `Servicio profesional de ${servicio.nombre.toLowerCase()} con atención personalizada.`;
-
-  // Beneficios
-  const bens = beneficiosPorServicio(servicio.nombre);
-  document.getElementById('spDetBeneficios').innerHTML = bens.map(b =>
-    `<div class="sp-det-ben-item"><i class="ti ti-check"></i>${b}</div>`
-  ).join('');
-
-  // Mostrar con animación
-  detalle.classList.add('visible');
-  detalle.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-function actualizarResumenDesktop(servicio, fecha) {
-  mostrarDetalleDesktop(servicio);
-}
-
-// ── Click en panel derecho — solo muestra detalle, no toca el chat
-function seleccionarServicioDesktop(id) {
-  const servicios = CONFIG.negocio?.servicios || serviciosFallback();
-  const s = servicios.find(x => x.id === id);
-  if (!s) return;
-  CONFIG.servicioSeleccionado = s;
-  mostrarDetalleDesktop(s);
-}
-
-function agendarDesdePanel() {
-  if (!CONFIG.servicioSeleccionado) return;
-  // Simula click en el chat — lleva al resumen en el chat también
-  appendUserBubble(`Quiero agendar ${CONFIG.servicioSeleccionado.nombre}`);
-  setTimeout(async () => {
-    appendTyping();
-    await delay(600);
-    removeTyping();
-    const fecha = proximaFecha();
-    appendBotBubble(`Perfecto, aquí está tu resumen para <strong>${CONFIG.servicioSeleccionado.nombre}</strong>:`);
-    await delay(300);
-    appendResumen(CONFIG.servicioSeleccionado, fecha);
-  }, 200);
-}
-
-function iniciarPagoDesktop() {
-  if (CONFIG.servicioSeleccionado) {
-    iniciarPago(CONFIG.servicioSeleccionado.id, proximaFecha(), CONFIG.servicioSeleccionado.precio);
-  }
-}
-
-function ajustarBrillo(hex, amount) {
-  try {
-    const num = parseInt(hex.replace('#', ''), 16);
-    const r = Math.min(255, Math.max(0, (num >> 16) + amount));
-    const g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + amount));
-    const b = Math.min(255, Math.max(0, (num & 0xff) + amount));
-    return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
-  } catch { return hex; }
-}
-
-// ── Mostrar UI principal ─────────────────────────────────────
 function mostrarUI() {
-  document.getElementById('chatHeader').style.display = 'flex';
-  document.getElementById('chatBody').style.display = 'flex';
-  document.getElementById('inputBar').style.display = 'flex';
-  document.getElementById('bottomNav').style.display = 'flex';
-  const ls = document.getElementById('loadingScreen');
+  document.getElementById('chatHeader').style.display='flex';
+  document.getElementById('chatBody').style.display='flex';
+  document.getElementById('inputBar').style.display='flex';
+  document.getElementById('bottomNav').style.display='flex';
+  const ls=document.getElementById('loadingScreen');
   ls.classList.add('fade-out');
-  setTimeout(() => ls.style.display = 'none', 400);
+  setTimeout(()=>ls.style.display='none',400);
 }
-
-function mostrarError(msg) {
-  document.getElementById('loadingScreen').style.display = 'none';
-  document.getElementById('errorMsg').textContent = msg || '';
+function mostrarError(msg){
+  document.getElementById('loadingScreen').style.display='none';
+  document.getElementById('errorMsg').textContent=msg||'';
   document.getElementById('errorScreen').classList.add('show');
 }
 
-// ── Session token (localStorage) ────────────────────────────
-function initSession(slug) {
-  const key = `pc_session_${slug}`;
-  let token = localStorage.getItem(key);
-  if (!token) {
-    token = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
-    localStorage.setItem(key, token);
-  }
-  CONFIG.sessionToken = token;
-
-  // Historial guardado
-  const histKey = `pc_hist_${slug}`;
-  const saved = localStorage.getItem(histKey);
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      if (parsed && parsed.length > 0) {
-        CONFIG.historial = parsed;
-        document.getElementById('sessionBanner').classList.add('show');
-      }
-    } catch {}
-  }
+function initSession(slug){
+  const key=`pc_session_${slug}`;
+  let token=localStorage.getItem(key);
+  if(!token){ token=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2); localStorage.setItem(key,token); }
+  CONFIG.sessionToken=token;
+  const histKey=`pc_hist_${slug}`;
+  try{
+    const saved=localStorage.getItem(histKey);
+    if(saved){ const p=JSON.parse(saved); if(p&&p.length>0){CONFIG.historial=p; document.getElementById('sessionBanner').classList.add('show');} }
+  }catch{}
 }
-
-function guardarHistorial() {
-  if (!CONFIG.slug) return;
-  const key = `pc_hist_${CONFIG.slug}`;
-  localStorage.setItem(key, JSON.stringify(CONFIG.historial.slice(-20)));
+function guardarHistorial(){
+  if(!CONFIG.slug)return;
+  localStorage.setItem(`pc_hist_${CONFIG.slug}`,JSON.stringify(CONFIG.historial.slice(-20)));
 }
-
-function recoverySession() {
+function recoverySession(){
   document.getElementById('sessionBanner').classList.remove('show');
-  // Re-renderizar historial guardado
-  const body = document.getElementById('chatBody');
-  body.innerHTML = '';
-  addDateSeparator(fechaHoy());
-  CONFIG.historial.forEach(m => {
-    if (m.role === 'bot') appendBotBubble(m.text, false);
-    else appendUserBubble(m.text, false);
-  });
-  body.scrollTop = body.scrollHeight;
+  const body=document.getElementById('chatBody'); body.innerHTML='';
+  addDateSep(fechaHoy());
+  CONFIG.historial.forEach(m=>{ if(m.role==='bot')appendBotBubble(m.text,false); else appendUserBubble(m.text,false); });
+  body.scrollTop=body.scrollHeight;
 }
 
-// ── DOM helpers ──────────────────────────────────────────────
-function addDateSeparator(text) {
-  const body = document.getElementById('chatBody');
-  const div = document.createElement('div');
-  div.className = 'date-separator';
-  div.innerHTML = `<span>${text}</span>`;
-  body.appendChild(div);
+// DOM helpers
+function addDateSep(text){
+  const body=document.getElementById('chatBody');
+  const d=document.createElement('div'); d.className='date-sep';
+  d.innerHTML=`<span>${text}</span>`; body.appendChild(d);
 }
 
-function appendTyping() {
-  const body = document.getElementById('chatBody');
-  const row = document.createElement('div');
-  row.className = 'msg-row bot';
-  row.id = 'typingIndicator';
-  row.innerHTML = `<div class="typing-bubble">
-    <div class="typing-dot"></div>
-    <div class="typing-dot"></div>
-    <div class="typing-dot"></div>
+function appendTyping(){
+  const body=document.getElementById('chatBody');
+  const row=document.createElement('div'); row.className='msg-row bot'; row.id='typingIndicator';
+  row.innerHTML=`<div class="typing-wrap">
+    <div class="msg-avatar" id="typingAvatar">${CONFIG.negocio?.icono||'💬'}</div>
+    <div class="typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
   </div>`;
-  body.appendChild(row);
-  body.scrollTop = body.scrollHeight;
+  body.appendChild(row); body.scrollTop=body.scrollHeight;
 }
+function removeTyping(){ const el=document.getElementById('typingIndicator'); if(el)el.remove(); }
 
-function removeTyping() {
-  const el = document.getElementById('typingIndicator');
-  if (el) el.remove();
-}
-
-function appendBotBubble(html, animate = true) {
-  const body = document.getElementById('chatBody');
-  const row = document.createElement('div');
-  row.className = 'msg-row bot';
-  row.innerHTML = `
-    <div class="bubble bubble-bot">${html}</div>
-    <div class="msg-time">${horaActual()}</div>
-  `;
-  if (!animate) row.style.animation = 'none';
-  body.appendChild(row);
-  body.scrollTop = body.scrollHeight;
+function appendBotBubble(html, animate=true){
+  const body=document.getElementById('chatBody');
+  const row=document.createElement('div'); row.className='msg-row bot';
+  if(!animate)row.style.animation='none';
+  const av = CONFIG.negocio?.logo_url ? `<img src="${CONFIG.negocio.logo_url}" />` : (CONFIG.negocio?.icono||'💬');
+  row.innerHTML=`<div class="msg-with-avatar">
+    <div class="msg-avatar">${av}</div>
+    <div><div class="bubble bubble-bot">${html}</div><div class="msg-time">${hora()}</div></div>
+  </div>`;
+  body.appendChild(row); body.scrollTop=body.scrollHeight;
   return row;
 }
 
-function appendUserBubble(text, animate = true) {
-  const body = document.getElementById('chatBody');
-  const row = document.createElement('div');
-  row.className = 'msg-row user';
-  row.innerHTML = `
-    <div class="bubble bubble-user">${text}</div>
-    <div class="msg-time">${horaActual()}</div>
-  `;
-  if (!animate) row.style.animation = 'none';
-  body.appendChild(row);
-  body.scrollTop = body.scrollHeight;
+function appendUserBubble(text, animate=true){
+  const body=document.getElementById('chatBody');
+  const row=document.createElement('div'); row.className='msg-row user';
+  if(!animate)row.style.animation='none';
+  row.innerHTML=`<div class="bubble bubble-user">${text}</div><div class="msg-time">${hora()}</div>`;
+  body.appendChild(row); body.scrollTop=body.scrollHeight;
 }
 
-// ── Carrusel de servicios ────────────────────────────────────
-function appendCarrusel(servicios) {
-  const body = document.getElementById('chatBody');
-  const cards = servicios.map(s => `
-    <div class="service-card" id="sc-${s.id}" onclick="seleccionarServicio(${s.id})">
+function appendCarrusel(servicios){
+  const body=document.getElementById('chatBody');
+  const tipo=detectarTipoNegocio(CONFIG.negocio?.nombre||'');
+  const badges=['popular','elegido','',''];
+  const cards=servicios.map((s,i)=>{
+    const foto=s.imagen_url||getFotoServicio(s.nombre,tipo);
+    const badge=badges[i]||'';
+    return `<div class="service-card" id="sc-${s.id}" onclick="seleccionarServicio(${s.id})">
       <div class="service-img-wrap">
-        ${s.imagen_url
-          ? `<img src="${s.imagen_url}" alt="${s.nombre}" />`
-          : `<span>${s.icono || '🛎️'}</span>`}
+        ${foto?`<img src="${foto}" alt="${s.nombre}" />`:`<span>${s.icono||'🛎️'}</span>`}
+        ${badge?`<span class="service-badge ${badge}">${badge==='popular'?'Popular':'Más elegido'}</span>`:''}
       </div>
       <div class="service-info">
         <div class="service-name">${s.nombre}</div>
-        <div class="service-price">Desde $${s.precio}</div>
+        <div class="service-desc">${s.descripcion||''}</div>
+        <div class="service-price">Desde $${s.precio} USD</div>
+        <div class="service-duration"><i class="ti ti-clock" style="font-size:11px"></i>${s.duracion||'45 min'}</div>
       </div>
-      <button class="service-select-btn">Seleccionar</button>
+      <button class="service-select-btn">Seleccionar →</button>
+    </div>`;
+  }).join('');
+  const row=document.createElement('div'); row.className='msg-row bot';
+  row.innerHTML=`<div class="msg-with-avatar">
+    <div class="msg-avatar">${CONFIG.negocio?.icono||'💬'}</div>
+    <div>
+      <div class="carousel-wrapper">
+        <div class="carousel-label">Nuestros servicios</div>
+        <div class="carousel-scroll">${cards}</div>
+      </div>
+      <div class="msg-time">${hora()}</div>
     </div>
-  `).join('');
-
-  const row = document.createElement('div');
-  row.className = 'msg-row bot';
-  row.innerHTML = `
-    <div class="carousel-wrapper">
-      <div class="carousel-scroll">${cards}</div>
-    </div>
-    <div class="msg-time">${horaActual()}</div>
-  `;
-  body.appendChild(row);
-  body.scrollTop = body.scrollHeight;
+  </div>`;
+  body.appendChild(row); body.scrollTop=body.scrollHeight;
 }
 
-// ── Tarjeta de resumen + pago ────────────────────────────────
-function appendResumen(servicio, fecha) {
-  const body = document.getElementById('chatBody');
-  const row = document.createElement('div');
-  row.className = 'msg-row bot';
-  row.innerHTML = `
-    <div class="resumen-card">
-      <div class="resumen-titulo">
-        <i class="ti ti-clipboard-check" style="font-size:15px"></i>
-        Resumen de Cita
+function appendResumen(servicio,fecha){
+  const body=document.getElementById('chatBody');
+  const row=document.createElement('div'); row.className='msg-row bot';
+  row.innerHTML=`<div class="msg-with-avatar">
+    <div class="msg-avatar">${CONFIG.negocio?.icono||'💬'}</div>
+    <div>
+      <div class="resumen-card">
+        <div class="resumen-header">
+          <div class="resumen-icon">${servicio.icono||'🛎️'}</div>
+          <div>
+            <div class="resumen-titulo">Resumen de tu cita</div>
+            <div class="resumen-subtitulo">${CONFIG.negocio?.nombre||''}</div>
+          </div>
+        </div>
+        <div class="resumen-fila"><i class="ti ti-stethoscope"></i><span>Servicio: <strong>${servicio.nombre}</strong></span></div>
+        <div class="resumen-fila"><i class="ti ti-calendar"></i><span>Fecha: <strong>${fecha}</strong></span></div>
+        <div class="resumen-fila"><i class="ti ti-clock"></i><span>Duración: <strong>${servicio.duracion||'45 min'}</strong></span></div>
+        <div class="resumen-total">
+          <span class="resumen-total-label">Total a pagar</span>
+          <span class="resumen-total-amount">$${servicio.precio} USD</span>
+        </div>
+        <button class="pagar-btn" onclick="iniciarPago('${servicio.id}','${fecha}',${servicio.precio})">
+          <i class="ti ti-lock" style="font-size:16px"></i> Pagar Ahora
+        </button>
+        <div class="pagos-logos">
+          <span class="visa-logo">VISA</span>
+          <span class="mc-logo"><span></span><span></span></span>
+          <span class="clave-logo">CLAVE</span>
+        </div>
+        <div class="pagos-secure"><i class="ti ti-shield-check"></i> Pago 100% seguro con cifrado SSL</div>
       </div>
-      <div class="resumen-fila">Servicio: <strong>${servicio.nombre}</strong></div>
-      <div class="resumen-fila">Fecha: <strong>${fecha}</strong></div>
-      <div class="resumen-fila">Total a pagar: <strong>$${servicio.precio} USD</strong></div>
-      <button class="pagar-btn" id="pagarBtn" onclick="iniciarPago('${servicio.id}', '${fecha}', ${servicio.precio})">
-        <i class="ti ti-lock" style="font-size:16px"></i> Pagar Ahora
-      </button>
-      <div class="pagos-logos">
-        <span class="visa-logo">VISA</span>
-        <span class="mc-logo"><span></span><span></span></span>
-        <span class="clave-logo">CLAVE</span>
-      </div>
+      <div class="msg-time">${hora()}</div>
     </div>
-    <div class="msg-time">${horaActual()}</div>
-  `;
-  body.appendChild(row);
-  body.scrollTop = body.scrollHeight;
+  </div>`;
+  body.appendChild(row); body.scrollTop=body.scrollHeight;
 }
 
-// ── Quick replies ────────────────────────────────────────────
-function appendQuickReplies(opciones) {
-  const body = document.getElementById('chatBody');
-  const div = document.createElement('div');
-  div.className = 'quick-replies';
-  opciones.forEach(op => {
-    const btn = document.createElement('button');
-    btn.className = 'quick-btn';
-    btn.innerHTML = `<i class="ti ${op.icono}"></i> ${op.texto}`;
-    btn.onclick = () => { div.remove(); quickAction(op.accion); };
+function appendQuickReplies(opciones){
+  const body=document.getElementById('chatBody');
+  const div=document.createElement('div'); div.className='quick-replies';
+  opciones.forEach(op=>{
+    const btn=document.createElement('button'); btn.className='quick-btn';
+    btn.innerHTML=`<i class="ti ${op.icono}"></i> ${op.texto}`;
+    btn.onclick=()=>{div.remove();quickAction(op.accion);};
     div.appendChild(btn);
   });
-  body.appendChild(div);
-  body.scrollTop = body.scrollHeight;
+  body.appendChild(div); body.scrollTop=body.scrollHeight;
 }
 
-// ── Mensaje de bienvenida ────────────────────────────────────
-async function mensajeBienvenida() {
-  const negocio = CONFIG.negocio;
-  addDateSeparator(fechaHoy());
+async function mensajeBienvenida(){
+  addDateSep(fechaHoy());
   await delay(300);
-  appendBotBubble(
-    `¡Hola! 👋 Soy el asistente virtual de <strong>${negocio.nombre}</strong>.<br>¿En qué puedo ayudarte hoy?`
-  );
+  appendBotBubble(`¡Hola! 👋 Soy el asistente virtual de <strong>${CONFIG.negocio.nombre}</strong>.<br>¿En qué puedo ayudarte hoy?`);
   await delay(500);
   appendQuickReplies([
-    { icono: 'ti-calendar', texto: 'Agendar cita',     accion: 'agendar'   },
-    { icono: 'ti-list',     texto: 'Ver servicios',    accion: 'servicios' },
-    { icono: 'ti-tag',      texto: 'Consultar precios',accion: 'precios'   },
+    {icono:'ti-calendar',texto:'Agendar cita',accion:'agendar'},
+    {icono:'ti-list',texto:'Ver servicios',accion:'servicios'},
+    {icono:'ti-tag',texto:'Consultar precios',accion:'precios'},
   ]);
 }
 
-// ── Quick actions ────────────────────────────────────────────
-async function quickAction(accion) {
-  if (accion === 'agendar' || accion === 'servicios') {
-    appendUserBubble(accion === 'agendar' ? 'Quiero agendar una cita' : 'Ver servicios disponibles');
-    appendTyping();
-    await delay(700);
-    removeTyping();
+async function quickAction(accion){
+  if(accion==='agendar'||accion==='servicios'){
+    appendUserBubble(accion==='agendar'?'Quiero agendar una cita':'Ver servicios disponibles');
+    appendTyping(); await delay(700); removeTyping();
     appendBotBubble('Aquí tienes nuestros servicios disponibles:');
-    appendCarrusel(CONFIG.negocio.servicios || serviciosFallback());
-  } else if (accion === 'precios') {
+    appendCarrusel(CONFIG.negocio.servicios||serviciosFallback());
+  } else if(accion==='precios'){
     appendUserBubble('Consultar precios');
-    appendTyping();
-    await delay(600);
-    removeTyping();
-    const lista = (CONFIG.negocio.servicios || serviciosFallback())
-      .map(s => `${s.icono || '🛎️'} ${s.nombre} — <strong>$${s.precio}</strong>`)
-      .join('<br>');
+    appendTyping(); await delay(600); removeTyping();
+    const lista=(CONFIG.negocio.servicios||serviciosFallback()).map(s=>`${s.icono||'🛎️'} ${s.nombre} — <strong>$${s.precio} USD</strong>`).join('<br>');
     appendBotBubble(`Nuestros precios actuales:<br><br>${lista}<br><br>¿Te gustaría agendar alguno?`);
-    appendQuickReplies([
-      { icono: 'ti-calendar', texto: 'Sí, agendar', accion: 'agendar' },
-    ]);
+    appendQuickReplies([{icono:'ti-calendar',texto:'Sí, agendar',accion:'agendar'}]);
   }
 }
 
-// ── Seleccionar servicio del carrusel ────────────────────────
-function seleccionarServicio(id) {
-  const servicios = CONFIG.negocio.servicios || serviciosFallback();
-  const s = servicios.find(x => x.id === id);
-  if (!s) return;
-  CONFIG.servicioSeleccionado = s;
-
-  document.querySelectorAll('.service-card, .sp-service-item').forEach(c => c.classList.remove('selected'));
-  const card = document.getElementById('sc-' + id);
-  if (card) card.classList.add('selected');
-
+function seleccionarServicio(id){
+  const servicios=CONFIG.negocio.servicios||serviciosFallback();
+  const s=servicios.find(x=>x.id===id); if(!s)return;
+  CONFIG.servicioSeleccionado=s;
+  document.querySelectorAll('.service-card,.sp-service-item').forEach(c=>c.classList.remove('selected'));
+  const card=document.getElementById('sc-'+id); if(card)card.classList.add('selected');
   appendUserBubble(`Elijo ${s.nombre}`);
-  const fechaCita = proximaFecha();
-
-  // Actualizar panel derecho desktop inmediatamente
-  actualizarResumenDesktop(s, fechaCita);
-
-  setTimeout(async () => {
-    appendTyping();
-    await delay(600);
-    removeTyping();
-    appendBotBubble(`Excelente elección 🎉 <strong>${s.nombre}</strong> — duración aprox. ${s.duracion || '45 min'}.<br>Te muestro el resumen de tu reserva:`);
+  const fecha=proximaFecha();
+  mostrarDetalleDesktop(s);
+  setTimeout(async()=>{
+    appendTyping(); await delay(600); removeTyping();
+    appendBotBubble(`Excelente elección 🎉 <strong>${s.nombre}</strong> — duración aprox. ${s.duracion||'45 min'}.<br>Te muestro el resumen de tu reserva:`);
     await delay(400);
-    appendResumen(s, fechaCita);
-  }, 200);
+    appendResumen(s,fecha);
+  },200);
 }
 
-// ── Iniciar pago (Páguelo Fácil — próxima fase) ──────────────
-async function iniciarPago(servicioId, fecha, total) {
-  const btn = document.getElementById('pagarBtn');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader" style="animation:spin 0.8s linear infinite;font-size:16px"></i> Procesando...'; }
+function seleccionarServicioDesktop(id){
+  const servicios=CONFIG.negocio?.servicios||serviciosFallback();
+  const s=servicios.find(x=>x.id===id); if(!s)return;
+  CONFIG.servicioSeleccionado=s;
+  mostrarDetalleDesktop(s);
+}
 
-  try {
-    // TODO Fase 4: integrar Páguelo Fácil
-    // const res = await fetch(`/api/pago/crear`, {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ slug: CONFIG.slug, servicioId, fecha, total, sessionToken: CONFIG.sessionToken })
-    // });
-    // const data = await res.json();
-    // if (data.checkout_url) window.location.href = data.checkout_url;
+function beneficios(nombre){
+  const n=nombre.toLowerCase();
+  if(n.includes('limpieza'))   return['Elimina sarro y placa bacteriana','Revisión general incluida','Resultado inmediato'];
+  if(n.includes('blanquea'))   return['Dientes hasta 8 tonos más blancos','Tratamiento profesional','Resultados duraderos'];
+  if(n.includes('implante'))   return['Titanio de alta durabilidad','Se integra naturalmente','Solución permanente'];
+  if(n.includes('orto'))       return['Corrección precisa y progresiva','Brackets o alineadores invisibles','Seguimiento personalizado'];
+  if(n.includes('aceite'))     return['Prolonga la vida del motor','Aceite de alta calidad','Inspección incluida'];
+  if(n.includes('aline')||n.includes('balanc')) return['Mejora el manejo','Reduce desgaste de llantas','Diagnóstico computarizado'];
+  return['Atención profesional','Servicio garantizado','Reserva en minutos'];
+}
 
-    // Placeholder hasta Fase 4
+function mostrarDetalleDesktop(s){
+  const det=document.getElementById('spDetalle'); if(!det)return;
+  document.querySelectorAll('.sp-service-item').forEach(el=>el.classList.remove('active'));
+  const it=document.querySelector(`.sp-service-item[data-id="${s.id}"]`); if(it)it.classList.add('active');
+  const tipo=detectarTipoNegocio(CONFIG.negocio?.nombre||'');
+  const foto=s.imagen_url||getFotoServicio(s.nombre,tipo);
+  const cover=document.getElementById('spDetCover');
+  if(foto) cover.innerHTML=`<img src="${foto}" alt="${s.nombre}" />`; else cover.textContent=s.icono||'🛎️';
+  document.getElementById('spDetIcon').textContent=s.icono||'🛎️';
+  document.getElementById('spDetTitulo').textContent=s.nombre;
+  document.getElementById('spDetPrecio').textContent=`Desde $${s.precio} USD`;
+  document.getElementById('spDetDur').textContent=s.duracion||'45 min';
+  document.getElementById('spDetFecha').textContent=proximaFecha();
+  document.getElementById('spDetDesc').textContent=s.descripcion||`Servicio profesional de ${s.nombre.toLowerCase()} con atención personalizada.`;
+  document.getElementById('spDetBens').innerHTML=beneficios(s.nombre).map(b=>`<div class="sp-det-ben"><i class="ti ti-check"></i>${b}</div>`).join('');
+  det.classList.add('visible');
+  det.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function agendarDesdePanel(){
+  if(!CONFIG.servicioSeleccionado)return;
+  appendUserBubble(`Quiero agendar ${CONFIG.servicioSeleccionado.nombre}`);
+  setTimeout(async()=>{
+    appendTyping(); await delay(600); removeTyping();
+    const fecha=proximaFecha();
+    appendBotBubble(`Perfecto, aquí está tu resumen para <strong>${CONFIG.servicioSeleccionado.nombre}</strong>:`);
+    await delay(300); appendResumen(CONFIG.servicioSeleccionado,fecha);
+  },200);
+}
+
+async function iniciarPago(servicioId,fecha,total){
+  const btns=document.querySelectorAll('.pagar-btn');
+  btns.forEach(b=>{b.disabled=true;b.innerHTML='<i class="ti ti-loader" style="animation:spin 0.8s linear infinite;font-size:16px"></i> Procesando...';});
+  try{
     await delay(1200);
-    appendBotBubble('✅ Procesando tu pago de forma segura con <strong>Páguelo Fácil</strong>.<br>Serás redirigido en un momento...');
-  } catch (err) {
-    appendBotBubble('❌ Hubo un error al procesar el pago. Por favor intenta de nuevo.');
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-lock" style="font-size:16px"></i> Pagar Ahora'; }
+    appendBotBubble('✅ Procesando tu pago con <strong>Páguelo Fácil</strong>.<br>Serás redirigido en un momento... 🔒');
+  }catch{
+    btns.forEach(b=>{b.disabled=false;b.innerHTML='<i class="ti ti-lock"></i> Pagar Ahora';});
+    appendBotBubble('❌ Error al procesar el pago. Por favor intenta de nuevo.');
   }
 }
+function iniciarPagoDesktop(){ if(CONFIG.servicioSeleccionado) iniciarPago(CONFIG.servicioSeleccionado.id,proximaFecha(),CONFIG.servicioSeleccionado.precio); }
 
-// ── Enviar mensaje del usuario ───────────────────────────────
-async function sendUserMsg() {
-  const input = document.getElementById('msgInput');
-  const texto = input.value.trim();
-  if (!texto) return;
-  input.value = '';
+async function sendUserMsg(){
+  const input=document.getElementById('msgInput');
+  const texto=input.value.trim(); if(!texto)return;
+  input.value='';
   appendUserBubble(texto);
-  CONFIG.historial.push({ role: 'user', text: texto });
-  guardarHistorial();
+  CONFIG.historial.push({role:'user',text:texto}); guardarHistorial();
   await procesarRespuesta(texto);
 }
+function handleEnter(e){ if(e.key==='Enter')sendUserMsg(); }
 
-function handleEnter(e) {
-  if (e.key === 'Enter') sendUserMsg();
-}
-
-// ── Procesar respuesta IA ────────────────────────────────────
-async function procesarRespuesta(texto) {
-  appendTyping();
-  await delay(200);
-
-  try {
-    // Llamada al worker de IA
-    const res = await fetch(`/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        slug: CONFIG.slug,
-        mensaje: texto,
-        sessionToken: CONFIG.sessionToken,
-        historial: CONFIG.historial.slice(-6),
-      }),
+async function procesarRespuesta(texto){
+  appendTyping(); await delay(200);
+  try{
+    const res=await fetch('/api/chat',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({slug:CONFIG.slug,mensaje:texto,sessionToken:CONFIG.sessionToken,historial:CONFIG.historial.slice(-6)}),
     });
-
-    if (!res.ok) throw new Error('Error en respuesta');
-    const data = await res.json();
+    if(!res.ok)throw new Error('Error');
+    const data=await res.json(); removeTyping();
+    if(data.respuesta){ appendBotBubble(data.respuesta); CONFIG.historial.push({role:'bot',text:data.respuesta}); guardarHistorial(); }
+    if(data.mostrar_servicios){ await delay(300); appendCarrusel(data.servicios||CONFIG.negocio.servicios||serviciosFallback()); }
+    if(data.mostrar_resumen&&data.servicio){ await delay(300); appendResumen(data.servicio,data.fecha||proximaFecha()); mostrarDetalleDesktop(data.servicio); }
+  }catch{
     removeTyping();
-
-    if (data.respuesta) {
-      appendBotBubble(data.respuesta);
-      CONFIG.historial.push({ role: 'bot', text: data.respuesta });
-      guardarHistorial();
-    }
-    // Si el worker retorna servicios para mostrar
-    if (data.mostrar_servicios) {
-      await delay(300);
-      appendCarrusel(data.servicios || CONFIG.negocio.servicios || serviciosFallback());
-    }
-    // Si retorna resumen de cita
-    if (data.mostrar_resumen && data.servicio) {
-      await delay(300);
-      appendResumen(data.servicio, data.fecha || proximaFecha());
-    }
-
-  } catch {
-    // Fallback local si no hay backend aún
-    removeTyping();
-    const t = texto.toLowerCase();
-    if (t.includes('cita') || t.includes('agendar') || t.includes('reservar')) {
-      appendBotBubble('Con gusto te ayudo a agendar. Aquí están nuestros servicios:');
-      appendCarrusel(CONFIG.negocio?.servicios || serviciosFallback());
-    } else if (t.includes('precio') || t.includes('costo') || t.includes('cuánto')) {
-      await quickAction('precios');
-    } else if (t.includes('hola') || t.includes('buenos') || t.includes('buenas')) {
-      appendBotBubble(`¡Hola! Bienvenido a <strong>${CONFIG.negocio?.nombre || 'nuestro negocio'}</strong>. ¿En qué puedo ayudarte?`);
-    } else if (t.includes('gracias')) {
-      appendBotBubble('¡Con mucho gusto! Cualquier otra consulta estoy aquí para ayudarte. 😊');
-    } else {
-      appendBotBubble('Entendido. ¿Te puedo ayudar con agendar una cita o consultar nuestros servicios?');
-      appendQuickReplies([
-        { icono: 'ti-calendar', texto: 'Agendar cita',  accion: 'agendar'   },
-        { icono: 'ti-list',     texto: 'Ver servicios', accion: 'servicios' },
-      ]);
-    }
+    const t=texto.toLowerCase();
+    if(t.includes('cita')||t.includes('agendar')||t.includes('reservar')){ appendBotBubble('Con gusto te ayudo a agendar. Aquí están nuestros servicios:'); appendCarrusel(CONFIG.negocio?.servicios||serviciosFallback()); }
+    else if(t.includes('precio')||t.includes('costo')||t.includes('cuánto')){ await quickAction('precios'); }
+    else if(t.includes('hola')||t.includes('buenos')||t.includes('buenas')){ appendBotBubble(`¡Hola! Bienvenido a <strong>${CONFIG.negocio?.nombre||'nuestro negocio'}</strong>. ¿En qué puedo ayudarte?`); }
+    else if(t.includes('gracias')){ appendBotBubble('¡Con mucho gusto! Cualquier otra consulta estoy aquí. 😊'); }
+    else{ appendBotBubble('Entendido. ¿Te puedo ayudar con agendar una cita o consultar nuestros servicios?'); appendQuickReplies([{icono:'ti-calendar',texto:'Agendar cita',accion:'agendar'},{icono:'ti-list',texto:'Ver servicios',accion:'servicios'}]); }
   }
 }
 
-// ── Cargar config del negocio desde D1 ──────────────────────
-async function cargarNegocio(slug) {
-  try {
-    const res = await fetch(`/api/negocio/${slug}`);
-    if (!res.ok) throw new Error('not found');
-    const data = await res.json();
-    if (!data.success || !data.negocio) throw new Error('no data');
+async function cargarNegocio(slug){
+  try{
+    const res=await fetch(`/api/negocio/${slug}`); if(!res.ok)throw new Error('not found');
+    const data=await res.json(); if(!data.success||!data.negocio)throw new Error('no data');
     return data.negocio;
-  } catch {
-    return null;
-  }
+  }catch{return null;}
 }
 
-// ── Fallback de datos de demo ────────────────────────────────
-function negocioDemo(slug) {
-  return {
-    nombre: 'Clínica Dental AI',
-    slug: slug || 'demo',
-    color_primary: '#1a73e8',
-    icono: '🦷',
-    logo_url: null,
-    whatsapp_destino: '50799999999',
-    servicios: serviciosFallback(),
-  };
-}
-
-function serviciosFallback() {
-  return [
-    { id: 1, nombre: 'Limpieza Dental',    precio: '30',  icono: '🪥', duracion: '45 min', imagen_url: null },
-    { id: 2, nombre: 'Blanqueamiento',     precio: '80',  icono: '✨', duracion: '60 min', imagen_url: null },
-    { id: 3, nombre: 'Implante Dental',    precio: '250', icono: '🦷', duracion: '90 min', imagen_url: null },
-    { id: 4, nombre: 'Ortodoncia',         precio: '500', icono: '😁', duracion: '120 min',imagen_url: null },
+function serviciosFallback(){
+  return[
+    {id:1,nombre:'Limpieza Dental',precio:'30',icono:'🪥',duracion:'45 min',descripcion:'Limpieza profunda y eliminación de sarro'},
+    {id:2,nombre:'Blanqueamiento',precio:'80',icono:'✨',duracion:'60 min',descripcion:'Blanqueamiento dental profesional'},
+    {id:3,nombre:'Implante Dental',precio:'250',icono:'🦷',duracion:'90 min',descripcion:'Implante de titanio de alta durabilidad'},
+    {id:4,nombre:'Ortodoncia',precio:'500',icono:'😁',duracion:'120 min',descripcion:'Corrección dental con brackets o alineadores'},
   ];
 }
 
-function proximaFecha() {
-  const d = new Date();
-  d.setDate(d.getDate() + 2);
-  return d.toLocaleDateString('es-PA', { day: 'numeric', month: 'long' }) + ', 3:00 PM';
+function negocioDemo(slug){
+  return{nombre:'Clínica Dental AI',slug:slug||'demo',color_primary:'#1a73e8',icono:'🦷',logo_url:null,whatsapp_destino:'50799999999',descripcion:'Tu clínica dental de confianza en Panamá',servicios:serviciosFallback()};
 }
 
-// ── Menú dropdown ────────────────────────────────────────────
-function toggleMenu() {
-  document.getElementById('dropdownMenu').classList.toggle('open');
-}
-document.addEventListener('click', e => {
-  if (!e.target.closest('.header-menu-btn')) {
-    document.getElementById('dropdownMenu')?.classList.remove('open');
-  }
-});
-function openConfig()  { appendBotBubble('Para cambiar la configuración de tu cuenta contacta al administrador.'); }
-function openSupport() {
-  window.open('https://onyx-agente-ia.pages.dev/agente-ia.html?contexto=tienda', '_blank');
-}
+function toggleMenu(){ document.getElementById('dropdownMenu').classList.toggle('open'); }
+document.addEventListener('click',e=>{ if(!e.target.closest('.header-action-btn')) document.getElementById('dropdownMenu')?.classList.remove('open'); });
+function openConfig(){ appendBotBubble('Para cambiar la configuración contacta al administrador.'); }
+function openSupport(){ window.open('https://onyx-agente-ia.pages.dev/agente-ia.html?contexto=tienda','_blank'); }
+function navClick(el,section){ document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active')); el.classList.add('active'); if(section!=='inicio') appendBotBubble(`Sección <strong>${section}</strong> próximamente disponible.`); }
 
-// ── Voz (placeholder) ────────────────────────────────────────
-let recording = false;
-function toggleVoice() {
-  recording = !recording;
-  const icon = document.getElementById('micIcon');
-  icon.className = recording ? 'ti ti-microphone-off' : 'ti ti-microphone';
-  if (recording) appendBotBubble('Funcionalidad de voz próximamente disponible 🎙️');
-}
-
-// ── Navegación bottom ────────────────────────────────────────
-function goSection(section) {
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  event.currentTarget.classList.add('active');
-  if (section !== 'inicio') {
-    appendBotBubble(`Sección <strong>${section}</strong> próximamente disponible.`);
-  }
-}
-
-// ── Utilidad delay ───────────────────────────────────────────
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-// ── INIT ─────────────────────────────────────────────────────
-async function init() {
-  const slug = getSlug();
-  CONFIG.slug = slug;
-
-  if (!slug) {
-    mostrarError('No se especificó ningún negocio en la URL. Ejemplo: tunegocio.com/mi-tienda');
-    return;
-  }
-
+async function init(){
+  const slug=getSlug(); CONFIG.slug=slug;
+  if(!slug){ mostrarError('No se especificó ningún negocio en la URL.'); return; }
   initSession(slug);
-
-  // Cargar negocio desde API
-  let negocio = await cargarNegocio(slug);
-
-  // Si no hay backend aún, usar demo
-  if (!negocio) {
-    negocio = negocioDemo(slug);
-  }
-
-  CONFIG.negocio = negocio;
+  let negocio=await cargarNegocio(slug);
+  if(!negocio) negocio=negocioDemo(slug);
+  CONFIG.negocio=negocio;
   aplicarTema(negocio);
   mostrarUI();
-
-  // Mostrar bienvenida solo si no hay sesión guardada
-  if (CONFIG.historial.length === 0) {
-    await delay(400);
-    await mensajeBienvenida();
-  }
+  if(CONFIG.historial.length===0){ await delay(400); await mensajeBienvenida(); }
 }
 
 init();
 </script>
-
 </body>
 </html>
