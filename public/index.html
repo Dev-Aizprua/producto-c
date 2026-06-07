@@ -974,7 +974,7 @@ async function iniciarPago(svcId, fecha, total) {
       };
       localStorage.setItem(`pc_pago_${C.slug}`, JSON.stringify(estadoPago));
       // Guardar historial también en clave normal
-      guardarHistorial();
+      saveHist();
 
       await registrarCita(s, fecha, total, data.code || '');
       botBubble(`✅ Redirigiendo al pago seguro de <strong>Páguelo Fácil</strong>...<br><small style="color:#aaa">VISA · Mastercard · CLAVE</small>`);
