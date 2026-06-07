@@ -418,6 +418,67 @@
             </button>
           </div>
         </div>
+
+        <!-- Modo de reserva -->
+        <div class="card">
+          <div class="card-title"><i class="ti ti-cash"></i> Modo de Reserva</div>
+          <p style="font-size:13px;color:#888;margin-bottom:18px;line-height:1.6">
+            Define cómo quieres que tus clientes reserven una cita. Puedes cobrar un adelanto, el total o simplemente agendar sin pago.
+          </p>
+
+          <!-- Opciones de modo -->
+          <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
+
+            <label style="display:flex;align-items:flex-start;gap:14px;padding:16px;border:1.5px solid #e0e0e0;border-radius:12px;cursor:pointer;transition:all .15s" id="modoCard-solo_cita" onclick="seleccionarModo('solo_cita')">
+              <input type="radio" name="modoReserva" value="solo_cita" id="modoSoloCita" style="margin-top:3px;accent-color:var(--primary);flex-shrink:0" />
+              <div>
+                <div style="font-size:14px;font-weight:700;color:#1a1a2e;display:flex;align-items:center;gap:8px">
+                  <i class="ti ti-calendar" style="color:var(--primary)"></i> Solo cita — sin pago
+                </div>
+                <div style="font-size:12.5px;color:#888;margin-top:4px;line-height:1.5">
+                  El cliente agenda y paga en el negocio. Ideal para clínicas que prefieren cobrar al momento de la consulta.
+                </div>
+              </div>
+            </label>
+
+            <label style="display:flex;align-items:flex-start;gap:14px;padding:16px;border:1.5px solid #e0e0e0;border-radius:12px;cursor:pointer;transition:all .15s" id="modoCard-adelanto" onclick="seleccionarModo('adelanto')">
+              <input type="radio" name="modoReserva" value="adelanto" id="modoAdelanto" style="margin-top:3px;accent-color:var(--primary);flex-shrink:0" />
+              <div style="flex:1">
+                <div style="font-size:14px;font-weight:700;color:#1a1a2e;display:flex;align-items:center;gap:8px">
+                  <i class="ti ti-coin" style="color:#f59e0b"></i> Reserva con adelanto
+                </div>
+                <div style="font-size:12.5px;color:#888;margin-top:4px;line-height:1.5">
+                  El cliente paga un monto fijo para reservar. El resto lo paga en el negocio. Reduce no-shows.
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+                  <label style="font-size:12px;color:#666;font-weight:600;white-space:nowrap">Monto adelanto:</label>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <span style="font-size:14px;color:#888">$</span>
+                    <input class="field-input" id="montoAdelanto" type="number" min="1" max="999" placeholder="5.00" style="width:90px;padding:7px 10px" onclick="event.stopPropagation()" />
+                    <span style="font-size:12px;color:#888">USD</span>
+                  </div>
+                </div>
+              </div>
+            </label>
+
+            <label style="display:flex;align-items:flex-start;gap:14px;padding:16px;border:1.5px solid #e0e0e0;border-radius:12px;cursor:pointer;transition:all .15s" id="modoCard-pago_completo" onclick="seleccionarModo('pago_completo')">
+              <input type="radio" name="modoReserva" value="pago_completo" id="modoPagoCompleto" style="margin-top:3px;accent-color:var(--primary);flex-shrink:0" />
+              <div>
+                <div style="font-size:14px;font-weight:700;color:#1a1a2e;display:flex;align-items:center;gap:8px">
+                  <i class="ti ti-credit-card" style="color:#10b981"></i> Pago completo
+                </div>
+                <div style="font-size:12.5px;color:#888;margin-top:4px;line-height:1.5">
+                  El cliente paga el total del servicio al reservar. Ideal para tratamientos especiales, paquetes o eventos.
+                </div>
+              </div>
+            </label>
+
+          </div>
+
+          <button class="btn btn-primary" onclick="guardarModoReserva()">
+            <i class="ti ti-device-floppy"></i> Guardar modo de reserva
+          </button>
+        </div>
       </section>
 
       <!-- ── TAB: Servicios ────────────────────────────── -->
@@ -551,13 +612,10 @@ const STATE = {
   negocio: null,
 };
 
-// ── Leer slug de la URL  /panel/dental-demo  o  ?slug=dental-demo ──
+// ── Leer slug de la URL  /panel/dental-demo ──────────────────
 function getSlug() {
-  // Primero busca ?slug=dental-demo en la URL
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('slug')) return params.get('slug');
-  // Si no, lee del path /panel/dental-demo
   const parts = window.location.pathname.replace(/^\/+|\/+$/g, '').split('/');
+  // /panel/dental-demo → parts = ['panel','dental-demo']
   return parts.length >= 2 ? parts[parts.length - 1] : null;
 }
 
@@ -677,8 +735,43 @@ async function cargarNegocio() {
     document.getElementById('negColor').value       = n.color_primary || '#1a73e8';
     document.getElementById('negColorPicker').value = n.color_primary || '#1a73e8';
     document.getElementById('negLogo').value        = n.logo_url || '';
+    // Cargar modo de reserva
+    const modo = n.modo_reserva || 'adelanto';
+    seleccionarModo(modo);
+    if (n.monto_reserva) document.getElementById('montoAdelanto').value = n.monto_reserva;
   } catch (err) {
     showToast('Error al cargar negocio: ' + err.message, 'error');
+  }
+}
+
+function seleccionarModo(modo) {
+  // Marcar radio
+  const radio = document.getElementById(
+    modo === 'solo_cita' ? 'modoSoloCita' :
+    modo === 'adelanto'  ? 'modoAdelanto' : 'modoPagoCompleto'
+  );
+  if (radio) radio.checked = true;
+
+  // Resaltar card seleccionada
+  ['solo_cita','adelanto','pago_completo'].forEach(m => {
+    const card = document.getElementById(`modoCard-${m}`);
+    if (card) {
+      card.style.borderColor = m === modo ? 'var(--primary)' : '#e0e0e0';
+      card.style.background  = m === modo ? 'var(--primary-light)' : 'white';
+    }
+  });
+}
+
+async function guardarModoReserva() {
+  const modo = document.querySelector('input[name="modoReserva"]:checked')?.value || 'adelanto';
+  const monto = parseFloat(document.getElementById('montoAdelanto').value) || 5;
+
+  try {
+    const data = await api('PUT', '/api/panel/negocio/reserva', { modo_reserva: modo, monto_reserva: monto });
+    if (!data.success) throw new Error(data.error);
+    showToast('Modo de reserva guardado correctamente');
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
   }
 }
 

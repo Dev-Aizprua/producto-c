@@ -15,7 +15,7 @@ export async function onRequestGet(context) {
   const { env, data } = context;
   try {
     const negocio = await env.producto_c_db
-      .prepare('SELECT id, slug, nombre, descripcion, logo_url, icono, color_primary, whatsapp_destino FROM negocios WHERE id = ? LIMIT 1')
+      .prepare('SELECT id, slug, nombre, descripcion, logo_url, icono, color_primary, whatsapp_destino, modo_reserva, monto_reserva FROM negocios WHERE id = ? LIMIT 1')
       .bind(data.negocio_id).first();
 
     return Response.json({ success: true, negocio }, { headers: cors });

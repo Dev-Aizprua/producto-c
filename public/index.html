@@ -885,7 +885,6 @@ async function iniciarPago(svcId, fecha, total) {
   const s = C.svcSeleccionado || C.negocio?.servicios?.find(x => x.id == svcId);
   if (!s) return;
 
-  // Deshabilitar botones
   document.querySelectorAll('.pagar-btn, .sp-pag-btn').forEach(b => {
     b.disabled = true;
     b.innerHTML = '<i class="ti ti-loader" style="animation:spin .8s linear infinite;font-size:15px"></i> Generando enlace...';
@@ -896,7 +895,7 @@ async function iniciarPago(svcId, fecha, total) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        monto:      total,
+        monto:       total,
         descripcion: `${s.nombre} — ${C.negocio?.nombre || ''} — ${fecha}`,
         slug:        C.slug,
       }),
@@ -905,7 +904,19 @@ async function iniciarPago(svcId, fecha, total) {
     const data = await res.json();
 
     if (data.success && data.url) {
-      // Registrar cita antes de redirigir
+      // Guardar historial completo + estado antes de salir
+      const estadoPago = {
+        historial:   C.historial,
+        svc:         s,
+        fecha,
+        total,
+        operacion:   data.code || '',
+        timestamp:   Date.now(),
+      };
+      localStorage.setItem(`pc_pago_${C.slug}`, JSON.stringify(estadoPago));
+      // Guardar historial también en clave normal
+      guardarHistorial();
+
       await registrarCita(s, fecha, total, data.code || '');
       botBubble(`✅ Redirigiendo al pago seguro de <strong>Páguelo Fácil</strong>...<br><small style="color:#aaa">VISA · Mastercard · CLAVE</small>`);
       await delay(800);
@@ -953,15 +964,69 @@ function iniciarPagoDesktop() {
   if (C.svcSeleccionado) iniciarPago(C.svcSeleccionado.id, proxFecha(), C.svcSeleccionado.precio);
 }
 
-// Detectar retorno de PF con pago=ok
+// ── Detectar retorno de PF y restaurar historial ─────────────
 function detectarRetornoPago() {
   const params = new URLSearchParams(window.location.search);
-  if (params.get('pago') === 'ok') {
-    delay(600).then(() => {
-      botBubble('✅ <strong>¡Pago completado!</strong> Tu cita ha sido confirmada con éxito.<br>Recibirás más detalles en breve. ¡Gracias! 🎉');
+  if (params.get('pago') !== 'ok') return;
+
+  // Limpiar URL inmediatamente
+  window.history.replaceState({}, '', window.location.pathname);
+
+  // Recuperar estado guardado antes del pago
+  const key = `pc_pago_${C.slug}`;
+  let estadoPago = null;
+  try {
+    const saved = localStorage.getItem(key);
+    if (saved) estadoPago = JSON.parse(saved);
+  } catch {}
+
+  if (estadoPago) {
+    // Restaurar historial completo
+    C.historial = estadoPago.historial || [];
+    localStorage.setItem(`pc_h_${C.slug}`, JSON.stringify(C.historial));
+    localStorage.removeItem(key);
+
+    // Re-renderizar toda la conversación anterior
+    const body = document.getElementById('chatBody');
+    body.innerHTML = '';
+    addDateSep(fechaHoy());
+    C.historial.forEach(m => {
+      if (m.role === 'bot') botBubble(m.text, false);
+      else userBubble(m.text, false);
     });
-    // Limpiar URL
-    window.history.replaceState({}, '', window.location.pathname);
+
+    // Agregar mensaje de confirmación al final
+    setTimeout(() => {
+      const svc = estadoPago.svc;
+      botBubble(
+        `✅ <strong>¡Pago completado!</strong> Tu cita de <strong>${svc?.nombre || 'tu servicio'}</strong> ha sido confirmada con éxito.<br><br>` +
+        `📅 Fecha: <strong>${estadoPago.fecha}</strong><br>` +
+        `💰 Total pagado: <strong>$${estadoPago.total} USD</strong><br><br>` +
+        `Recibirás una confirmación en breve. ¡Gracias por tu confianza! 🎉`
+      );
+      // Actualizar estado de cita a pagado
+      fetch('/api/cita/crear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug:            C.slug,
+          servicio_id:     svc?.id,
+          servicio_nombre: svc?.nombre,
+          fecha_cita:      estadoPago.fecha,
+          total:           estadoPago.total,
+          estado_pago:     'pagado',
+          metodo_pago:     'paguelo_facil',
+          referencia_pago: estadoPago.operacion,
+          session_token:   C.sessionToken,
+        }),
+      }).catch(() => {});
+    }, 400);
+
+  } else {
+    // Sin estado guardado — solo mostrar confirmación
+    setTimeout(() => {
+      botBubble('✅ <strong>¡Pago completado!</strong> Tu cita ha sido confirmada con éxito.<br>Recibirás más detalles en breve. ¡Gracias! 🎉');
+    }, 400);
   }
 }
 
