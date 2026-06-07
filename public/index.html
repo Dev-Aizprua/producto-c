@@ -956,7 +956,7 @@ async function iniciarPago(svcId, fecha, total) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         monto:       total,
-        descripcion: `${s.nombre} — ${C.negocio?.nombre || ''} — ${fecha}`,
+        descripcion: `${s.nombre} - ${C.negocio?.nombre || ''} - ${fecha}`,
         slug:        C.slug,
       }),
     });
