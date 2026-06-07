@@ -792,7 +792,7 @@ async function confirmarSoloCita(svcId, fecha, nombre){
   });
   await registrarCita({id:svcId,nombre}, fecha, 0, 'sin-pago');
   await delay(600);
-  botBubble(`✅ <strong>¡Cita confirmada!</strong> Tu cita de <strong>${nombre}</strong> ha sido reservada para el <strong>${fecha}</strong>.<br><br>Te esperamos en el negocio. ¡Hasta pronto! 😊`);
+  botBubble(`✅ <strong>¡Cita confirmada!</strong> Tu cita de <strong>${nombre}</strong> ha sido reservada para el <strong>${fecha}</strong>.<br><br>Te esperamos en la clínica para brindarte una atención profesional y personalizada. ¡Nos vemos pronto! 😊`);
 }
 
 async function mensajeBienvenida(){
