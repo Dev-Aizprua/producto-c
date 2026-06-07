@@ -45,6 +45,8 @@ export async function onRequestGet(context) {
         icono:           negocio.icono,
         color_primary:   negocio.color_primary,
         whatsapp_destino:negocio.whatsapp_destino,
+        modo_reserva:    negocio.modo_reserva || 'adelanto',
+        monto_reserva:   negocio.monto_reserva || 5,
         servicios:       servicios.map(s => ({
           id:         s.id,
           nombre:     s.nombre,

@@ -709,6 +709,43 @@ function appendCarrusel(servicios){
 
 // ── Resumen ───────────────────────────────────────────────────
 function appendResumen(s,fecha){
+  const modo        = C.negocio?.modo_reserva || 'adelanto';
+  const montoReserva= parseFloat(C.negocio?.monto_reserva || 5);
+  const precioTotal = parseFloat(s.precio);
+
+  // Calcular monto a cobrar según modo
+  let montoPagar, labelTotal, btnTexto, btnIcono, mostrarPagos, filaPago;
+
+  if(modo === 'solo_cita'){
+    montoPagar  = 0;
+    labelTotal  = 'Total en negocio';
+    btnTexto    = 'Confirmar cita gratis';
+    btnIcono    = 'ti-calendar-check';
+    mostrarPagos= false;
+    filaPago    = `<div class="res-fila" style="background:#f0fdf4;border-radius:10px;padding:8px 12px;margin-top:4px">
+      <i class="ti ti-info-circle" style="color:#16a34a"></i>
+      <span style="color:#16a34a;font-weight:600">Sin pago anticipado — paga en el negocio</span>
+    </div>`;
+  } else if(modo === 'adelanto'){
+    montoPagar  = montoReserva;
+    labelTotal  = `Adelanto para reservar`;
+    btnTexto    = `Pagar adelanto $${montoReserva} USD`;
+    btnIcono    = 'ti-lock';
+    mostrarPagos= true;
+    filaPago    = `<div class="res-fila">
+      <i class="ti ti-coin"></i>
+      <span>Saldo restante: <strong>$${(precioTotal - montoReserva).toFixed(2)} USD</strong> — paga en el negocio</span>
+    </div>`;
+  } else {
+    // pago_completo
+    montoPagar  = precioTotal;
+    labelTotal  = 'Total a pagar';
+    btnTexto    = 'Pagar ahora';
+    btnIcono    = 'ti-lock';
+    mostrarPagos= true;
+    filaPago    = '';
+  }
+
   const body=document.getElementById('chatBody');
   const row=document.createElement('div');row.className='msg-row bot';
   row.innerHTML=`<div class="msg-wa"><div class="msg-av">${getAv()}</div>
@@ -721,18 +758,40 @@ function appendResumen(s,fecha){
         <div class="res-fila"><i class="ti ti-stethoscope"></i><span>Servicio: <strong>${s.nombre}</strong></span></div>
         <div class="res-fila"><i class="ti ti-calendar"></i><span>Fecha: <strong>${fecha}</strong></span></div>
         <div class="res-fila"><i class="ti ti-clock"></i><span>Duración: <strong>${s.duracion||'45 min'}</strong></span></div>
-        <div class="res-total"><span class="res-total-lbl">Total a pagar</span><span class="res-total-amt">$${s.precio} USD</span></div>
-        <button class="pagar-btn" onclick="iniciarPago('${s.id}','${fecha}',${s.precio})">
-          <i class="ti ti-lock" style="font-size:15px"></i> Pagar Ahora
-        </button>
+        <div class="res-fila"><i class="ti ti-tag"></i><span>Precio del servicio: <strong>$${precioTotal} USD</strong></span></div>
+        ${filaPago}
+        <div class="res-total">
+          <span class="res-total-lbl">${labelTotal}</span>
+          <span class="res-total-amt">${montoPagar > 0 ? `$${montoPagar} USD` : 'Gratis'}</span>
+        </div>
+        ${modo === 'solo_cita'
+          ? `<button class="pagar-btn" style="background:#16a34a;box-shadow:0 4px 16px rgba(22,163,74,.35)" onclick="confirmarSoloCita('${s.id}','${fecha}','${s.nombre}')">
+              <i class="ti ${btnIcono}" style="font-size:15px"></i> ${btnTexto}
+             </button>`
+          : `<button class="pagar-btn" onclick="iniciarPago('${s.id}','${fecha}',${montoPagar})">
+              <i class="ti ${btnIcono}" style="font-size:15px"></i> ${btnTexto}
+             </button>`
+        }
+        ${mostrarPagos ? `
         <div class="pagos-logos">
           <span class="visa-l">VISA</span><span class="mc-l"><span></span><span></span></span><span class="clave-l">CLAVE</span>
         </div>
-        <div class="pagos-sec"><i class="ti ti-shield-check"></i> Pago 100% seguro con cifrado SSL</div>
+        <div class="pagos-sec"><i class="ti ti-shield-check"></i> Pago 100% seguro con cifrado SSL</div>` : ''}
       </div>
       <div class="msg-time">${hora()}</div>
     </div></div>`;
   body.appendChild(row);body.scrollTop=body.scrollHeight;
+}
+
+// ── Confirmar cita sin pago (modo solo_cita) ─────────────────
+async function confirmarSoloCita(svcId, fecha, nombre){
+  document.querySelectorAll('.pagar-btn').forEach(b=>{
+    b.disabled=true;
+    b.innerHTML='<i class="ti ti-loader" style="animation:spin .8s linear infinite;font-size:15px"></i> Confirmando...';
+  });
+  await registrarCita({id:svcId,nombre}, fecha, 0, 'sin-pago');
+  await delay(600);
+  botBubble(`✅ <strong>¡Cita confirmada!</strong> Tu cita de <strong>${nombre}</strong> ha sido reservada para el <strong>${fecha}</strong>.<br><br>Te esperamos en el negocio. ¡Hasta pronto! 😊`);
 }
 
 async function mensajeBienvenida(){
@@ -961,7 +1020,16 @@ async function registrarCita(s, fecha, total, operacion) {
 }
 
 function iniciarPagoDesktop() {
-  if (C.svcSeleccionado) iniciarPago(C.svcSeleccionado.id, proxFecha(), C.svcSeleccionado.precio);
+  if (!C.svcSeleccionado) return;
+  const modo = C.negocio?.modo_reserva || 'adelanto';
+  const monto = modo === 'solo_cita' ? 0
+    : modo === 'adelanto' ? parseFloat(C.negocio?.monto_reserva || 5)
+    : parseFloat(C.svcSeleccionado.precio);
+  if (modo === 'solo_cita') {
+    confirmarSoloCita(C.svcSeleccionado.id, proxFecha(), C.svcSeleccionado.nombre);
+  } else {
+    iniciarPago(C.svcSeleccionado.id, proxFecha(), monto);
+  }
 }
 
 // ── Detectar retorno de PF y restaurar historial ─────────────
@@ -1073,7 +1141,7 @@ function svcFallback(){
     {id:4,nombre:'Ortodoncia',precio:'500',icono:'😁',duracion:'120 min',descripcion:'Alinea tu sonrisa con brackets'},
   ];
 }
-function negDemo(slug){return{nombre:'Clínica Dental AI',slug:slug||'demo',color_primary:'#1a73e8',icono:'🦷',logo_url:null,whatsapp_destino:'50799999999',descripcion:'Tu clínica dental de confianza en Panamá',servicios:svcFallback()};}
+function negDemo(slug){return{nombre:'Clínica Dental AI',slug:slug||'demo',color_primary:'#1a73e8',icono:'🦷',logo_url:null,whatsapp_destino:'50799999999',descripcion:'Tu clínica dental de confianza en Panamá',modo_reserva:'adelanto',monto_reserva:5,servicios:svcFallback()};}
 
 function toggleMenu(){document.getElementById('dropMenu').classList.toggle('open');}
 document.addEventListener('click',e=>{if(!e.target.closest('.hdr-btn'))document.getElementById('dropMenu')?.classList.remove('open');});
