@@ -80,7 +80,8 @@ INSTRUCCIONES:
 - Si no puedes ayudar con algo, sugiere llamar al negocio por WhatsApp.
 - NUNCA inventes servicios ni precios que no estén en la lista.
 - NUNCA menciones que eres una IA de Groq o cualquier proveedor externo.
-- Cuando el cliente confirme un servicio, termina tu respuesta con: [MOSTRAR_RESUMEN]
+- IMPORTANTE: Cuando el cliente mencione un servicio específico que quiere agendar (aunque no lo confirme explícitamente), confirma brevemente y termina SIEMPRE tu respuesta con: [MOSTRAR_RESUMEN]
+- Ejemplos que deben disparar [MOSTRAR_RESUMEN]: "quiero blanqueamiento", "agenda una limpieza", "reserva para mañana", "quiero una cita de implante".
 
 NEGOCIO: ${negocio.nombre}
 WHATSAPP: ${negocio.whatsapp_destino || 'No disponible'}`;
