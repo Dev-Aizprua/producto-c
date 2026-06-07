@@ -718,13 +718,13 @@ function appendResumen(s,fecha){
 
   if(modo === 'solo_cita'){
     montoPagar  = 0;
-    labelTotal  = 'Total en negocio';
-    btnTexto    = 'Confirmar cita gratis';
+    labelTotal  = 'Reserva';
+    btnTexto    = 'Confirmar cita';
     btnIcono    = 'ti-calendar-check';
     mostrarPagos= false;
     filaPago    = `<div class="res-fila" style="background:#f0fdf4;border-radius:10px;padding:8px 12px;margin-top:4px">
-      <i class="ti ti-info-circle" style="color:#16a34a"></i>
-      <span style="color:#16a34a;font-weight:600">Sin pago anticipado — paga en el negocio</span>
+      <i class="ti ti-circle-check" style="color:#16a34a"></i>
+      <span style="color:#16a34a;font-weight:600">Reserva confirmada al instante</span>
     </div>`;
   } else if(modo === 'adelanto'){
     montoPagar  = montoReserva;
@@ -760,10 +760,11 @@ function appendResumen(s,fecha){
         <div class="res-fila"><i class="ti ti-clock"></i><span>Duración: <strong>${s.duracion||'45 min'}</strong></span></div>
         <div class="res-fila"><i class="ti ti-tag"></i><span>Precio del servicio: <strong>$${precioTotal} USD</strong></span></div>
         ${filaPago}
+        ${modo !== 'solo_cita' ? `
         <div class="res-total">
           <span class="res-total-lbl">${labelTotal}</span>
-          <span class="res-total-amt">${montoPagar > 0 ? `$${montoPagar} USD` : 'Gratis'}</span>
-        </div>
+          <span class="res-total-amt">$${montoPagar} USD</span>
+        </div>` : ''}
         ${modo === 'solo_cita'
           ? `<button class="pagar-btn" style="background:#16a34a;box-shadow:0 4px 16px rgba(22,163,74,.35)" onclick="confirmarSoloCita('${s.id}','${fecha}','${s.nombre}')">
               <i class="ti ${btnIcono}" style="font-size:15px"></i> ${btnTexto}
