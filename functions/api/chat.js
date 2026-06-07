@@ -52,17 +52,31 @@ export async function onRequestPost(context) {
       `- ${s.nombre}: $${s.precio} USD (${s.duracion || 'consultar'})`
     ).join('\n');
 
+    // Instrucción de pago según modo de reserva
+    const modoReserva   = negocio.modo_reserva   || 'adelanto';
+    const montoReserva  = negocio.monto_reserva  || 5;
+
+    const instruccionPago =
+      modoReserva === 'solo_cita'
+        ? `POLÍTICA DE PAGO: Este negocio NO requiere pago anticipado. El cliente agenda su cita gratis y paga el servicio completo directamente en el negocio el día de la cita.`
+      : modoReserva === 'adelanto'
+        ? `POLÍTICA DE PAGO: Para reservar una cita se requiere un adelanto de $${montoReserva} USD. El cliente paga ese adelanto en línea ahora y el saldo restante lo paga en el negocio el día de la cita.`
+      : `POLÍTICA DE PAGO: Este negocio requiere pago completo al momento de reservar. El cliente paga el total del servicio en línea para confirmar su cita.`;
+
     const systemPrompt = `Eres el asistente virtual de "${negocio.nombre}".
 Tu trabajo es ayudar a los clientes a conocer los servicios disponibles, responder preguntas y agendar citas.
 
 SERVICIOS DISPONIBLES:
 ${listaServicios || 'No hay servicios cargados aún.'}
 
+${instruccionPago}
+
 INSTRUCCIONES:
 - Responde siempre en español, de forma amable y profesional.
 - Sé breve (máximo 3 oraciones por respuesta).
 - Si el cliente quiere agendar, confirma el servicio y la fecha.
 - Si preguntan por precio, menciona el costo exacto del servicio.
+- Si preguntan si tienen que pagar algo ahora, explica la política de pago claramente.
 - Si no puedes ayudar con algo, sugiere llamar al negocio por WhatsApp.
 - NUNCA inventes servicios ni precios que no estén en la lista.
 - NUNCA menciones que eres una IA de Groq o cualquier proveedor externo.
