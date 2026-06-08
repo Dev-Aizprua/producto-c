@@ -4,313 +4,252 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Panel de Control</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
   <style>
-    /* ── Reset ──────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; font-family: -apple-system, 'Segoe UI', sans-serif; background: #f4f6f9; color: #1a1a2e; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;font-family:'Inter',-apple-system,sans-serif;background:#f0f2f7;color:#1a1a2e}
 
-    /* ── Variables ──────────────────────────────────────────── */
-    :root {
-      --primary: #1a73e8;
-      --primary-dark: #1557b0;
-      --primary-light: #e8f0fe;
-      --success: #16a34a;
-      --warning: #d97706;
-      --danger: #dc2626;
-      --sidebar-w: 220px;
-      --header-h: 60px;
+    :root{
+      --primary:#1a73e8;--primary-dark:#1557b0;--primary-light:#e8f0fe;
+      --success:#16a34a;--warning:#d97706;--danger:#dc2626;
+      --sidebar-w:240px;--header-h:64px;
+      --card-radius:16px;--card-shadow:0 2px 16px rgba(0,0,0,.06);
+      --card-border:1px solid #edf2f7;
     }
 
-    /* ════════════════════════════════════════════════════════
-       LOGIN
-    ════════════════════════════════════════════════════════ */
-    .login-screen {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-    }
-    .login-card {
-      background: white;
-      border-radius: 20px;
-      padding: 40px;
-      width: 100%;
-      max-width: 380px;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.3);
-    }
-    .login-logo { font-size: 40px; text-align: center; margin-bottom: 8px; }
-    .login-title { font-size: 22px; font-weight: 700; text-align: center; color: #1a1a2e; margin-bottom: 4px; }
-    .login-sub { font-size: 13px; color: #888; text-align: center; margin-bottom: 28px; }
-    .login-slug { background: #f4f6f9; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #555; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
-    .login-slug i { color: var(--primary); }
-    .form-group { margin-bottom: 16px; }
-    .form-label { display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
-    .form-input {
-      width: 100%; padding: 11px 14px; border: 1.5px solid #e0e0e0; border-radius: 10px;
-      font-size: 14px; color: #1a1a2e; outline: none; transition: border-color 0.15s;
-      font-family: inherit;
-    }
-    .form-input:focus { border-color: var(--primary); }
-    .login-btn {
-      width: 100%; padding: 13px; background: var(--primary); color: white; border: none;
-      border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
-      transition: background 0.15s; margin-top: 4px;
-    }
-    .login-btn:hover { background: var(--primary-dark); }
-    .login-btn:disabled { background: #aaa; cursor: not-allowed; }
-    .login-error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 12px; display: none; }
-    .login-error.show { display: block; }
+    /* ══ LOGIN ══════════════════════════════════════════════ */
+    .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)}
+    .login-card{background:white;border-radius:24px;padding:44px;width:100%;max-width:400px;box-shadow:0 32px 80px rgba(0,0,0,.25)}
+    .login-logo{font-size:44px;text-align:center;margin-bottom:8px}
+    .login-title{font-size:24px;font-weight:800;text-align:center;color:#1a1a2e;margin-bottom:4px;letter-spacing:-.3px}
+    .login-sub{font-size:13.5px;color:#999;text-align:center;margin-bottom:28px}
+    .login-slug{background:#f8f9fc;border-radius:12px;padding:11px 16px;font-size:13px;color:#555;margin-bottom:22px;display:flex;align-items:center;gap:8px;border:1px solid #edf2f7}
+    .login-slug i{color:var(--primary)}
+    .form-group{margin-bottom:18px}
+    .form-label{display:block;font-size:11.5px;font-weight:700;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em}
+    .form-input{width:100%;padding:12px 15px;border:1.5px solid #e8ecf0;border-radius:12px;font-size:14px;color:#1a1a2e;outline:none;transition:border-color .15s;font-family:inherit}
+    .form-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,115,232,.08)}
+    .login-btn{width:100%;padding:14px;background:var(--primary);color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;margin-top:4px;font-family:inherit}
+    .login-btn:hover{background:var(--primary-dark)}
+    .login-btn:disabled{background:#aaa;cursor:not-allowed}
+    .login-error{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:10px;padding:11px 15px;font-size:13px;margin-top:12px;display:none}
+    .login-error.show{display:block}
 
-    /* ════════════════════════════════════════════════════════
-       LAYOUT PANEL
-    ════════════════════════════════════════════════════════ */
-    .panel-layout { display: none; min-height: 100vh; }
-    .panel-layout.visible { display: flex; }
+    /* ══ LAYOUT ═════════════════════════════════════════════ */
+    .panel-layout{display:none;min-height:100vh}
+    .panel-layout.visible{display:flex}
 
-    /* Sidebar */
-    .sidebar {
-      width: var(--sidebar-w);
-      background: #1a1a2e;
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-      position: fixed;
-      top: 0; left: 0; bottom: 0;
-      z-index: 100;
-    }
-    .sidebar-header {
-      padding: 20px 16px 16px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-    .sidebar-biz { font-size: 15px; font-weight: 700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sidebar-slug { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
-    .sidebar-nav { flex: 1; padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; }
-    .nav-link {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 12px; border-radius: 10px;
-      font-size: 14px; color: rgba(255,255,255,0.6);
-      cursor: pointer; transition: all 0.15s; text-decoration: none;
-    }
-    .nav-link i { font-size: 18px; }
-    .nav-link:hover { background: rgba(255,255,255,0.07); color: white; }
-    .nav-link.active { background: var(--primary); color: white; }
-    .sidebar-footer { padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.08); }
-    .logout-btn {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 12px; border-radius: 10px;
-      font-size: 14px; color: rgba(255,255,255,0.5);
-      cursor: pointer; transition: all 0.15s; width: 100%; background: none; border: none;
-    }
-    .logout-btn:hover { background: rgba(220,38,38,0.15); color: #f87171; }
-    .logout-btn i { font-size: 18px; }
+    /* ══ SIDEBAR ════════════════════════════════════════════ */
+    .sidebar{width:var(--sidebar-w);background:#0f172a;display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;bottom:0;z-index:100}
+    .sb-brand{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:12px}
+    .sb-brand-icon{width:38px;height:38px;border-radius:10px;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+    .sb-brand-name{font-size:14px;font-weight:700;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+    .sb-brand-slug{font-size:11px;color:rgba(255,255,255,.35);margin-top:1px}
+    .sb-nav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:2px}
+    .sb-section{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.25);padding:12px 10px 6px;margin-top:4px}
+    .nav-link{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;font-size:13.5px;color:rgba(255,255,255,.55);cursor:pointer;transition:all .15s;text-decoration:none;font-weight:500;border-left:3px solid transparent}
+    .nav-link i{font-size:18px;flex-shrink:0}
+    .nav-link:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85)}
+    .nav-link.active{background:rgba(26,115,232,.18);color:white;border-left-color:var(--primary)}
+    .sb-footer{padding:14px 12px;border-top:1px solid rgba(255,255,255,.07)}
+    .sb-user{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:background .15s;margin-bottom:4px}
+    .sb-user:hover{background:rgba(255,255,255,.06)}
+    .sb-user-av{width:34px;height:34px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:white;flex-shrink:0}
+    .sb-user-name{font-size:13px;font-weight:600;color:white;line-height:1.3}
+    .sb-user-role{font-size:11px;color:rgba(255,255,255,.35)}
+    .logout-btn{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;font-size:13px;color:rgba(255,255,255,.4);cursor:pointer;transition:all .15s;width:100%;background:none;border:none;font-family:inherit}
+    .logout-btn:hover{background:rgba(220,38,38,.12);color:#f87171}
+    .logout-btn i{font-size:17px}
 
-    /* Main */
-    .main-content {
-      margin-left: var(--sidebar-w);
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    .main-header {
-      height: var(--header-h);
-      background: white;
-      border-bottom: 1px solid #e8ecf0;
-      display: flex;
-      align-items: center;
-      padding: 0 24px;
-      gap: 12px;
-      position: sticky; top: 0; z-index: 50;
-    }
-    .main-header-title { font-size: 18px; font-weight: 700; color: #1a1a2e; flex: 1; }
-    .main-body { padding: 24px; flex: 1; }
+    /* ══ MAIN ═══════════════════════════════════════════════ */
+    .main-content{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
 
-    /* ════════════════════════════════════════════════════════
-       TABS / SECCIONES
-    ════════════════════════════════════════════════════════ */
-    .tab-section { display: none; }
-    .tab-section.active { display: block; }
+    /* Header */
+    .main-header{background:white;border-bottom:1px solid #edf2f7;padding:0 28px;height:var(--header-h);display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+    .mh-title{flex:1}
+    .mh-greeting{font-size:18px;font-weight:800;color:#1a1a2e;letter-spacing:-.2px}
+    .mh-sub{font-size:12.5px;color:#aaa;margin-top:1px}
+    .mh-actions{display:flex;gap:10px}
 
-    /* ── Cards ──────────────────────────────────────────────── */
-    .card {
-      background: white; border-radius: 14px;
-      border: 1px solid #e8ecf0; padding: 24px;
-      margin-bottom: 20px;
-    }
-    .card-title { font-size: 15px; font-weight: 700; color: #1a1a2e; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
-    .card-title i { font-size: 18px; color: var(--primary); }
+    /* Body */
+    .main-body{padding:28px;flex:1}
 
-    /* ── Form ───────────────────────────────────────────────── */
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-    .form-row.full { grid-template-columns: 1fr; }
-    .field-label { font-size: 12px; font-weight: 600; color: #666; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; display: block; }
-    .field-input, .field-select, .field-textarea {
-      width: 100%; padding: 10px 13px; border: 1.5px solid #e0e0e0; border-radius: 9px;
-      font-size: 14px; color: #1a1a2e; outline: none; transition: border-color 0.15s;
-      font-family: inherit; background: white;
-    }
-    .field-input:focus, .field-select:focus, .field-textarea:focus { border-color: var(--primary); }
-    .field-textarea { resize: vertical; min-height: 80px; }
-    .color-preview { display: flex; align-items: center; gap: 10px; }
-    .color-preview input[type=color] { width: 44px; height: 38px; padding: 2px; border: 1.5px solid #e0e0e0; border-radius: 8px; cursor: pointer; }
+    /* Tabs */
+    .tab-section{display:none}
+    .tab-section.active{display:block}
 
-    /* ── Buttons ────────────────────────────────────────────── */
-    .btn {
-      padding: 10px 18px; border-radius: 9px; font-size: 14px; font-weight: 600;
-      cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
-      transition: all 0.15s; border: none;
-    }
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-primary:hover { background: var(--primary-dark); }
-    .btn-success { background: var(--success); color: white; }
-    .btn-success:hover { background: #15803d; }
-    .btn-danger { background: var(--danger); color: white; }
-    .btn-danger:hover { background: #b91c1c; }
-    .btn-outline { background: white; color: #555; border: 1.5px solid #e0e0e0; }
-    .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
-    .btn-sm { padding: 7px 13px; font-size: 13px; }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    /* ══ CARDS ═══════════════════════════════════════════════ */
+    .card{background:white;border-radius:var(--card-radius);border:var(--card-border);padding:24px;margin-bottom:20px;box-shadow:var(--card-shadow)}
+    .card-title{font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+    .card-title i{font-size:18px;color:var(--primary)}
 
-    /* ── Toast ──────────────────────────────────────────────── */
-    .toast {
-      position: fixed; bottom: 24px; right: 24px;
-      background: #1a1a2e; color: white;
-      padding: 13px 18px; border-radius: 12px;
-      font-size: 14px; display: flex; align-items: center; gap: 10px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-      z-index: 9999; transform: translateY(80px); opacity: 0;
-      transition: all 0.3s; pointer-events: none;
-    }
-    .toast.show { transform: translateY(0); opacity: 1; }
-    .toast.success i { color: #4ade80; }
-    .toast.error i { color: #f87171; }
+    /* ══ KPI CARDS ════════════════════════════════════════════ */
+    .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+    .kpi-card{background:white;border-radius:var(--card-radius);border:var(--card-border);padding:20px;box-shadow:var(--card-shadow);display:flex;align-items:center;gap:16px}
+    .kpi-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+    .kpi-icon.blue{background:#eff6ff;color:#1a73e8}
+    .kpi-icon.green{background:#f0fdf4;color:#16a34a}
+    .kpi-icon.purple{background:#faf5ff;color:#7c3aed}
+    .kpi-icon.orange{background:#fff7ed;color:#ea580c}
+    .kpi-num{font-size:26px;font-weight:800;color:#1a1a2e;letter-spacing:-.5px}
+    .kpi-label{font-size:12.5px;color:#aaa;margin-top:1px;font-weight:500}
+    .kpi-trend{font-size:11px;font-weight:600;margin-top:4px;display:flex;align-items:center;gap:3px}
+    .kpi-trend.up{color:#16a34a}
+    .kpi-trend.neutral{color:#aaa}
 
-    /* ── Servicios grid ─────────────────────────────────────── */
-    .servicios-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-    .servicio-card {
-      background: white; border: 1.5px solid #e8ecf0; border-radius: 14px;
-      overflow: hidden; transition: box-shadow 0.15s;
-    }
-    .servicio-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
-    .servicio-img {
-      width: 100%; height: 140px; object-fit: cover;
-      background: #f0f4ff; display: flex; align-items: center; justify-content: center;
-      font-size: 48px;
-    }
-    .servicio-img img { width: 100%; height: 100%; object-fit: cover; }
-    .servicio-body { padding: 14px; }
-    .servicio-nombre { font-size: 15px; font-weight: 700; color: #1a1a2e; }
-    .servicio-precio { font-size: 18px; font-weight: 800; color: var(--primary); margin: 4px 0; }
-    .servicio-duracion { font-size: 12px; color: #888; }
-    .servicio-actions { display: flex; gap: 8px; margin-top: 12px; }
-    .servicio-inactive { opacity: 0.5; }
+    /* ══ LAYOUT 2 COL ════════════════════════════════════════ */
+    .two-col{display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
 
-    /* ── Modal ──────────────────────────────────────────────── */
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-      display: none; align-items: center; justify-content: center;
-      z-index: 200; padding: 20px;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal {
-      background: white; border-radius: 18px; padding: 28px;
-      width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.2);
-    }
-    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-    .modal-title { font-size: 17px; font-weight: 700; color: #1a1a2e; }
-    .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #888; padding: 4px; }
+    /* ══ FORM ════════════════════════════════════════════════ */
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+    .form-row.full{grid-template-columns:1fr}
+    .field-label{font-size:11.5px;font-weight:700;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;display:block}
+    .field-input,.field-select,.field-textarea{width:100%;padding:11px 14px;border:1.5px solid #e8ecf0;border-radius:10px;font-size:14px;color:#1a1a2e;outline:none;transition:border-color .15s;font-family:inherit;background:white}
+    .field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,115,232,.07)}
+    .field-textarea{resize:vertical;min-height:88px}
+    .color-row{display:flex;align-items:center;gap:10px}
+    .color-row input[type=color]{width:46px;height:40px;padding:3px;border:1.5px solid #e8ecf0;border-radius:10px;cursor:pointer}
 
-    /* ── Upload imagen ──────────────────────────────────────── */
-    .upload-zone {
-      border: 2px dashed #e0e0e0; border-radius: 12px;
-      padding: 24px; text-align: center; cursor: pointer;
-      transition: border-color 0.15s; position: relative;
-    }
-    .upload-zone:hover { border-color: var(--primary); }
-    .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-    .upload-zone i { font-size: 32px; color: #ccc; margin-bottom: 8px; display: block; }
-    .upload-zone p { font-size: 13px; color: #888; }
-    .upload-preview { width: 100%; max-height: 160px; object-fit: cover; border-radius: 10px; margin-top: 12px; display: none; }
+    /* ══ BUTTONS ═════════════════════════════════════════════ */
+    .btn{padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .15s;border:none;font-family:inherit}
+    .btn-primary{background:var(--primary);color:white;box-shadow:0 2px 8px rgba(26,115,232,.25)}
+    .btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 4px 14px rgba(26,115,232,.3)}
+    .btn-success{background:var(--success);color:white}
+    .btn-success:hover{background:#15803d}
+    .btn-danger{background:var(--danger);color:white}
+    .btn-danger:hover{background:#b91c1c}
+    .btn-outline{background:white;color:#555;border:1.5px solid #e8ecf0}
+    .btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+    .btn-ghost{background:transparent;color:#555;border:1.5px solid #e8ecf0}
+    .btn-ghost:hover{background:#f8f9fc}
+    .btn-sm{padding:7px 14px;font-size:13px}
+    .btn-lg{padding:13px 24px;font-size:15px}
+    .btn:disabled{opacity:.6;cursor:not-allowed;transform:none!important}
 
-    /* ── Tabla ──────────────────────────────────────────────── */
-    .table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    thead th { padding: 11px 14px; background: #f8f9fb; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #888; text-align: left; border-bottom: 1px solid #e8ecf0; }
-    tbody td { padding: 13px 14px; border-bottom: 1px solid #f0f0f0; color: #333; vertical-align: middle; }
-    tbody tr:last-child td { border-bottom: none; }
-    tbody tr:hover td { background: #fafbfc; }
+    /* ══ TOAST ═══════════════════════════════════════════════ */
+    .toast{position:fixed;bottom:24px;right:24px;background:#1a1a2e;color:white;padding:13px 18px;border-radius:14px;font-size:14px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none;min-width:260px}
+    .toast.show{transform:translateY(0);opacity:1}
+    .toast.success i{color:#4ade80}
+    .toast.error i{color:#f87171}
 
-    /* ── Badge ──────────────────────────────────────────────── */
-    .badge {
-      display: inline-block; padding: 3px 10px; border-radius: 20px;
-      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
-    }
-    .badge-success { background: #dcfce7; color: #16a34a; }
-    .badge-warning { background: #fef3c7; color: #d97706; }
-    .badge-danger  { background: #fee2e2; color: #dc2626; }
-    .badge-gray    { background: #f1f5f9; color: #64748b; }
+    /* ══ MODO RESERVA — CARDS ═══════════════════════════════ */
+    .modo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+    .modo-card{border:2px solid #e8ecf0;border-radius:14px;padding:18px;cursor:pointer;transition:all .2s;position:relative;background:white}
+    .modo-card:hover{border-color:var(--primary);box-shadow:0 4px 16px rgba(26,115,232,.1)}
+    .modo-card.selected{border-color:var(--primary);background:var(--primary-light);box-shadow:0 4px 16px rgba(26,115,232,.15)}
+    .modo-card-check{position:absolute;top:14px;right:14px;width:22px;height:22px;border-radius:50%;border:2px solid #e0e0e0;display:flex;align-items:center;justify-content:center;transition:all .2s}
+    .modo-card.selected .modo-card-check{background:var(--primary);border-color:var(--primary);color:white}
+    .modo-card-icon{font-size:28px;margin-bottom:10px}
+    .modo-card-title{font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:4px}
+    .modo-card-desc{font-size:12px;color:#888;line-height:1.5}
+    .modo-adelanto-input{margin-top:14px;padding-top:14px;border-top:1px solid #e8ecf0;display:none}
+    .modo-card.selected .modo-adelanto-input{display:block}
+    .modo-adelanto-row{display:flex;align-items:center;gap:8px}
+    .modo-adelanto-row span{font-size:13px;color:#666;font-weight:500}
 
-    /* ── Empty state ────────────────────────────────────────── */
-    .empty-state { text-align: center; padding: 48px 24px; color: #aaa; }
-    .empty-state i { font-size: 48px; margin-bottom: 12px; display: block; }
-    .empty-state p { font-size: 14px; }
+    /* ══ SERVICIOS ════════════════════════════════════════════ */
+    .svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:20px}
+    .svc-card{background:white;border:var(--card-border);border-radius:var(--card-radius);overflow:hidden;transition:box-shadow .15s;box-shadow:var(--card-shadow)}
+    .svc-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.1)}
+    .svc-img{width:100%;height:140px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-size:52px;overflow:hidden}
+    .svc-img img{width:100%;height:100%;object-fit:cover}
+    .svc-body{padding:16px}
+    .svc-nombre{font-size:15px;font-weight:700;color:#1a1a2e}
+    .svc-precio{font-size:20px;font-weight:800;color:var(--primary);margin:4px 0}
+    .svc-dur{font-size:12px;color:#aaa;display:flex;align-items:center;gap:4px}
+    .svc-actions{display:flex;gap:8px;margin-top:14px}
+    .svc-inactive{opacity:.5}
 
-    /* ── Chat viewer ────────────────────────────────────────── */
-    .chat-list { display: flex; flex-direction: column; gap: 10px; }
-    .chat-item {
-      background: white; border: 1px solid #e8ecf0; border-radius: 12px;
-      padding: 16px; cursor: pointer; transition: all 0.15s;
-    }
-    .chat-item:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(26,115,232,0.1); }
-    .chat-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-    .chat-item-id { font-size: 13px; font-weight: 600; color: #1a1a2e; }
-    .chat-item-fecha { font-size: 11px; color: #aaa; }
-    .chat-item-preview { font-size: 13px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .chat-bubble-list { display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; padding: 12px 0; }
-    .chat-bub { max-width: 80%; padding: 9px 13px; border-radius: 12px; font-size: 13.5px; line-height: 1.5; }
-    .chat-bub.bot { background: #f0f2f5; border-radius: 2px 12px 12px 12px; align-self: flex-start; color: #1a1a2e; }
-    .chat-bub.user { background: var(--primary-light); border-radius: 12px 2px 12px 12px; align-self: flex-end; color: #1a1a2e; }
+    /* ══ MODAL ════════════════════════════════════════════════ */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;backdrop-filter:blur(4px)}
+    .modal-overlay.open{display:flex}
+    .modal{background:white;border-radius:20px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.2)}
+    .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+    .modal-title{font-size:18px;font-weight:800;color:#1a1a2e}
+    .modal-close{background:#f5f5f5;border:none;width:34px;height:34px;border-radius:50%;cursor:pointer;color:#888;font-size:18px;display:flex;align-items:center;justify-content:center;transition:background .15s}
+    .modal-close:hover{background:#fee2e2;color:#dc2626}
 
-    /* ── Responsive ─────────────────────────────────────────── */
-    @media (max-width: 768px) {
-      .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
-      .sidebar.open { transform: translateX(0); }
-      .main-content { margin-left: 0; }
-      .form-row { grid-template-columns: 1fr; }
-    }
+    /* ══ UPLOAD ═══════════════════════════════════════════════ */
+    .upload-zone{border:2px dashed #e0e0e0;border-radius:12px;padding:24px;text-align:center;cursor:pointer;transition:border-color .15s;position:relative}
+    .upload-zone:hover{border-color:var(--primary);background:#fafbff}
+    .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+    .upload-zone i{font-size:32px;color:#ccc;margin-bottom:8px;display:block}
+    .upload-zone p{font-size:13px;color:#aaa}
+    .upload-preview{width:100%;max-height:160px;object-fit:cover;border-radius:10px;margin-top:12px;display:none}
 
-    /* ── Loading spinner ────────────────────────────────────── */
-    .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* ══ TABLE ════════════════════════════════════════════════ */
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    thead th{padding:12px 16px;background:#f8f9fc;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#999;text-align:left;border-bottom:1px solid #edf2f7}
+    tbody td{padding:14px 16px;border-bottom:1px solid #f5f5f5;color:#333;vertical-align:middle}
+    tbody tr:last-child td{border-bottom:none}
+    tbody tr:hover td{background:#fafbfc}
 
-    .section-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .section-actions h2 { font-size: 16px; font-weight: 700; }
+    /* ══ BADGE ════════════════════════════════════════════════ */
+    .badge{display:inline-flex;align-items:center;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+    .badge-success{background:#dcfce7;color:#16a34a}
+    .badge-warning{background:#fef3c7;color:#d97706}
+    .badge-danger{background:#fee2e2;color:#dc2626}
+    .badge-gray{background:#f1f5f9;color:#64748b}
+    .badge-blue{background:var(--primary-light);color:var(--primary)}
+
+    /* ══ EMPTY ════════════════════════════════════════════════ */
+    .empty-state{text-align:center;padding:56px 24px;color:#ccc}
+    .empty-state i{font-size:52px;margin-bottom:14px;display:block}
+    .empty-state p{font-size:14px}
+
+    /* ══ CHAT PREVIEW ═════════════════════════════════════════ */
+    .preview-card{background:#f0f2f7;border-radius:var(--card-radius);border:var(--card-border);overflow:hidden;box-shadow:var(--card-shadow)}
+    .preview-header{padding:14px 16px;display:flex;align-items:center;gap:10px}
+    .preview-av{width:38px;height:38px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;flex-shrink:0}
+    .preview-av img{width:100%;height:100%;object-fit:cover}
+    .preview-name{font-size:14px;font-weight:700;color:white}
+    .preview-status{font-size:11px;color:rgba(255,255,255,.8);display:flex;align-items:center;gap:4px}
+    .preview-dot{width:6px;height:6px;border-radius:50%;background:#4ade80}
+    .preview-body{padding:14px;display:flex;flex-direction:column;gap:10px;min-height:200px;background:linear-gradient(180deg,#f7f9fc,#eef2f7)}
+    .preview-bubble{background:white;border-radius:4px 14px 14px 14px;padding:10px 13px;font-size:13px;color:#1a1a2e;box-shadow:0 1px 4px rgba(0,0,0,.06);max-width:85%}
+    .preview-qr{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+    .preview-qr-btn{border:1.5px solid var(--primary);color:var(--primary);border-radius:16px;padding:5px 11px;font-size:11.5px;font-weight:500;background:white;white-space:nowrap}
+    .preview-input{margin:10px 14px 14px;background:white;border-radius:20px;padding:10px 16px;font-size:13px;color:#aaa;border:1.5px solid #e8ecf0}
+
+    /* ══ CHAT LIST ════════════════════════════════════════════ */
+    .chat-list{display:flex;flex-direction:column;gap:10px}
+    .chat-item{background:white;border:var(--card-border);border-radius:12px;padding:16px;cursor:pointer;transition:all .15s;box-shadow:var(--card-shadow)}
+    .chat-item:hover{border-color:var(--primary);box-shadow:0 4px 16px rgba(26,115,232,.1)}
+    .chat-item-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+    .chat-item-id{font-size:13.5px;font-weight:700;color:#1a1a2e}
+    .chat-item-fecha{font-size:11px;color:#aaa}
+    .chat-item-preview{font-size:13px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .chat-bubble-list{display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;padding:12px 0}
+    .chat-bub{max-width:80%;padding:10px 14px;border-radius:12px;font-size:13.5px;line-height:1.5}
+    .chat-bub.bot{background:#f0f2f5;border-radius:2px 12px 12px 12px;align-self:flex-start;color:#1a1a2e}
+    .chat-bub.user{background:var(--primary-light);border-radius:12px 2px 12px 12px;align-self:flex-end;color:#1a1a2e}
+
+    /* ══ SECTION HEADER ══════════════════════════════════════ */
+    .section-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+    .section-hdr h2{font-size:17px;font-weight:800;color:#1a1a2e}
+
+    /* ══ SPINNER ═════════════════════════════════════════════ */
+    .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ══ RESPONSIVE ══════════════════════════════════════════ */
+    @media(max-width:1100px){.two-col{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:768px){.sidebar{transform:translateX(-100%)}.main-content{margin-left:0}.form-row{grid-template-columns:1fr}.modo-grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════════════
-     LOGIN
-══════════════════════════════════════════════════════ -->
+<!-- ══ LOGIN ════════════════════════════════════════════════ -->
 <div class="login-screen" id="loginScreen">
   <div class="login-card">
     <div class="login-logo">🏢</div>
     <div class="login-title">Panel de Control</div>
     <div class="login-sub">Accede para administrar tu negocio</div>
-
-    <div class="login-slug">
-      <i class="ti ti-building-store"></i>
-      <span id="loginSlugLabel">Cargando...</span>
-    </div>
-
+    <div class="login-slug"><i class="ti ti-building-store"></i><span id="loginSlugLabel">Cargando...</span></div>
     <div class="form-group">
       <label class="form-label">Usuario</label>
       <input class="form-input" id="loginUsuario" type="text" placeholder="tu usuario" autocomplete="username" />
@@ -319,208 +258,159 @@
       <label class="form-label">Contraseña</label>
       <input class="form-input" id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
     </div>
-
-    <button class="login-btn" id="loginBtn" onclick="doLogin()">
-      Ingresar al Panel
-    </button>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Ingresar al Panel</button>
     <div class="login-error" id="loginError"></div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════
-     PANEL LAYOUT
-══════════════════════════════════════════════════════ -->
+<!-- ══ PANEL ═════════════════════════════════════════════════ -->
 <div class="panel-layout" id="panelLayout">
 
   <!-- Sidebar -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-biz" id="sidebarBiz">Mi Negocio</div>
-      <div class="sidebar-slug" id="sidebarSlug"></div>
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-brand-icon" id="sbIcon">🏢</div>
+      <div>
+        <div class="sb-brand-name" id="sbName">Mi Negocio</div>
+        <div class="sb-brand-slug" id="sbSlug">Panel de administración</div>
+      </div>
     </div>
-    <nav class="sidebar-nav">
-      <a class="nav-link active" onclick="showTab('negocio')">
-        <i class="ti ti-building-store"></i> Mi Negocio
-      </a>
-      <a class="nav-link" onclick="showTab('servicios')">
-        <i class="ti ti-list-details"></i> Servicios
-      </a>
-      <a class="nav-link" onclick="showTab('citas')">
-        <i class="ti ti-calendar-check"></i> Citas
-      </a>
-      <a class="nav-link" onclick="showTab('chats')">
-        <i class="ti ti-message-dots"></i> Chats
-      </a>
+    <nav class="sb-nav">
+      <div class="sb-section">Principal</div>
+      <a class="nav-link active" onclick="showTab('dashboard',this)"><i class="ti ti-home"></i> Dashboard</a>
+      <div class="sb-section">Gestión</div>
+      <a class="nav-link" onclick="showTab('servicios',this)"><i class="ti ti-list-details"></i> Servicios</a>
+      <a class="nav-link" onclick="showTab('citas',this)"><i class="ti ti-calendar-check"></i> Reservas</a>
+      <a class="nav-link" onclick="showTab('chats',this)"><i class="ti ti-message-dots"></i> Conversaciones</a>
+      <div class="sb-section">Configuración</div>
+      <a class="nav-link" onclick="showTab('negocio',this)"><i class="ti ti-settings"></i> Configuración</a>
     </nav>
-    <div class="sidebar-footer">
-      <button class="logout-btn" onclick="doLogout()">
-        <i class="ti ti-logout"></i> Cerrar sesión
-      </button>
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="sb-user-av" id="sbUserAv">A</div>
+        <div>
+          <div class="sb-user-name">Admin</div>
+          <div class="sb-user-role">Administrador</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()"><i class="ti ti-logout"></i> Cerrar sesión</button>
     </div>
   </aside>
 
   <!-- Main -->
   <main class="main-content">
     <header class="main-header">
-      <div class="main-header-title" id="mainTitle">Mi Negocio</div>
-      <a href="#" id="verChatLink" target="_blank" style="text-decoration:none">
-        <button class="btn btn-outline btn-sm"><i class="ti ti-external-link"></i> Ver chat</button>
-      </a>
+      <div class="mh-title">
+        <div class="mh-greeting" id="mhGreeting">¡Hola, Admin! 👋</div>
+        <div class="mh-sub">Gestiona tu negocio, servicios y reservas desde un solo lugar.</div>
+      </div>
+      <div class="mh-actions">
+        <a id="verChatLink" href="#" target="_blank" style="text-decoration:none">
+          <button class="btn btn-ghost btn-sm"><i class="ti ti-eye"></i> Ver chat</button>
+        </a>
+        <button class="btn btn-ghost btn-sm" onclick="copiarEnlace()"><i class="ti ti-share"></i> Compartir</button>
+        <button class="btn btn-primary btn-sm" onclick="showTab('negocio',null)"><i class="ti ti-settings"></i> Configuración</button>
+      </div>
     </header>
 
     <div class="main-body">
 
-      <!-- ── TAB: Negocio ───────────────────────────────── -->
-      <section class="tab-section active" id="tab-negocio">
+      <!-- ══ TAB: DASHBOARD ══════════════════════════════════ -->
+      <section class="tab-section active" id="tab-dashboard">
+        <!-- KPIs -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-icon blue"><i class="ti ti-list-details"></i></div>
+            <div>
+              <div class="kpi-num" id="kpiServicios">—</div>
+              <div class="kpi-label">Servicios activos</div>
+              <div class="kpi-trend neutral"><i class="ti ti-minus" style="font-size:11px"></i> En tu catálogo</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon green"><i class="ti ti-calendar-check"></i></div>
+            <div>
+              <div class="kpi-num" id="kpiCitas">—</div>
+              <div class="kpi-label">Reservas totales</div>
+              <div class="kpi-trend up"><i class="ti ti-arrow-up" style="font-size:11px"></i> Acumuladas</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon purple"><i class="ti ti-message-dots"></i></div>
+            <div>
+              <div class="kpi-num" id="kpiChats">—</div>
+              <div class="kpi-label">Conversaciones</div>
+              <div class="kpi-trend neutral"><i class="ti ti-minus" style="font-size:11px"></i> Este mes</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon orange"><i class="ti ti-currency-dollar"></i></div>
+            <div>
+              <div class="kpi-num" id="kpiIngresos">$—</div>
+              <div class="kpi-label">Ingresos recibidos</div>
+              <div class="kpi-trend up"><i class="ti ti-arrow-up" style="font-size:11px"></i> Pagos en línea</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accesos rápidos -->
         <div class="card">
-          <div class="card-title"><i class="ti ti-building-store"></i> Información del Negocio</div>
-          <div class="form-row">
-            <div>
-              <label class="field-label">Nombre del negocio</label>
-              <input class="field-input" id="negNombre" type="text" placeholder="Ej: Clínica Dental AI" />
-            </div>
-            <div>
-              <label class="field-label">Ícono (emoji)</label>
-              <input class="field-input" id="negIcono" type="text" placeholder="🦷" maxlength="4" />
-            </div>
-          </div>
-          <div class="form-row full">
-            <div>
-              <label class="field-label">Descripción</label>
-              <textarea class="field-textarea" id="negDescripcion" placeholder="Describe brevemente tu negocio..."></textarea>
-            </div>
-          </div>
-          <div class="form-row">
-            <div>
-              <label class="field-label">WhatsApp (con código de país)</label>
-              <input class="field-input" id="negWhatsapp" type="text" placeholder="50799999999" />
-            </div>
-            <div>
-              <label class="field-label">Color principal</label>
-              <div class="color-preview">
-                <input type="color" id="negColorPicker" value="#1a73e8" oninput="document.getElementById('negColor').value=this.value" />
-                <input class="field-input" id="negColor" type="text" value="#1a73e8" placeholder="#1a73e8" oninput="document.getElementById('negColorPicker').value=this.value" style="flex:1" />
-              </div>
-            </div>
-          </div>
-          <div class="form-row full">
-            <div>
-              <label class="field-label">Logo URL (Cloudinary)</label>
-              <input class="field-input" id="negLogo" type="text" placeholder="https://res.cloudinary.com/..." />
-            </div>
-          </div>
-          <div style="display:flex; gap:10px; margin-top:8px">
-            <button class="btn btn-primary" onclick="guardarNegocio()">
-              <i class="ti ti-device-floppy"></i> Guardar cambios
-            </button>
-            <button class="btn btn-outline" onclick="cargarNegocio()">
-              <i class="ti ti-refresh"></i> Recargar
-            </button>
+          <div class="card-title"><i class="ti ti-bolt"></i> Accesos rápidos</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="showTab('servicios',null);abrirModalServicio()"><i class="ti ti-plus"></i> Nuevo servicio</button>
+            <button class="btn btn-outline" onclick="showTab('citas',null)"><i class="ti ti-calendar"></i> Ver reservas</button>
+            <button class="btn btn-outline" onclick="showTab('chats',null)"><i class="ti ti-message"></i> Ver conversaciones</button>
+            <button class="btn btn-outline" onclick="showTab('negocio',null)"><i class="ti ti-settings"></i> Configurar negocio</button>
           </div>
         </div>
 
-        <!-- Modo de reserva -->
+        <!-- Últimas citas -->
         <div class="card">
-          <div class="card-title"><i class="ti ti-cash"></i> Modo de Reserva</div>
-          <p style="font-size:13px;color:#888;margin-bottom:18px;line-height:1.6">
-            Define cómo quieres que tus clientes reserven una cita. Puedes cobrar un adelanto, el total o simplemente agendar sin pago.
-          </p>
-
-          <!-- Opciones de modo -->
-          <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
-
-            <label style="display:flex;align-items:flex-start;gap:14px;padding:16px;border:1.5px solid #e0e0e0;border-radius:12px;cursor:pointer;transition:all .15s" id="modoCard-solo_cita" onclick="seleccionarModo('solo_cita')">
-              <input type="radio" name="modoReserva" value="solo_cita" id="modoSoloCita" style="margin-top:3px;accent-color:var(--primary);flex-shrink:0" />
-              <div>
-                <div style="font-size:14px;font-weight:700;color:#1a1a2e;display:flex;align-items:center;gap:8px">
-                  <i class="ti ti-calendar" style="color:var(--primary)"></i> Solo cita — sin pago
-                </div>
-                <div style="font-size:12.5px;color:#888;margin-top:4px;line-height:1.5">
-                  El cliente agenda y paga en el negocio. Ideal para clínicas que prefieren cobrar al momento de la consulta.
-                </div>
-              </div>
-            </label>
-
-            <label style="display:flex;align-items:flex-start;gap:14px;padding:16px;border:1.5px solid #e0e0e0;border-radius:12px;cursor:pointer;transition:all .15s" id="modoCard-adelanto" onclick="seleccionarModo('adelanto')">
-              <input type="radio" name="modoReserva" value="adelanto" id="modoAdelanto" style="margin-top:3px;accent-color:var(--primary);flex-shrink:0" />
-              <div style="flex:1">
-                <div style="font-size:14px;font-weight:700;color:#1a1a2e;display:flex;align-items:center;gap:8px">
-                  <i class="ti ti-coin" style="color:#f59e0b"></i> Reserva con adelanto
-                </div>
-                <div style="font-size:12.5px;color:#888;margin-top:4px;line-height:1.5">
-                  El cliente paga un monto fijo para reservar. El resto lo paga en el negocio. Reduce no-shows.
-                </div>
-                <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
-                  <label style="font-size:12px;color:#666;font-weight:600;white-space:nowrap">Monto adelanto:</label>
-                  <div style="display:flex;align-items:center;gap:6px">
-                    <span style="font-size:14px;color:#888">$</span>
-                    <input class="field-input" id="montoAdelanto" type="number" min="1" max="999" placeholder="5.00" style="width:90px;padding:7px 10px" onclick="event.stopPropagation()" />
-                    <span style="font-size:12px;color:#888">USD</span>
-                  </div>
-                </div>
-              </div>
-            </label>
-
-            <label style="display:flex;align-items:flex-start;gap:14px;padding:16px;border:1.5px solid #e0e0e0;border-radius:12px;cursor:pointer;transition:all .15s" id="modoCard-pago_completo" onclick="seleccionarModo('pago_completo')">
-              <input type="radio" name="modoReserva" value="pago_completo" id="modoPagoCompleto" style="margin-top:3px;accent-color:var(--primary);flex-shrink:0" />
-              <div>
-                <div style="font-size:14px;font-weight:700;color:#1a1a2e;display:flex;align-items:center;gap:8px">
-                  <i class="ti ti-credit-card" style="color:#10b981"></i> Pago completo
-                </div>
-                <div style="font-size:12.5px;color:#888;margin-top:4px;line-height:1.5">
-                  El cliente paga el total del servicio al reservar. Ideal para tratamientos especiales, paquetes o eventos.
-                </div>
-              </div>
-            </label>
-
-          </div>
-
-          <button class="btn btn-primary" onclick="guardarModoReserva()">
-            <i class="ti ti-device-floppy"></i> Guardar modo de reserva
-          </button>
-        </div>
-      </section>
-
-      <!-- ── TAB: Servicios ────────────────────────────── -->
-      <section class="tab-section" id="tab-servicios">
-        <div class="section-actions">
-          <h2>Servicios</h2>
-          <button class="btn btn-primary" onclick="abrirModalServicio()">
-            <i class="ti ti-plus"></i> Nuevo servicio
-          </button>
-        </div>
-        <div class="servicios-grid" id="serviciosGrid">
-          <div class="empty-state"><i class="ti ti-loader" style="animation:spin 1s linear infinite"></i><p>Cargando servicios...</p></div>
-        </div>
-      </section>
-
-      <!-- ── TAB: Citas ─────────────────────────────────── -->
-      <section class="tab-section" id="tab-citas">
-        <div class="card">
-          <div class="card-title"><i class="ti ti-calendar-check"></i> Citas recibidas</div>
+          <div class="card-title"><i class="ti ti-calendar-check"></i> Últimas reservas</div>
           <div class="table-wrap">
-            <table id="citasTable">
-              <thead>
-                <tr>
-                  <th>Cliente</th><th>Teléfono</th><th>Servicio</th>
-                  <th>Fecha cita</th><th>Total</th><th>Pago</th><th>Fecha</th>
-                </tr>
-              </thead>
-              <tbody id="citasTbody">
-                <tr><td colspan="7" style="text-align:center;color:#aaa;padding:32px">Cargando citas...</td></tr>
+            <table>
+              <thead><tr><th>Servicio</th><th>Fecha</th><th>Total</th><th>Estado</th></tr></thead>
+              <tbody id="dashCitasTbody">
+                <tr><td colspan="4" style="text-align:center;color:#aaa;padding:28px">Cargando...</td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- ── TAB: Chats ─────────────────────────────────── -->
+      <!-- ══ TAB: SERVICIOS ══════════════════════════════════ -->
+      <section class="tab-section" id="tab-servicios">
+        <div class="section-hdr">
+          <h2>Servicios</h2>
+          <button class="btn btn-primary" onclick="abrirModalServicio()"><i class="ti ti-plus"></i> Nuevo servicio</button>
+        </div>
+        <div class="svc-grid" id="serviciosGrid">
+          <div class="empty-state" style="grid-column:1/-1"><i class="ti ti-loader" style="animation:spin 1s linear infinite"></i><p>Cargando...</p></div>
+        </div>
+      </section>
+
+      <!-- ══ TAB: CITAS ══════════════════════════════════════ -->
+      <section class="tab-section" id="tab-citas">
+        <div class="section-hdr"><h2>Reservas</h2></div>
+        <div class="card">
+          <div class="card-title"><i class="ti ti-calendar-check"></i> Todas las reservas</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Cliente</th><th>Teléfono</th><th>Servicio</th><th>Fecha cita</th><th>Total</th><th>Pago</th><th>Fecha registro</th></tr></thead>
+              <tbody id="citasTbody"><tr><td colspan="7" style="text-align:center;color:#aaa;padding:32px">Cargando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══ TAB: CHATS ══════════════════════════════════════ -->
       <section class="tab-section" id="tab-chats">
+        <div class="section-hdr"><h2>Conversaciones</h2></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
           <div class="card" style="margin:0">
             <div class="card-title"><i class="ti ti-message-dots"></i> Conversaciones</div>
             <div class="chat-list" id="chatList">
-              <div class="empty-state"><i class="ti ti-loader" style="animation:spin 1s linear infinite"></i><p>Cargando chats...</p></div>
+              <div class="empty-state"><i class="ti ti-loader" style="animation:spin 1s linear infinite"></i><p>Cargando...</p></div>
             </div>
           </div>
           <div class="card" style="margin:0" id="chatViewer">
@@ -530,56 +420,124 @@
         </div>
       </section>
 
-    </div><!-- /main-body -->
-  </main>
-</div><!-- /panel-layout -->
+      <!-- ══ TAB: NEGOCIO (CONFIGURACIÓN) ════════════════════ -->
+      <section class="tab-section" id="tab-negocio">
+        <div class="two-col">
+          <!-- Izquierda: formularios -->
+          <div>
+            <div class="card">
+              <div class="card-title"><i class="ti ti-building-store"></i> Información del Negocio</div>
+              <div class="form-row">
+                <div><label class="field-label">Nombre del negocio</label><input class="field-input" id="negNombre" type="text" placeholder="Ej: Clínica Dental AI" oninput="actualizarPreview()" /></div>
+                <div><label class="field-label">Ícono (emoji)</label><input class="field-input" id="negIcono" type="text" placeholder="🦷" maxlength="4" oninput="actualizarPreview()" /></div>
+              </div>
+              <div class="form-row full">
+                <div><label class="field-label">Descripción</label><textarea class="field-textarea" id="negDescripcion" placeholder="Describe brevemente tu negocio..."></textarea></div>
+              </div>
+              <div class="form-row">
+                <div><label class="field-label">WhatsApp (con código de país)</label><input class="field-input" id="negWhatsapp" type="text" placeholder="50799999999" /></div>
+                <div>
+                  <label class="field-label">Color principal</label>
+                  <div class="color-row">
+                    <input type="color" id="negColorPicker" value="#1a73e8" oninput="document.getElementById('negColor').value=this.value;actualizarPreview()" />
+                    <input class="field-input" id="negColor" type="text" value="#1a73e8" placeholder="#1a73e8" oninput="document.getElementById('negColorPicker').value=this.value;actualizarPreview()" style="flex:1" />
+                  </div>
+                </div>
+              </div>
+              <div class="form-row full">
+                <div><label class="field-label">Logo URL (Cloudinary)</label><input class="field-input" id="negLogo" type="text" placeholder="https://res.cloudinary.com/..." oninput="actualizarPreview()" /></div>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:8px">
+                <button class="btn btn-primary btn-lg" onclick="guardarNegocio()"><i class="ti ti-device-floppy"></i> Guardar cambios</button>
+                <button class="btn btn-ghost" onclick="cargarNegocio()"><i class="ti ti-refresh"></i> Recargar</button>
+              </div>
+            </div>
 
-<!-- ══════════════════════════════════════════════════════
-     MODAL: Crear / Editar Servicio
-══════════════════════════════════════════════════════ -->
+            <!-- Modo de reserva -->
+            <div class="card">
+              <div class="card-title"><i class="ti ti-cash"></i> Modo de Reserva</div>
+              <p style="font-size:13.5px;color:#888;margin-bottom:20px;line-height:1.6">Define cómo quieres que tus clientes reserven una cita.</p>
+              <div class="modo-grid">
+                <div class="modo-card" id="modoCard-solo_cita" onclick="seleccionarModo('solo_cita')">
+                  <div class="modo-card-check"><i class="ti ti-check" style="font-size:12px"></i></div>
+                  <div class="modo-card-icon">📅</div>
+                  <div class="modo-card-title">Solo cita</div>
+                  <div class="modo-card-desc">El cliente agenda sin pago. Paga en el negocio el día de la cita.</div>
+                </div>
+                <div class="modo-card" id="modoCard-adelanto" onclick="seleccionarModo('adelanto')">
+                  <div class="modo-card-check"><i class="ti ti-check" style="font-size:12px"></i></div>
+                  <div class="modo-card-icon">💵</div>
+                  <div class="modo-card-title">Reserva con adelanto</div>
+                  <div class="modo-card-desc">Cobra un monto fijo para reservar. Reduce no-shows.</div>
+                  <div class="modo-adelanto-input">
+                    <div class="modo-adelanto-row">
+                      <span>Adelanto:</span>
+                      <span style="color:#aaa">$</span>
+                      <input class="field-input" id="montoAdelanto" type="number" min="1" max="999" placeholder="5.00" style="width:80px;padding:7px 10px" onclick="event.stopPropagation()" />
+                      <span>USD</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="modo-card" id="modoCard-pago_completo" onclick="seleccionarModo('pago_completo')">
+                  <div class="modo-card-check"><i class="ti ti-check" style="font-size:12px"></i></div>
+                  <div class="modo-card-icon">💳</div>
+                  <div class="modo-card-title">Pago completo</div>
+                  <div class="modo-card-desc">El cliente paga el total al reservar. Ideal para paquetes o eventos.</div>
+                </div>
+              </div>
+              <button class="btn btn-primary" onclick="guardarModoReserva()"><i class="ti ti-device-floppy"></i> Guardar modo de reserva</button>
+            </div>
+          </div>
+
+          <!-- Derecha: preview -->
+          <div style="position:sticky;top:84px">
+            <div class="card" style="margin:0;padding:16px">
+              <div class="card-title" style="margin-bottom:14px"><i class="ti ti-eye"></i> Vista previa en tiempo real</div>
+              <div class="preview-card">
+                <div class="preview-header" id="previewHeader" style="background:#1a73e8">
+                  <div class="preview-av" id="previewAv">💬</div>
+                  <div>
+                    <div class="preview-name" id="previewName">Tu negocio</div>
+                    <div class="preview-status"><span class="preview-dot"></span> En línea</div>
+                  </div>
+                </div>
+                <div class="preview-body">
+                  <div class="preview-bubble">👋 Bienvenido a <strong id="previewNameBubble">Tu negocio</strong><br>¿En qué puedo ayudarte hoy?</div>
+                  <div class="preview-qr">
+                    <span class="preview-qr-btn" id="previewBtn1">📅 Agendar cita</span>
+                    <span class="preview-qr-btn" id="previewBtn2">🦷 Ver tratamientos</span>
+                  </div>
+                </div>
+                <div class="preview-input">Escribe tu mensaje...</div>
+              </div>
+              <p style="font-size:11.5px;color:#aaa;text-align:center;margin-top:12px">Los cambios se reflejan automáticamente</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- ══ MODAL SERVICIO ════════════════════════════════════════ -->
 <div class="modal-overlay" id="modalServicio">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title" id="modalServicioTitle">Nuevo Servicio</div>
       <button class="modal-close" onclick="cerrarModalServicio()"><i class="ti ti-x"></i></button>
     </div>
-
     <input type="hidden" id="svcId" />
-
     <div class="form-row">
-      <div>
-        <label class="field-label">Nombre del servicio</label>
-        <input class="field-input" id="svcNombre" type="text" placeholder="Ej: Limpieza Dental" />
-      </div>
-      <div>
-        <label class="field-label">Ícono (emoji)</label>
-        <input class="field-input" id="svcIcono" type="text" placeholder="🦷" maxlength="4" />
-      </div>
+      <div><label class="field-label">Nombre</label><input class="field-input" id="svcNombre" type="text" placeholder="Ej: Limpieza Dental" /></div>
+      <div><label class="field-label">Ícono</label><input class="field-input" id="svcIcono" type="text" placeholder="🦷" maxlength="4" /></div>
     </div>
     <div class="form-row">
-      <div>
-        <label class="field-label">Precio (USD)</label>
-        <input class="field-input" id="svcPrecio" type="number" placeholder="30" min="0" />
-      </div>
-      <div>
-        <label class="field-label">Duración</label>
-        <input class="field-input" id="svcDuracion" type="text" placeholder="45 min" />
-      </div>
+      <div><label class="field-label">Precio (USD)</label><input class="field-input" id="svcPrecio" type="number" placeholder="30" min="0" /></div>
+      <div><label class="field-label">Duración</label><input class="field-input" id="svcDuracion" type="text" placeholder="45 min" /></div>
     </div>
-    <div class="form-row full">
-      <div>
-        <label class="field-label">Descripción</label>
-        <textarea class="field-textarea" id="svcDescripcion" placeholder="Describe el servicio..."></textarea>
-      </div>
-    </div>
-    <div class="form-row full">
-      <div>
-        <label class="field-label">Orden (posición en el carrusel)</label>
-        <input class="field-input" id="svcOrden" type="number" placeholder="1" min="1" />
-      </div>
-    </div>
-
-    <!-- Upload imagen -->
+    <div class="form-row full"><div><label class="field-label">Descripción</label><textarea class="field-textarea" id="svcDescripcion" placeholder="Describe el servicio..."></textarea></div></div>
+    <div class="form-row full"><div><label class="field-label">Orden en el carrusel</label><input class="field-input" id="svcOrden" type="number" placeholder="1" min="1" /></div></div>
     <label class="field-label" style="margin-bottom:8px">Imagen del servicio</label>
     <div class="upload-zone" id="uploadZone">
       <input type="file" accept="image/*" onchange="subirImagen(this)" />
@@ -588,473 +546,357 @@
     </div>
     <img id="uploadPreview" class="upload-preview" />
     <input type="hidden" id="svcImagenUrl" />
-
-    <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
-      <button class="btn btn-outline" onclick="cerrarModalServicio()">Cancelar</button>
-      <button class="btn btn-primary" id="svcGuardarBtn" onclick="guardarServicio()">
-        <i class="ti ti-device-floppy"></i> Guardar
-      </button>
+    <div style="display:flex;gap:10px;margin-top:22px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="cerrarModalServicio()">Cancelar</button>
+      <button class="btn btn-primary" id="svcGuardarBtn" onclick="guardarServicio()"><i class="ti ti-device-floppy"></i> Guardar</button>
     </div>
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"><i class="ti ti-check"></i><span id="toastMsg"></span></div>
 
-<!-- ══════════════════════════════════════════════════════
-     JAVASCRIPT
-══════════════════════════════════════════════════════ -->
 <script>
-// ── Estado global ────────────────────────────────────────────
-const STATE = {
-  slug: null,
-  token: null,
-  negocio: null,
-};
+const STATE={slug:null,token:null,negocio:null};
 
-// ── Leer slug de la URL  /panel/dental-demo  o  ?slug=dental-demo ──
-function getSlug() {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('slug')) return params.get('slug');
-  const parts = window.location.pathname.replace(/^\/+|\/+$/g, '').split('/');
-  return parts.length >= 2 ? parts[parts.length - 1] : null;
+function getSlug(){
+  const params=new URLSearchParams(window.location.search);
+  if(params.get('slug'))return params.get('slug');
+  const parts=window.location.pathname.replace(/^\/+|\/+$/g,'').split('/');
+  return parts.length>=2?parts[parts.length-1]:null;
 }
 
-// ── SHA-256 en browser ───────────────────────────────────────
-async function sha256(text) {
-  const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-// ── Toast ────────────────────────────────────────────────────
-function showToast(msg, tipo = 'success') {
-  const t = document.getElementById('toast');
-  const icon = t.querySelector('i');
-  document.getElementById('toastMsg').textContent = msg;
-  t.className = `toast ${tipo}`;
-  icon.className = tipo === 'success' ? 'ti ti-check' : 'ti ti-alert-circle';
+function showToast(msg,tipo='success'){
+  const t=document.getElementById('toast');
+  document.getElementById('toastMsg').textContent=msg;
+  t.className=`toast ${tipo}`;
+  t.querySelector('i').className=tipo==='success'?'ti ti-check':'ti ti-alert-circle';
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  setTimeout(()=>t.classList.remove('show'),3000);
 }
 
-// ── API helper ───────────────────────────────────────────────
-async function api(method, path, body = null) {
-  const opts = {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${STATE.token}`,
-    },
-  };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(path, opts);
+async function api(method,path,body=null){
+  const opts={method,headers:{'Content-Type':'application/json','Authorization':`Bearer ${STATE.token}`}};
+  if(body)opts.body=JSON.stringify(body);
+  const res=await fetch(path,opts);
+  if(res.status===401){doLogout();return{success:false,error:'Sesión inválida'};}
   return res.json();
 }
 
-// ── LOGIN ────────────────────────────────────────────────────
-async function doLogin() {
-  const usuario  = document.getElementById('loginUsuario').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  const errorEl  = document.getElementById('loginError');
-  const btn      = document.getElementById('loginBtn');
-
-  if (!usuario || !password) {
-    errorEl.textContent = 'Ingresa usuario y contraseña.';
-    errorEl.classList.add('show'); return;
-  }
-
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Ingresando...';
+async function doLogin(){
+  const usuario=document.getElementById('loginUsuario').value.trim();
+  const password=document.getElementById('loginPassword').value;
+  const errorEl=document.getElementById('loginError');
+  const btn=document.getElementById('loginBtn');
+  if(!usuario||!password){errorEl.textContent='Ingresa usuario y contraseña.';errorEl.classList.add('show');return;}
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Ingresando...';
   errorEl.classList.remove('show');
-
-  try {
-    const data = await fetch('/api/panel/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug: STATE.slug, usuario, password }),
-    }).then(r => r.json());
-
-    if (!data.success) throw new Error(data.error || 'Error de acceso');
-
-    STATE.token   = data.token;
-    STATE.negocio = data.negocio;
-    localStorage.setItem(`pc_panel_token_${STATE.slug}`, data.token);
-
+  try{
+    const data=await fetch('/api/panel/login',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({slug:STATE.slug,usuario,password})}).then(r=>r.json());
+    if(!data.success)throw new Error(data.error||'Error de acceso');
+    STATE.token=data.token;STATE.negocio=data.negocio;
+    localStorage.setItem(`pc_panel_token_${STATE.slug}`,data.token);
     mostrarPanel();
-  } catch (err) {
-    errorEl.textContent = err.message;
-    errorEl.classList.add('show');
-    btn.disabled = false;
-    btn.textContent = 'Ingresar al Panel';
+  }catch(err){
+    errorEl.textContent=err.message;errorEl.classList.add('show');
+    btn.disabled=false;btn.textContent='Ingresar al Panel';
   }
 }
 
-// ── Mostrar panel ────────────────────────────────────────────
-function mostrarPanel() {
-  document.getElementById('loginScreen').style.display  = 'none';
+function mostrarPanel(){
+  document.getElementById('loginScreen').style.display='none';
   document.getElementById('panelLayout').classList.add('visible');
-  document.getElementById('sidebarBiz').textContent = STATE.negocio?.nombre || 'Mi Negocio';
-  document.getElementById('sidebarSlug').textContent = STATE.slug;
-  document.getElementById('verChatLink').href = `/${STATE.slug}`;
-  cargarNegocio();
-  cargarServicios();
-  cargarCitas();
-  cargarChats();
+  const nombre=STATE.negocio?.nombre||'Mi Negocio';
+  document.getElementById('sbName').textContent=nombre;
+  document.getElementById('sbSlug').textContent=STATE.slug;
+  document.getElementById('sbUserAv').textContent=(STATE.negocio?.nombre||'A')[0].toUpperCase();
+  document.getElementById('mhGreeting').textContent=`¡Hola, ${nombre}! 👋`;
+  document.getElementById('verChatLink').href=`/${STATE.slug}`;
+  cargarNegocio();cargarServicios();cargarCitas();cargarChats();cargarKPIs();
 }
 
-// ── Logout ───────────────────────────────────────────────────
-function doLogout() {
+function doLogout(){
   localStorage.removeItem(`pc_panel_token_${STATE.slug}`);
-  STATE.token = null;
+  STATE.token=null;
   document.getElementById('panelLayout').classList.remove('visible');
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loginPassword').value='';
 }
 
-// ── Tabs ─────────────────────────────────────────────────────
-function showTab(tab) {
-  document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+function showTab(tab,el){
+  document.querySelectorAll('.tab-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
   document.getElementById(`tab-${tab}`).classList.add('active');
-  event.currentTarget.classList.add('active');
-  const titles = { negocio: 'Mi Negocio', servicios: 'Servicios', citas: 'Citas', chats: 'Chats' };
-  document.getElementById('mainTitle').textContent = titles[tab] || tab;
+  if(el)el.classList.add('active');
 }
 
-// ══════════════════════════════════════════════════════════════
-// TAB NEGOCIO
-// ══════════════════════════════════════════════════════════════
-async function cargarNegocio() {
-  try {
-    const data = await api('GET', '/api/panel/negocio');
-    if (!data.success) throw new Error(data.error);
-    const n = data.negocio;
-    document.getElementById('negNombre').value      = n.nombre || '';
-    document.getElementById('negIcono').value       = n.icono || '';
-    document.getElementById('negDescripcion').value = n.descripcion || '';
-    document.getElementById('negWhatsapp').value    = n.whatsapp_destino || '';
-    document.getElementById('negColor').value       = n.color_primary || '#1a73e8';
-    document.getElementById('negColorPicker').value = n.color_primary || '#1a73e8';
-    document.getElementById('negLogo').value        = n.logo_url || '';
-    // Cargar modo de reserva
-    const modo = n.modo_reserva || 'adelanto';
+function copiarEnlace(){
+  const url=`${window.location.origin}/${STATE.slug}`;
+  navigator.clipboard.writeText(url).then(()=>showToast('Enlace copiado al portapapeles'));
+}
+
+// ══ KPIs ════════════════════════════════════════════════════
+async function cargarKPIs(){
+  try{
+    const[svcs,citas,chats]=await Promise.all([
+      api('GET','/api/panel/servicios'),
+      api('GET','/api/panel/citas'),
+      api('GET','/api/panel/chats'),
+    ]);
+    document.getElementById('kpiServicios').textContent=svcs.servicios?.filter(s=>s.activo).length||0;
+    document.getElementById('kpiCitas').textContent=citas.citas?.length||0;
+    document.getElementById('kpiChats').textContent=chats.chats?.length||0;
+    const ingresos=citas.citas?.filter(c=>c.estado_pago==='pagado').reduce((a,c)=>a+parseFloat(c.total||0),0)||0;
+    document.getElementById('kpiIngresos').textContent=`$${ingresos.toFixed(2)}`;
+    // Últimas citas en dashboard
+    const tbody=document.getElementById('dashCitasTbody');
+    const ultimas=(citas.citas||[]).slice(0,5);
+    if(!ultimas.length){tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;color:#aaa;padding:24px">Sin reservas aún</td></tr>`;return;}
+    tbody.innerHTML=ultimas.map(c=>`<tr>
+      <td><strong>${c.servicio_nombre||'—'}</strong></td>
+      <td>${c.fecha_cita||'—'}</td>
+      <td><strong>$${c.total||0}</strong></td>
+      <td>${badgePago(c.estado_pago)}</td>
+    </tr>`).join('');
+  }catch(e){console.error(e);}
+}
+
+// ══ NEGOCIO ══════════════════════════════════════════════════
+async function cargarNegocio(){
+  try{
+    const data=await api('GET','/api/panel/negocio');
+    if(!data.success)throw new Error(data.error);
+    const n=data.negocio;
+    document.getElementById('negNombre').value=n.nombre||'';
+    document.getElementById('negIcono').value=n.icono||'';
+    document.getElementById('negDescripcion').value=n.descripcion||'';
+    document.getElementById('negWhatsapp').value=n.whatsapp_destino||'';
+    document.getElementById('negColor').value=n.color_primary||'#1a73e8';
+    document.getElementById('negColorPicker').value=n.color_primary||'#1a73e8';
+    document.getElementById('negLogo').value=n.logo_url||'';
+    const modo=n.modo_reserva||'adelanto';
     seleccionarModo(modo);
-    if (n.monto_reserva) document.getElementById('montoAdelanto').value = n.monto_reserva;
-  } catch (err) {
-    showToast('Error al cargar negocio: ' + err.message, 'error');
-  }
+    if(n.monto_reserva)document.getElementById('montoAdelanto').value=n.monto_reserva;
+    actualizarPreview();
+  }catch(err){showToast('Error: '+err.message,'error');}
 }
 
-function seleccionarModo(modo) {
-  // Marcar radio
-  const radio = document.getElementById(
-    modo === 'solo_cita' ? 'modoSoloCita' :
-    modo === 'adelanto'  ? 'modoAdelanto' : 'modoPagoCompleto'
-  );
-  if (radio) radio.checked = true;
-
-  // Resaltar card seleccionada
-  ['solo_cita','adelanto','pago_completo'].forEach(m => {
-    const card = document.getElementById(`modoCard-${m}`);
-    if (card) {
-      card.style.borderColor = m === modo ? 'var(--primary)' : '#e0e0e0';
-      card.style.background  = m === modo ? 'var(--primary-light)' : 'white';
-    }
-  });
-}
-
-async function guardarModoReserva() {
-  const modo = document.querySelector('input[name="modoReserva"]:checked')?.value || 'adelanto';
-  const monto = parseFloat(document.getElementById('montoAdelanto').value) || 5;
-
-  try {
-    const data = await api('PUT', '/api/panel/negocio/reserva', { modo_reserva: modo, monto_reserva: monto });
-    if (!data.success) throw new Error(data.error);
-    showToast('Modo de reserva guardado correctamente');
-  } catch (err) {
-    showToast('Error: ' + err.message, 'error');
-  }
-}
-
-async function guardarNegocio() {
-  try {
-    const data = await api('PUT', '/api/panel/negocio', {
-      nombre:           document.getElementById('negNombre').value.trim(),
-      descripcion:      document.getElementById('negDescripcion').value.trim(),
-      logo_url:         document.getElementById('negLogo').value.trim(),
-      icono:            document.getElementById('negIcono').value.trim(),
-      color_primary:    document.getElementById('negColor').value.trim(),
-      whatsapp_destino: document.getElementById('negWhatsapp').value.trim(),
+async function guardarNegocio(){
+  try{
+    const data=await api('PUT','/api/panel/negocio',{
+      nombre:document.getElementById('negNombre').value.trim(),
+      descripcion:document.getElementById('negDescripcion').value.trim(),
+      logo_url:document.getElementById('negLogo').value.trim(),
+      icono:document.getElementById('negIcono').value.trim(),
+      color_primary:document.getElementById('negColor').value.trim(),
+      whatsapp_destino:document.getElementById('negWhatsapp').value.trim(),
     });
-    if (!data.success) throw new Error(data.error);
+    if(!data.success)throw new Error(data.error);
     showToast('Negocio actualizado correctamente');
-  } catch (err) {
-    showToast('Error: ' + err.message, 'error');
-  }
+    actualizarPreview();
+  }catch(err){showToast('Error: '+err.message,'error');}
 }
 
-// ══════════════════════════════════════════════════════════════
-// TAB SERVICIOS
-// ══════════════════════════════════════════════════════════════
-async function cargarServicios() {
-  const grid = document.getElementById('serviciosGrid');
-  try {
-    const data = await api('GET', '/api/panel/servicios');
-    if (!data.success) throw new Error(data.error);
+// ══ PREVIEW EN TIEMPO REAL ════════════════════════════════════
+function actualizarPreview(){
+  const nombre=document.getElementById('negNombre').value||'Tu negocio';
+  const icono=document.getElementById('negIcono').value||'💬';
+  const color=document.getElementById('negColor').value||'#1a73e8';
+  const logo=document.getElementById('negLogo').value;
+  document.getElementById('previewHeader').style.background=color;
+  document.getElementById('previewName').textContent=nombre;
+  document.getElementById('previewNameBubble').textContent=nombre;
+  document.getElementById('sbName').textContent=nombre;
+  const av=document.getElementById('previewAv');
+  if(logo){av.innerHTML=`<img src="${logo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />`;}
+  else{av.textContent=icono;}
+  document.querySelectorAll('.preview-qr-btn').forEach(b=>b.style.color=color);
+  document.querySelectorAll('.preview-qr-btn').forEach(b=>b.style.borderColor=color);
+}
 
-    if (!data.servicios.length) {
-      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-list-details"></i><p>No hay servicios. Crea el primero.</p></div>`;
-      return;
+// ══ MODO RESERVA ═════════════════════════════════════════════
+function seleccionarModo(modo){
+  document.querySelectorAll('.modo-card').forEach(c=>c.classList.remove('selected'));
+  const card=document.getElementById(`modoCard-${modo}`);
+  if(card)card.classList.add('selected');
+}
+
+async function guardarModoReserva(){
+  const modo=document.querySelector('.modo-card.selected')?.id?.replace('modoCard-','')||'adelanto';
+  const monto=parseFloat(document.getElementById('montoAdelanto').value)||5;
+  try{
+    const data=await api('PUT','/api/panel/negocio/reserva',{modo_reserva:modo,monto_reserva:monto});
+    if(!data.success)throw new Error(data.error);
+    showToast('Modo de reserva guardado');
+  }catch(err){showToast('Error: '+err.message,'error');}
+}
+
+// ══ SERVICIOS ════════════════════════════════════════════════
+async function cargarServicios(){
+  const grid=document.getElementById('serviciosGrid');
+  try{
+    const data=await api('GET','/api/panel/servicios');
+    if(!data.success)throw new Error(data.error);
+    if(!data.servicios.length){
+      grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-list-details"></i><p>No hay servicios. Crea el primero.</p></div>`;return;
     }
-
-    grid.innerHTML = data.servicios.map(s => `
-      <div class="servicio-card ${s.activo ? '' : 'servicio-inactive'}">
-        <div class="servicio-img">
-          ${s.imagen_url ? `<img src="${s.imagen_url}" alt="${s.nombre}" />` : s.icono || '🛎️'}
-        </div>
-        <div class="servicio-body">
-          <div class="servicio-nombre">${s.nombre}</div>
-          <div class="servicio-precio">$${s.precio} USD</div>
-          <div class="servicio-duracion"><i class="ti ti-clock" style="font-size:12px"></i> ${s.duracion || '—'}</div>
-          <div class="servicio-actions">
-            <button class="btn btn-outline btn-sm" onclick="editarServicio(${s.id})">
-              <i class="ti ti-edit"></i> Editar
-            </button>
-            <button class="btn btn-danger btn-sm" onclick="eliminarServicio(${s.id}, '${s.nombre}')">
-              <i class="ti ti-trash"></i>
-            </button>
+    grid.innerHTML=data.servicios.map(s=>`
+      <div class="svc-card ${s.activo?'':'svc-inactive'}">
+        <div class="svc-img">${s.imagen_url?`<img src="${s.imagen_url}" alt="${s.nombre}" />`:(s.icono||'🛎️')}</div>
+        <div class="svc-body">
+          <div class="svc-nombre">${s.nombre}</div>
+          <div class="svc-precio">$${s.precio} USD</div>
+          <div class="svc-dur"><i class="ti ti-clock" style="font-size:12px"></i> ${s.duracion||'—'}</div>
+          <div class="svc-actions">
+            <button class="btn btn-ghost btn-sm" onclick="editarServicio(${s.id})"><i class="ti ti-edit"></i> Editar</button>
+            <button class="btn btn-danger btn-sm" onclick="eliminarServicio(${s.id},'${s.nombre}')"><i class="ti ti-trash"></i></button>
           </div>
         </div>
-      </div>
-    `).join('');
-  } catch (err) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-alert-circle"></i><p>${err.message}</p></div>`;
-  }
+      </div>`).join('');
+  }catch(err){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-alert-circle"></i><p>${err.message}</p></div>`;}
 }
 
-// Datos temporales del modal
-let _servicios = [];
-
-function abrirModalServicio(servicio = null) {
-  document.getElementById('modalServicioTitle').textContent = servicio ? 'Editar Servicio' : 'Nuevo Servicio';
-  document.getElementById('svcId').value          = servicio?.id || '';
-  document.getElementById('svcNombre').value      = servicio?.nombre || '';
-  document.getElementById('svcIcono').value       = servicio?.icono || '🛎️';
-  document.getElementById('svcPrecio').value      = servicio?.precio || '';
-  document.getElementById('svcDuracion').value    = servicio?.duracion || '45 min';
-  document.getElementById('svcDescripcion').value = servicio?.descripcion || '';
-  document.getElementById('svcOrden').value       = servicio?.orden || 1;
-  document.getElementById('svcImagenUrl').value   = servicio?.imagen_url || '';
-  const preview = document.getElementById('uploadPreview');
-  if (servicio?.imagen_url) { preview.src = servicio.imagen_url; preview.style.display = 'block'; }
-  else { preview.style.display = 'none'; preview.src = ''; }
+function abrirModalServicio(servicio=null){
+  document.getElementById('modalServicioTitle').textContent=servicio?'Editar Servicio':'Nuevo Servicio';
+  document.getElementById('svcId').value=servicio?.id||'';
+  document.getElementById('svcNombre').value=servicio?.nombre||'';
+  document.getElementById('svcIcono').value=servicio?.icono||'🛎️';
+  document.getElementById('svcPrecio').value=servicio?.precio||'';
+  document.getElementById('svcDuracion').value=servicio?.duracion||'45 min';
+  document.getElementById('svcDescripcion').value=servicio?.descripcion||'';
+  document.getElementById('svcOrden').value=servicio?.orden||1;
+  document.getElementById('svcImagenUrl').value=servicio?.imagen_url||'';
+  const prev=document.getElementById('uploadPreview');
+  if(servicio?.imagen_url){prev.src=servicio.imagen_url;prev.style.display='block';}
+  else{prev.style.display='none';prev.src='';}
   document.getElementById('modalServicio').classList.add('open');
 }
 
-function cerrarModalServicio() {
-  document.getElementById('modalServicio').classList.remove('open');
+function cerrarModalServicio(){document.getElementById('modalServicio').classList.remove('open');}
+
+async function editarServicio(id){
+  const data=await api('GET','/api/panel/servicios');
+  const s=data.servicios?.find(x=>x.id===id);
+  if(s)abrirModalServicio(s);
 }
 
-async function editarServicio(id) {
-  const data = await api('GET', '/api/panel/servicios');
-  const s = data.servicios?.find(x => x.id === id);
-  if (s) abrirModalServicio(s);
-}
-
-async function guardarServicio() {
-  const btn = document.getElementById('svcGuardarBtn');
-  const id  = document.getElementById('svcId').value;
-  const body = {
-    nombre:      document.getElementById('svcNombre').value.trim(),
-    icono:       document.getElementById('svcIcono').value.trim(),
-    precio:      parseFloat(document.getElementById('svcPrecio').value),
-    duracion:    document.getElementById('svcDuracion').value.trim(),
-    descripcion: document.getElementById('svcDescripcion').value.trim(),
-    orden:       parseInt(document.getElementById('svcOrden').value) || 1,
-    imagen_url:  document.getElementById('svcImagenUrl').value.trim(),
-    activo:      1,
+async function guardarServicio(){
+  const btn=document.getElementById('svcGuardarBtn');
+  const id=document.getElementById('svcId').value;
+  const body={
+    nombre:document.getElementById('svcNombre').value.trim(),
+    icono:document.getElementById('svcIcono').value.trim(),
+    precio:parseFloat(document.getElementById('svcPrecio').value),
+    duracion:document.getElementById('svcDuracion').value.trim(),
+    descripcion:document.getElementById('svcDescripcion').value.trim(),
+    orden:parseInt(document.getElementById('svcOrden').value)||1,
+    imagen_url:document.getElementById('svcImagenUrl').value.trim(),
+    activo:1,
   };
-
-  if (!body.nombre || !body.precio) { showToast('Nombre y precio son requeridos', 'error'); return; }
-
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Guardando...';
-  try {
-    const data = id
-      ? await api('PUT', `/api/panel/servicios?id=${id}`, body)
-      : await api('POST', '/api/panel/servicios', body);
-
-    if (!data.success) throw new Error(data.error);
-    showToast(id ? 'Servicio actualizado' : 'Servicio creado');
-    cerrarModalServicio();
-    cargarServicios();
-  } catch (err) {
-    showToast('Error: ' + err.message, 'error');
-  } finally {
-    btn.disabled = false; btn.innerHTML = '<i class="ti ti-device-floppy"></i> Guardar';
-  }
+  if(!body.nombre||!body.precio){showToast('Nombre y precio son requeridos','error');return;}
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Guardando...';
+  try{
+    const data=id?await api('PUT',`/api/panel/servicios?id=${id}`,body):await api('POST','/api/panel/servicios',body);
+    if(!data.success)throw new Error(data.error);
+    showToast(id?'Servicio actualizado':'Servicio creado');
+    cerrarModalServicio();cargarServicios();
+  }catch(err){showToast('Error: '+err.message,'error');}
+  finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-device-floppy"></i> Guardar';}
 }
 
-async function eliminarServicio(id, nombre) {
-  if (!confirm(`¿Eliminar "${nombre}"?`)) return;
-  try {
-    const data = await api('DELETE', `/api/panel/servicios?id=${id}`);
-    if (!data.success) throw new Error(data.error);
-    showToast('Servicio eliminado');
-    cargarServicios();
-  } catch (err) {
-    showToast('Error: ' + err.message, 'error');
-  }
+async function eliminarServicio(id,nombre){
+  if(!confirm(`¿Eliminar "${nombre}"?`))return;
+  try{
+    const data=await api('DELETE',`/api/panel/servicios?id=${id}`);
+    if(!data.success)throw new Error(data.error);
+    showToast('Servicio eliminado');cargarServicios();
+  }catch(err){showToast('Error: '+err.message,'error');}
 }
 
-// ── Upload imagen a Cloudinary ───────────────────────────────
-async function subirImagen(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const preview = document.getElementById('uploadPreview');
-  const zone    = document.getElementById('uploadZone');
-
-  zone.querySelector('p').textContent = 'Subiendo imagen...';
-
-  try {
-    // 1. Pedir firma al backend
-    const signData = await api('POST', '/api/panel/cloudinary', { folder: 'producto-c' });
-    if (!signData.success) throw new Error(signData.error);
-
-    // 2. Subir a Cloudinary
-    const form = new FormData();
-    form.append('file', file);
-    form.append('api_key', signData.api_key);
-    form.append('timestamp', signData.timestamp);
-    form.append('signature', signData.signature);
-    form.append('folder', signData.folder);
-
-    const res  = await fetch(signData.upload_url, { method: 'POST', body: form });
-    const cData = await res.json();
-
-    if (!cData.secure_url) throw new Error('Error en Cloudinary');
-
-    document.getElementById('svcImagenUrl').value = cData.secure_url;
-    preview.src = cData.secure_url;
-    preview.style.display = 'block';
-    zone.querySelector('p').textContent = '✅ Imagen subida correctamente';
+async function subirImagen(input){
+  const file=input.files[0];if(!file)return;
+  const prev=document.getElementById('uploadPreview');
+  const zone=document.getElementById('uploadZone');
+  zone.querySelector('p').textContent='Subiendo imagen...';
+  try{
+    const signData=await api('POST','/api/panel/cloudinary',{folder:'producto-c'});
+    if(!signData.success)throw new Error(signData.error);
+    const form=new FormData();
+    form.append('file',file);form.append('api_key',signData.api_key);
+    form.append('timestamp',signData.timestamp);form.append('signature',signData.signature);
+    form.append('folder',signData.folder);
+    const res=await fetch(signData.upload_url,{method:'POST',body:form});
+    const cData=await res.json();
+    if(!cData.secure_url)throw new Error('Error en Cloudinary');
+    document.getElementById('svcImagenUrl').value=cData.secure_url;
+    prev.src=cData.secure_url;prev.style.display='block';
+    zone.querySelector('p').textContent='✅ Imagen subida';
     showToast('Imagen subida');
-  } catch (err) {
-    zone.querySelector('p').textContent = 'Haz clic o arrastra una imagen aquí';
-    showToast('Error subiendo imagen: ' + err.message, 'error');
-  }
+  }catch(err){zone.querySelector('p').textContent='Haz clic o arrastra una imagen aquí';showToast('Error: '+err.message,'error');}
 }
 
-// ══════════════════════════════════════════════════════════════
-// TAB CITAS
-// ══════════════════════════════════════════════════════════════
-async function cargarCitas() {
-  const tbody = document.getElementById('citasTbody');
-  try {
-    const data = await api('GET', '/api/panel/citas');
-    if (!data.success) throw new Error(data.error);
-
-    if (!data.citas.length) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#aaa;padding:32px">No hay citas registradas aún</td></tr>`;
-      return;
-    }
-
-    tbody.innerHTML = data.citas.map(c => `
-      <tr>
-        <td><strong>${c.cliente_nombre || '—'}</strong></td>
-        <td>${c.cliente_tel || '—'}</td>
-        <td>${c.servicio_nombre || '—'}</td>
-        <td>${c.fecha_cita || '—'}</td>
-        <td><strong>$${c.total || 0}</strong></td>
-        <td>${badgePago(c.estado_pago)}</td>
-        <td style="color:#aaa;font-size:12px">${formatFecha(c.created_at)}</td>
-      </tr>
-    `).join('');
-  } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#e00;padding:32px">${err.message}</td></tr>`;
-  }
+// ══ CITAS ════════════════════════════════════════════════════
+async function cargarCitas(){
+  const tbody=document.getElementById('citasTbody');
+  try{
+    const data=await api('GET','/api/panel/citas');
+    if(!data.success)throw new Error(data.error);
+    if(!data.citas.length){tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;color:#aaa;padding:32px">Sin reservas aún</td></tr>`;return;}
+    tbody.innerHTML=data.citas.map(c=>`<tr>
+      <td><strong>${c.cliente_nombre||'—'}</strong></td>
+      <td>${c.cliente_tel||'—'}</td>
+      <td>${c.servicio_nombre||'—'}</td>
+      <td>${c.fecha_cita||'—'}</td>
+      <td><strong>$${c.total||0}</strong></td>
+      <td>${badgePago(c.estado_pago)}</td>
+      <td style="color:#aaa;font-size:12px">${formatFecha(c.created_at)}</td>
+    </tr>`).join('');
+  }catch(err){tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;color:#e00;padding:32px">${err.message}</td></tr>`;}
 }
 
-function badgePago(estado) {
-  const map = { pagado: 'success', pendiente: 'warning', cancelado: 'danger' };
-  const cls = map[estado] || 'gray';
-  return `<span class="badge badge-${cls}">${estado || 'pendiente'}</span>`;
-}
+function badgePago(e){const m={pagado:'success',pendiente:'warning',cancelado:'danger'};return`<span class="badge badge-${m[e]||'gray'}">${e||'pendiente'}</span>`;}
 
-// ══════════════════════════════════════════════════════════════
-// TAB CHATS
-// ══════════════════════════════════════════════════════════════
-async function cargarChats() {
-  const list = document.getElementById('chatList');
-  try {
-    const data = await api('GET', '/api/panel/chats');
-    if (!data.success) throw new Error(data.error);
-
-    if (!data.chats.length) {
-      list.innerHTML = `<div class="empty-state"><i class="ti ti-message-dots"></i><p>No hay conversaciones aún</p></div>`;
-      return;
-    }
-
-    list.innerHTML = data.chats.map(c => {
-      const ultimo = c.historial?.slice(-1)[0]?.text || 'Sin mensajes';
-      return `
-        <div class="chat-item" onclick="verChat(${JSON.stringify(c).replace(/"/g, '&quot;')})">
-          <div class="chat-item-header">
-            <div class="chat-item-id">
-              <i class="ti ti-message" style="font-size:13px;color:var(--primary)"></i>
-              ${c.cliente_nombre || 'Cliente anónimo'}
-              <span style="font-size:11px;color:#aaa;margin-left:4px">(${c.total_mensajes} msgs)</span>
-            </div>
-            <div class="chat-item-fecha">${formatFecha(c.fecha)}</div>
-          </div>
-          <div class="chat-item-preview">${ultimo}</div>
+// ══ CHATS ════════════════════════════════════════════════════
+async function cargarChats(){
+  const list=document.getElementById('chatList');
+  try{
+    const data=await api('GET','/api/panel/chats');
+    if(!data.success)throw new Error(data.error);
+    if(!data.chats.length){list.innerHTML=`<div class="empty-state"><i class="ti ti-message-dots"></i><p>Sin conversaciones aún</p></div>`;return;}
+    list.innerHTML=data.chats.map(c=>{
+      const ultimo=c.historial?.slice(-1)[0]?.text||'Sin mensajes';
+      return`<div class="chat-item" onclick="verChat(${JSON.stringify(c).replace(/"/g,'&quot;')})">
+        <div class="chat-item-header">
+          <div class="chat-item-id"><i class="ti ti-message" style="font-size:13px;color:var(--primary)"></i> ${c.cliente_nombre||'Cliente anónimo'} <span style="font-size:11px;color:#aaa">(${c.total_mensajes} msgs)</span></div>
+          <div class="chat-item-fecha">${formatFecha(c.fecha)}</div>
         </div>
-      `;
+        <div class="chat-item-preview">${ultimo}</div>
+      </div>`;
     }).join('');
-  } catch (err) {
-    list.innerHTML = `<div class="empty-state"><i class="ti ti-alert-circle"></i><p>${err.message}</p></div>`;
-  }
+  }catch(err){list.innerHTML=`<div class="empty-state"><i class="ti ti-alert-circle"></i><p>${err.message}</p></div>`;}
 }
 
-function verChat(chat) {
-  const viewer = document.getElementById('chatViewer');
-  const bubbles = chat.historial.map(m => `
-    <div class="chat-bub ${m.role}">${m.text}</div>
-  `).join('');
-
-  viewer.innerHTML = `
-    <div class="card-title"><i class="ti ti-messages"></i> ${chat.cliente_nombre || 'Cliente anónimo'}</div>
+function verChat(chat){
+  const viewer=document.getElementById('chatViewer');
+  const bubbles=chat.historial.map(m=>`<div class="chat-bub ${m.role}">${m.text}</div>`).join('');
+  viewer.innerHTML=`<div class="card-title"><i class="ti ti-messages"></i> ${chat.cliente_nombre||'Cliente anónimo'}</div>
     <div style="font-size:12px;color:#aaa;margin-bottom:12px">${formatFecha(chat.fecha)} · ${chat.total_mensajes} mensajes</div>
-    <div class="chat-bubble-list">${bubbles || '<div class="empty-state"><p>Sin mensajes</p></div>'}</div>
-  `;
+    <div class="chat-bubble-list">${bubbles||'<div class="empty-state"><p>Sin mensajes</p></div>'}</div>`;
 }
 
-// ── Helpers ──────────────────────────────────────────────────
-function formatFecha(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('es-PA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+function formatFecha(iso){
+  if(!iso)return'—';
+  return new Date(iso).toLocaleDateString('es-PA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
 }
 
-// ── INIT ─────────────────────────────────────────────────────
-function init() {
-  const slug = getSlug();
-  STATE.slug = slug;
-
-  if (!slug || slug === 'panel') {
-    document.getElementById('loginSlugLabel').textContent = 'URL inválida — accede desde /panel/tu-negocio';
-    return;
-  }
-
-  document.getElementById('loginSlugLabel').textContent = slug;
-
-  // Verificar sesión guardada
-  const savedToken = localStorage.getItem(`pc_panel_token_${slug}`);
-  if (savedToken) {
-    STATE.token = savedToken;
-    STATE.negocio = { slug };
-    mostrarPanel();
-  }
+// ══ INIT ═════════════════════════════════════════════════════
+function init(){
+  const slug=getSlug();STATE.slug=slug;
+  if(!slug||slug==='panel'){document.getElementById('loginSlugLabel').textContent='URL inválida';return;}
+  document.getElementById('loginSlugLabel').textContent=slug;
+  const saved=localStorage.getItem(`pc_panel_token_${slug}`);
+  if(saved){STATE.token=saved;STATE.negocio={slug};mostrarPanel();}
 }
-
 init();
 </script>
 </body>
