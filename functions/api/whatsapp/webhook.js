@@ -48,7 +48,7 @@ export async function onRequestPost(context) {
     // Cada clínica tiene su propio número WA → su propio phone_number_id
     let negocio = null;
     try {
-      const result = await env.DB.prepare(
+      const result = await env.producto_c_db.prepare(
         "SELECT * FROM negocios WHERE wa_phone_id = ? AND activo = 1 LIMIT 1"
       ).bind(phoneNumberId).first();
       negocio = result;
@@ -66,7 +66,7 @@ export async function onRequestPost(context) {
 
     // ─── MODO MANUAL — dueño tomó control, IA en pausa ───────
     try {
-      const modoManual = await env.DB.prepare(
+      const modoManual = await env.producto_c_db.prepare(
         "SELECT 1 FROM modos_manual WHERE numero = ? AND negocio_id = ? LIMIT 1"
       ).bind(from, negocioId).first();
 
@@ -188,7 +188,7 @@ export async function onRequestPost(context) {
     // Igual que Kairós: ventana de 8s para consolidar mensajes rápidos
     let miId = null;
     try {
-      const insertResult = await env.DB.prepare(
+      const insertResult = await env.producto_c_db.prepare(
         "INSERT INTO buffer_wa (negocio_id, numero, contenido, fecha, procesado) VALUES (?, ?, ?, ?, 0)"
       ).bind(negocioId, from, textoRecibido, new Date().toISOString()).run();
       miId = insertResult.meta?.last_row_id;
@@ -202,7 +202,7 @@ export async function onRequestPost(context) {
     // Leer todos los mensajes pendientes de este número
     let mensajesBuffer = [];
     try {
-      const bufferResult = await env.DB.prepare(
+      const bufferResult = await env.producto_c_db.prepare(
         "SELECT id, contenido FROM buffer_wa WHERE negocio_id = ? AND numero = ? AND procesado = 0 ORDER BY id ASC"
       ).bind(negocioId, from).all();
       mensajesBuffer = bufferResult.results || [];
@@ -226,7 +226,7 @@ export async function onRequestPost(context) {
     const msgId            = idsBuffer[idsBuffer.length - 1] || null;
 
     try {
-      await env.DB.prepare(
+      await env.producto_c_db.prepare(
         `UPDATE buffer_wa SET procesado = 1 WHERE id IN (${idsBuffer.join(",")})`
       ).run();
     } catch(e) { console.log("Error marcando buffer:", e.message); }
@@ -234,7 +234,7 @@ export async function onRequestPost(context) {
     // ─── CARGAR SERVICIOS DEL NEGOCIO ────────────────────────
     let servicios = [];
     try {
-      const svcResult = await env.DB.prepare(
+      const svcResult = await env.producto_c_db.prepare(
         "SELECT nombre, descripcion, precio, duracion FROM servicios WHERE negocio_id = ? AND activo = 1 ORDER BY orden ASC"
       ).bind(negocioId).all();
       servicios = svcResult.results || [];
@@ -248,7 +248,7 @@ export async function onRequestPost(context) {
     let historial = [];
     let nombrePaciente = nombrePerfil || null;
     try {
-      const chatResult = await env.DB.prepare(
+      const chatResult = await env.producto_c_db.prepare(
         `SELECT historial_json, cliente_nombre FROM chats
          WHERE negocio_id = ? AND cliente_tel = ?
          ORDER BY id DESC LIMIT 1`
@@ -387,12 +387,12 @@ REGLAS DE ORO:
       ];
 
       // Buscar chat existente de esta sesión (mismo número, mismo negocio, hoy)
-      const chatExistente = await env.DB.prepare(
+      const chatExistente = await env.producto_c_db.prepare(
         `SELECT id FROM chats WHERE negocio_id = ? AND cliente_tel = ? AND completado = 0 LIMIT 1`
       ).bind(negocioId, from).first();
 
       if (chatExistente) {
-        await env.DB.prepare(
+        await env.producto_c_db.prepare(
           `UPDATE chats SET historial_json = ?, cliente_nombre = ?, fecha = ? WHERE id = ?`
         ).bind(
           JSON.stringify(nuevoHistorial),
@@ -401,7 +401,7 @@ REGLAS DE ORO:
           chatExistente.id
         ).run();
       } else {
-        await env.DB.prepare(
+        await env.producto_c_db.prepare(
           `INSERT INTO chats (negocio_id, session_token, cliente_nombre, cliente_tel, historial_json, fecha, completado, canal)
            VALUES (?, ?, ?, ?, ?, ?, 0, 'whatsapp')`
         ).bind(
