@@ -195,7 +195,8 @@
     .badge-warning{background:#fef3c7;color:#d97706}
     .badge-danger{background:#fee2e2;color:#dc2626}
     .badge-gray{background:#f1f5f9;color:#64748b}
-    .badge-blue{background:var(--primary-light);color:var(--primary)}
+    .badge-blue{background:#dbeafe;color:#1d4ed8;display:inline-flex;align-items:center;gap:3px}
+    .badge-gray{background:#f1f5f9;color:#64748b}
     .badge-wa{background:#dcfce7;color:#15803d;display:inline-flex;align-items:center;gap:3px}
     .badge-web{background:#eff6ff;color:#1d4ed8;display:inline-flex;align-items:center;gap:3px}
 
@@ -493,7 +494,7 @@
           <div class="card-title"><i class="ti ti-calendar-check"></i> Todas las reservas</div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Cliente</th><th>Teléfono</th><th>Servicio</th><th>Fecha cita</th><th>Total</th><th>Pago</th><th>Canal</th><th>Fecha registro</th></tr></thead>
+              <thead><tr><th>Cliente</th><th>Teléfono</th><th>Servicio</th><th>Fecha cita</th><th>Total</th><th>Estado</th><th>Canal</th><th>Acción</th></tr></thead>
               <tbody id="citasTbody"><tr><td colspan="8" style="text-align:center;color:#aaa;padding:32px">Cargando...</td></tr></tbody>
             </table>
           </div>
@@ -1062,13 +1063,58 @@ async function cargarCitas(){
       <td><strong>$${c.total||0}</strong></td>
       <td>${badgePago(c.estado_pago)}</td>
       <td>${badgeCanal(c.canal)}</td>
-      <td style="color:#aaa;font-size:12px">${formatFecha(c.created_at)}</td>
+      <td>${accionCita(c)}</td>
     </tr>`).join('');
   }catch(err){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:#e00;padding:32px">${err.message}</td></tr>`;}
 }
 
-function badgePago(e){const m={pagado:'success',pendiente:'warning',cancelado:'danger'};return`<span class="badge badge-${m[e]||'gray'}">${e||'pendiente'}</span>`;}
+function badgePago(e){
+  const m={
+    confirmada:    'success',
+    pagado:        'success',
+    pago_por_verificar: 'blue',
+    esperando_pago:'warning',
+    pendiente:     'warning',
+    cancelada:     'danger',
+    expirada:      'gray'
+  };
+  const labels={
+    confirmada:    '✅ Confirmada',
+    pagado:        '✅ Pagado',
+    pago_por_verificar: '🔵 Pago por verificar',
+    esperando_pago:'🟡 Esperando pago',
+    pendiente:     '🟡 Pendiente',
+    cancelada:     '🔴 Cancelada',
+    expirada:      '⚪ Expirada'
+  };
+  return`<span class="badge badge-${m[e]||'gray'}">${labels[e]||e||'pendiente'}</span>`;
+}
 function badgeCanal(c){return c==='whatsapp'?`<span class="badge badge-wa">📱 WhatsApp</span>`:`<span class="badge badge-web">🌐 Web</span>`;}
+
+function accionCita(c){
+  if(c.estado_pago==='pago_por_verificar'){
+    return`<div style="display:flex;gap:6px">
+      <button onclick="actualizarCita(${c.id},'confirmada')" style="background:#16a34a;color:white;border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-weight:600">✅ Confirmar</button>
+      <button onclick="actualizarCita(${c.id},'cancelada')" style="background:#dc2626;color:white;border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer">✗</button>
+    </div>`;
+  }
+  if(c.estado_pago==='esperando_pago'){
+    return`<button onclick="actualizarCita(${c.id},'pago_por_verificar')" style="background:#1d4ed8;color:white;border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer">Marcar pagado</button>`;
+  }
+  if(c.estado_pago==='confirmada'||c.estado_pago==='pagado'){
+    return`<button onclick="actualizarCita(${c.id},'cancelada')" style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer">Cancelar</button>`;
+  }
+  return`<span style="color:#aaa;font-size:12px">${formatFecha(c.created_at)}</span>`;
+}
+
+async function actualizarCita(citaId, nuevoEstado){
+  try{
+    const res=await api('PUT','/api/panel/citas',{cita_id:citaId,estado_pago:nuevoEstado});
+    if(!res.success)throw new Error(res.error);
+    showToast('Estado actualizado');
+    cargarCitas();
+  }catch(err){showToast('Error: '+err.message,'error');}
+}
 
 // ══ CHATS ════════════════════════════════════════════════════
 async function cargarChats(){
