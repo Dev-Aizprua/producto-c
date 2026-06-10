@@ -15,7 +15,8 @@ export async function onRequestGet(context) {
   try {
     const { results } = await env.producto_c_db
       .prepare(`SELECT id, session_token, cliente_nombre, cliente_tel,
-                  historial_json, fecha, completado
+                  historial_json, fecha, completado,
+                  COALESCE(canal, 'web') as canal
                 FROM chats
                 WHERE negocio_id = ?
                 ORDER BY fecha DESC
@@ -27,6 +28,7 @@ export async function onRequestGet(context) {
       ...c,
       historial: JSON.parse(c.historial_json || '[]'),
       total_mensajes: JSON.parse(c.historial_json || '[]').length,
+      canal: c.canal || 'web',
       historial_json: undefined,
     }));
 

@@ -196,6 +196,8 @@
     .badge-danger{background:#fee2e2;color:#dc2626}
     .badge-gray{background:#f1f5f9;color:#64748b}
     .badge-blue{background:var(--primary-light);color:var(--primary)}
+    .badge-wa{background:#dcfce7;color:#15803d;display:inline-flex;align-items:center;gap:3px}
+    .badge-web{background:#eff6ff;color:#1d4ed8;display:inline-flex;align-items:center;gap:3px}
 
     /* ══ EMPTY ════════════════════════════════════════════════ */
     .empty-state{text-align:center;padding:56px 24px;color:#ccc}
@@ -491,8 +493,8 @@
           <div class="card-title"><i class="ti ti-calendar-check"></i> Todas las reservas</div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Cliente</th><th>Teléfono</th><th>Servicio</th><th>Fecha cita</th><th>Total</th><th>Pago</th><th>Fecha registro</th></tr></thead>
-              <tbody id="citasTbody"><tr><td colspan="7" style="text-align:center;color:#aaa;padding:32px">Cargando...</td></tr></tbody>
+              <thead><tr><th>Cliente</th><th>Teléfono</th><th>Servicio</th><th>Fecha cita</th><th>Total</th><th>Pago</th><th>Canal</th><th>Fecha registro</th></tr></thead>
+              <tbody id="citasTbody"><tr><td colspan="8" style="text-align:center;color:#aaa;padding:32px">Cargando...</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -582,7 +584,33 @@
               </div>
               <button class="btn btn-primary" onclick="guardarModoReserva()"><i class="ti ti-device-floppy"></i> Guardar modo de reserva</button>
             </div>
-          </div>
+
+            <!-- WhatsApp Business -->
+            <div class="card">
+              <div class="card-title"><i class="ti ti-brand-whatsapp"></i> WhatsApp Business</div>
+              <p style="font-size:13.5px;color:#888;margin-bottom:20px;line-height:1.6">Conecta tu número de WhatsApp Business para recibir y responder citas directamente desde WhatsApp.</p>
+              <div class="form-row">
+                <div>
+                  <label class="field-label">Phone Number ID</label>
+                  <input class="field-input" id="waPhoneId" type="text" placeholder="123456789012345" />
+                  <span style="font-size:11px;color:#aaa;margin-top:4px;display:block">Obtenido en Meta Developer Console → WhatsApp → API Setup</span>
+                </div>
+                <div>
+                  <label class="field-label">Access Token</label>
+                  <input class="field-input" id="waToken" type="password" placeholder="EAAxxxxx..." />
+                  <span style="font-size:11px;color:#aaa;margin-top:4px;display:block">Token permanente de WhatsApp Business</span>
+                </div>
+              </div>
+              <div class="form-row full" style="margin-bottom:8px">
+                <div>
+                  <label class="field-label">Telegram Chat ID (alertas al dueño)</label>
+                  <input class="field-input" id="waTelegramId" type="text" placeholder="-1001234567890" />
+                  <span style="font-size:11px;color:#aaa;margin-top:4px;display:block">Opcional — recibe una notificación por cada conversación de WhatsApp</span>
+                </div>
+              </div>
+              <div id="waStatus" style="display:none;margin-bottom:14px"></div>
+              <button class="btn btn-primary" onclick="guardarConfigWA()"><i class="ti ti-device-floppy"></i> Guardar configuración WhatsApp</button>
+            </div>
 
           <!-- Derecha: preview -->
           <div style="position:sticky;top:84px">
@@ -848,6 +876,10 @@ async function cargarNegocio(){
     const modo=n.modo_reserva||'adelanto';
     seleccionarModo(modo);
     if(n.monto_reserva)document.getElementById('montoAdelanto').value=n.monto_reserva;
+    // Campos WhatsApp
+    if(n.wa_phone_id)document.getElementById('waPhoneId').value=n.wa_phone_id;
+    if(n.telegram_chat_id)document.getElementById('waTelegramId').value=n.telegram_chat_id;
+    // No precargamos wa_token por seguridad — el dueño lo ingresa cuando quiera actualizarlo
     actualizarPreview();
   }catch(err){showToast('Error: '+err.message,'error');}
 }
@@ -1021,7 +1053,7 @@ async function cargarCitas(){
   try{
     const data=await api('GET','/api/panel/citas');
     if(!data.success)throw new Error(data.error);
-    if(!data.citas.length){tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;color:#aaa;padding:32px">Sin reservas aún</td></tr>`;return;}
+    if(!data.citas.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:#aaa;padding:32px">Sin reservas aún</td></tr>`;return;}
     tbody.innerHTML=data.citas.map(c=>`<tr>
       <td><strong>${c.cliente_nombre||'—'}</strong></td>
       <td>${c.cliente_tel||'—'}</td>
@@ -1029,12 +1061,14 @@ async function cargarCitas(){
       <td>${c.fecha_cita||'—'}</td>
       <td><strong>$${c.total||0}</strong></td>
       <td>${badgePago(c.estado_pago)}</td>
+      <td>${badgeCanal(c.canal)}</td>
       <td style="color:#aaa;font-size:12px">${formatFecha(c.created_at)}</td>
     </tr>`).join('');
-  }catch(err){tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;color:#e00;padding:32px">${err.message}</td></tr>`;}
+  }catch(err){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:#e00;padding:32px">${err.message}</td></tr>`;}
 }
 
 function badgePago(e){const m={pagado:'success',pendiente:'warning',cancelado:'danger'};return`<span class="badge badge-${m[e]||'gray'}">${e||'pendiente'}</span>`;}
+function badgeCanal(c){return c==='whatsapp'?`<span class="badge badge-wa">📱 WhatsApp</span>`:`<span class="badge badge-web">🌐 Web</span>`;}
 
 // ══ CHATS ════════════════════════════════════════════════════
 async function cargarChats(){
@@ -1047,7 +1081,7 @@ async function cargarChats(){
       const ultimo=c.historial?.slice(-1)[0]?.text||'Sin mensajes';
       return`<div class="chat-item" onclick="verChat(${JSON.stringify(c).replace(/"/g,'&quot;')})">
         <div class="chat-item-header">
-          <div class="chat-item-id"><i class="ti ti-message" style="font-size:13px;color:var(--primary)"></i> ${c.cliente_nombre||'Cliente anónimo'} <span style="font-size:11px;color:#aaa">(${c.total_mensajes} msgs)</span></div>
+          <div class="chat-item-id">${badgeCanal(c.canal)} ${c.cliente_nombre||'Cliente anónimo'} <span style="font-size:11px;color:#aaa">(${c.total_mensajes} msgs)</span></div>
           <div class="chat-item-fecha">${formatFecha(c.fecha)}</div>
         </div>
         <div class="chat-item-preview">${ultimo}</div>
@@ -1067,6 +1101,26 @@ function verChat(chat){
 function formatFecha(iso){
   if(!iso)return'—';
   return new Date(iso).toLocaleDateString('es-PA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+}
+
+// ══ CONFIG WHATSAPP ══════════════════════════════════════════
+async function guardarConfigWA(){
+  const phoneId=document.getElementById('waPhoneId').value.trim();
+  const token=document.getElementById('waToken').value.trim();
+  const telegramId=document.getElementById('waTelegramId').value.trim();
+  const status=document.getElementById('waStatus');
+  if(!phoneId&&!token){showToast('Ingresa al menos el Phone Number ID y el Token','error');return;}
+  try{
+    const res=await api('PUT','/api/panel/negocio',{
+      wa_phone_id:phoneId||null,
+      wa_token:token||null,
+      telegram_chat_id:telegramId||null
+    });
+    if(!res.success)throw new Error(res.error);
+    status.style.display='block';
+    status.innerHTML=`<div style="background:#dcfce7;border:1px solid #bbf7d0;color:#15803d;border-radius:10px;padding:11px 15px;font-size:13px">✅ Configuración WhatsApp guardada. Webhook URL: <strong>https://producto-c.pages.dev/api/whatsapp/webhook</strong></div>`;
+    showToast('Configuración WhatsApp guardada');
+  }catch(err){showToast('Error: '+err.message,'error');}
 }
 
 // ══ INIT ═════════════════════════════════════════════════════

@@ -402,8 +402,8 @@ REGLAS DE ORO:
         ).run();
       } else {
         await env.DB.prepare(
-          `INSERT INTO chats (negocio_id, session_token, cliente_nombre, cliente_tel, historial_json, fecha, completado)
-           VALUES (?, ?, ?, ?, ?, ?, 0)`
+          `INSERT INTO chats (negocio_id, session_token, cliente_nombre, cliente_tel, historial_json, fecha, completado, canal)
+           VALUES (?, ?, ?, ?, ?, ?, 0, 'whatsapp')`
         ).bind(
           negocioId,
           `wa_${from}_${Date.now()}`,

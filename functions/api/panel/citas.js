@@ -14,7 +14,8 @@ export async function onRequestGet(context) {
   const { env, data } = context;
   try {
     const { results } = await env.producto_c_db
-      .prepare(`SELECT c.*, s.nombre as servicio_nombre
+      .prepare(`SELECT c.*, s.nombre as servicio_nombre,
+                COALESCE(c.canal, 'web') as canal
                 FROM citas c
                 LEFT JOIN servicios s ON c.servicio_id = s.id
                 WHERE c.negocio_id = ?
