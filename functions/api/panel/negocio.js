@@ -33,18 +33,24 @@ export async function onRequestPut(context) {
   const { nombre, descripcion, logo_url, icono, color_primary, whatsapp_destino,
           wa_phone_id, wa_token, telegram_chat_id } = body;
 
-  // Construir SET dinámico — wa_token solo se actualiza si se envía un valor nuevo
-  const campos = [
-    'nombre = ?', 'descripcion = ?', 'logo_url = ?', 'icono = ?',
-    'color_primary = ?', 'whatsapp_destino = ?',
-  ];
-  const valores = [nombre, descripcion, logo_url, icono, color_primary, whatsapp_destino];
+  // Construir SET dinámico — solo actualiza los campos que vienen en el body
+  const campos = [];
+  const valores = [];
 
-  if (wa_phone_id !== undefined)   { campos.push('wa_phone_id = ?');     valores.push(wa_phone_id); }
-  if (wa_token    !== undefined && wa_token !== null && wa_token !== '') {
-    campos.push('wa_token = ?'); valores.push(wa_token);
+  if (nombre            !== undefined) { campos.push('nombre = ?');             valores.push(nombre); }
+  if (descripcion       !== undefined) { campos.push('descripcion = ?');        valores.push(descripcion); }
+  if (logo_url          !== undefined) { campos.push('logo_url = ?');           valores.push(logo_url); }
+  if (icono             !== undefined) { campos.push('icono = ?');              valores.push(icono); }
+  if (color_primary     !== undefined) { campos.push('color_primary = ?');      valores.push(color_primary); }
+  if (whatsapp_destino  !== undefined) { campos.push('whatsapp_destino = ?');   valores.push(whatsapp_destino); }
+  if (wa_phone_id       !== undefined) { campos.push('wa_phone_id = ?');        valores.push(wa_phone_id); }
+  if (wa_token !== undefined && wa_token !== null && wa_token !== '') {
+                                         campos.push('wa_token = ?');           valores.push(wa_token); }
+  if (telegram_chat_id  !== undefined) { campos.push('telegram_chat_id = ?');   valores.push(telegram_chat_id); }
+
+  if (campos.length === 0) {
+    return Response.json({ success: false, error: 'Nada que actualizar' }, { status: 400, headers: cors });
   }
-  if (telegram_chat_id !== undefined) { campos.push('telegram_chat_id = ?'); valores.push(telegram_chat_id); }
 
   valores.push(data.negocio_id);
 
