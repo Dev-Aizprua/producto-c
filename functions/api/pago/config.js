@@ -19,7 +19,7 @@ export async function onRequestPost(context) {
   try { body = await request.json(); }
   catch { return Response.json({ success: false, error: 'JSON inválido' }, { status: 400, headers: cors }); }
 
-  const { monto, descripcion, slug } = body;
+  const { monto, descripcion, slug, canal } = body;
 
   if (!monto || !descripcion) {
     return Response.json({ success: false, error: 'monto y descripcion requeridos' }, { status: 400, headers: cors });
@@ -32,8 +32,13 @@ export async function onRequestPost(context) {
     return Response.json({ success: false, error: 'Páguelo Fácil no configurado' }, { status: 503, headers: cors });
   }
 
-  // URL de retorno — donde PF devuelve al cliente después del pago
-  const returnUrl = `https://producto-c.pages.dev/${slug || 'dental-demo'}?pago=ok`;
+  // URL de retorno — diferente para WhatsApp vs Web
+  let returnUrl;
+  if (canal === 'whatsapp') {
+    returnUrl = `https://producto-c.pages.dev/pago-ok.html?canal=whatsapp`;
+  } else {
+    returnUrl = `https://producto-c.pages.dev/${slug || 'dental-demo'}?pago=ok`;
+  }
   const returnUrlHex = Buffer.from(returnUrl).toString('hex');
 
   try {
