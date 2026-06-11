@@ -221,8 +221,9 @@ export async function onRequestPost(context) {
     const modoReserva     = negocio.modo_reserva || "solo_cita";
     const montoReserva    = negocio.monto_reserva || 0;
 
-    // ─── DETECTAR DATOS DE RESERVA EN EL HISTORIAL ───────────
-    // Extraemos nombre, servicio y fecha si ya fueron mencionados
+    // ─── DETECCIÓN DIRECTA DE CONFIRMACIÓN ───────────────────
+    // Si el paciente confirma Y el historial ya tiene los 3 datos,
+    // generamos el pago directamente sin depender de Groq
     const historialTexto = historial.map(h => h.content).join(" ").toLowerCase();
 
     const servicioDetectado = servicios.find(s =>
@@ -230,14 +231,96 @@ export async function onRequestPost(context) {
       historialTexto.includes(s.nombre.toLowerCase())
     );
 
-    // Detectar si el paciente quiere confirmar la reserva
     const palabrasConfirmacion = [
-      "confirmo", "confirmar", "sí quiero", "si quiero", "me anoto",
-      "apúntame", "apuntame", "quiero reservar", "quiero agendar",
-      "reservar", "agendar", "apartar", "hagámoslo", "hagamoslo",
-      "listo", "dale", "perfecto", "acepto", "de acuerdo"
+      "si", "sí", "dale", "listo", "perfecto", "confirmo", "confirmar",
+      "acepto", "quiero pagar", "pagar", "me anoto", "apúntame", "apuntame",
+      "de acuerdo", "claro", "okay", "ok", "correcto", "adelante",
+      "proceder", "vamos", "hagámoslo", "hagamoslo", "cómo pago", "como pago",
+      "si los datos", "datos correctos", "todo correcto", "está bien", "esta bien"
     ];
-    const quiereConfirmar = palabrasConfirmacion.some(p => textoLower.includes(p));
+    const esConfirmacion = palabrasConfirmacion.some(p => textoLower.includes(p));
+
+    // Detectar si el historial menciona una fecha/hora
+    const tieneFecha = /mañana|lunes|martes|miércoles|jueves|viernes|sábado|domingo|\d{1,2}[\/:]\d{1,2}|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|am|pm|tarde|mañana|mediodía/.test(historialTexto);
+
+    // Extraer nombre del paciente del historial si lo tenemos
+    const nombreEnHistorial = nombrePaciente && nombrePaciente !== "Paciente WA";
+
+    // Si tenemos los 3 datos y el paciente confirma — actuar directamente
+    if (esConfirmacion && servicioDetectado && tieneFecha && nombreEnHistorial && modoReserva !== "solo_cita") {
+      const montoFinal = modoReserva === "adelanto" ? montoReserva : servicioDetectado.precio;
+
+      // Extraer fecha aproximada del historial
+      const fechaMatch = historialTexto.match(/mañana.*?(\d{1,2})\s*(am|pm|de la tarde|de la mañana)|(\d{1,2}[\/:]?\d{0,2})\s*(am|pm)/i);
+      const fechaTexto = fechaMatch ? fechaMatch[0] : "Por confirmar";
+
+      try {
+        await env.producto_c_db.prepare(
+          `INSERT INTO citas (negocio_id, servicio_id, cliente_nombre, cliente_tel,
+           fecha_cita, total, estado_pago, metodo_pago, session_token, canal)
+           VALUES (?, ?, ?, ?, ?, ?, 'esperando_pago', 'paguelofacil', ?, 'whatsapp')`
+        ).bind(
+          negocioId,
+          servicioDetectado.id,
+          nombrePaciente,
+          from,
+          fechaTexto,
+          montoFinal,
+          sessionToken
+        ).run();
+      } catch(e) { console.log("Error creando cita directa:", e.message); }
+
+      // Generar link de pago
+      let linkDirecto = null;
+      try {
+        const pfRes = await fetch("https://producto-c.pages.dev/api/pago/config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            slug:        negocio.slug,
+            descripcion: `Reserva ${servicioDetectado.nombre} — ${negocio.nombre}`,
+            monto:       montoFinal,
+            canal:       "whatsapp"
+          })
+        });
+        if (pfRes.ok) {
+          const pfData = await pfRes.json();
+          if (pfData.url) linkDirecto = pfData.url;
+        }
+      } catch(e) { console.log("Error link directo:", e.message); }
+
+      const montoTexto = modoReserva === "adelanto"
+        ? `un adelanto de $${montoFinal}`
+        : `el pago de $${montoFinal}`;
+
+      let respuestaDirecta = `¡Perfecto, ${nombrePaciente}! Tu cita de ${servicioDetectado.nombre} está reservada. Para confirmarla necesito ${montoTexto}.`;
+
+      if (linkDirecto) {
+        respuestaDirecta += `\n\n💳 Enlace de pago seguro:\n${linkDirecto}\n\n_Una vez confirmado el pago, tu cita quedará lista. ✅_`;
+      }
+
+      // Guardar historial
+      try {
+        const nuevoH = [...historial,
+          { role: "user", content: textoConsolidado },
+          { role: "assistant", content: respuestaDirecta }
+        ];
+        const chatEx = await env.producto_c_db.prepare(
+          `SELECT id FROM chats WHERE negocio_id = ? AND cliente_tel = ? AND completado = 0 LIMIT 1`
+        ).bind(negocioId, from).first();
+
+        if (chatEx) {
+          await env.producto_c_db.prepare(
+            `UPDATE chats SET historial_json = ?, fecha = ? WHERE id = ?`
+          ).bind(JSON.stringify(nuevoH), new Date().toISOString(), chatEx.id).run();
+        }
+      } catch(e) {}
+
+      await marcarLeido(waToken, phoneNumberId, message.id);
+      await new Promise(r => setTimeout(r, 2000));
+      await enviarMensaje(waToken, phoneNumberId, from, respuestaDirecta);
+      return new Response("EVENT_RECEIVED", { status: 200 });
+    }
 
     // ─── CONSTRUIR SYSTEM PROMPT ─────────────────────────────
     let instruccionPago = "";
