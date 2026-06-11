@@ -244,10 +244,42 @@ export async function onRequestPost(context) {
     const tieneFecha = /mañana|lunes|martes|miércoles|jueves|viernes|sábado|domingo|\d{1,2}[\/:]\d{1,2}|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|am|pm|tarde|mañana|mediodía/.test(historialTexto);
 
     // Extraer nombre del paciente del historial si lo tenemos
+    // Preferir nombre del historial sobre el perfil de WA (que puede tener errores)
+    const nombreDelHistorial = historial
+      .filter(h => h.role === "user")
+      .map(h => h.content)
+      .join(" ");
+
+    // Buscar patrón "mi nombre es X" o "soy X" en el historial
+    const matchNombre = nombreDelHistorial.match(/mi nombre es ([A-Za-záéíóúÁÉÍÓÚüÜñÑ\s]+?)[\.\,\n]|soy ([A-Za-záéíóúÁÉÍÓÚüÜñÑ\s]+?)[\.\,\n]/i);
+    if (matchNombre) {
+      const nombreExtraido = (matchNombre[1] || matchNombre[2] || "").trim();
+      if (nombreExtraido.length > 3) nombrePaciente = nombreExtraido;
+    }
+
     const nombreEnHistorial = nombrePaciente && nombrePaciente !== "Paciente WA";
 
     // Si tenemos los 3 datos y el paciente confirma — actuar directamente
     if (esConfirmacion && servicioDetectado && tieneFecha && nombreEnHistorial && modoReserva !== "solo_cita") {
+
+      // Verificar que NO existe ya una cita esperando_pago para este número
+      // Evita generar link duplicado cuando el paciente dice "ok" o "gracias" después
+      let citaExistente = null;
+      try {
+        citaExistente = await env.producto_c_db.prepare(
+          `SELECT id FROM citas WHERE negocio_id = ? AND cliente_tel = ? AND estado_pago = 'esperando_pago' LIMIT 1`
+        ).bind(negocioId, from).first();
+      } catch(e) {}
+
+      if (citaExistente) {
+        // Ya tiene cita pendiente — responder amablemente sin generar nuevo link
+        await marcarLeido(waToken, phoneNumberId, message.id);
+        await enviarMensaje(waToken, phoneNumberId, from,
+          `Tu cita ya está registrada y esperando el pago. Usa el enlace que te enviamos para confirmarla. 😊`
+        );
+        return new Response("EVENT_RECEIVED", { status: 200 });
+      }
+
       const montoFinal = modoReserva === "adelanto" ? montoReserva : servicioDetectado.precio;
 
       // Extraer fecha aproximada del historial
