@@ -559,6 +559,7 @@ REGLAS:
 
     // ─── GUARDAR HISTORIAL ────────────────────────────────────
     try {
+      console.log(`[CHAT] Guardando historial — negocioId:${negocioId} from:${from} sessionToken:${sessionToken}`);
       const nuevoHistorial = [
         ...historial,
         { role: "user",      content: textoConsolidado },
@@ -593,7 +594,7 @@ REGLAS:
           new Date().toISOString()
         ).run();
       }
-    } catch(e) { console.log("Error guardando chat:", e.message); }
+    } catch(e) { console.log("Error guardando chat:", e.message, e.stack); }
 
     // ─── DELAY HUMANO + ENVIAR ────────────────────────────────
     await marcarLeido(waToken, phoneNumberId, msgId);

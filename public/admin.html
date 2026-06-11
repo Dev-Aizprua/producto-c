@@ -1195,6 +1195,15 @@ function init(){
   if(saved){STATE.token=saved;STATE.negocio={slug};mostrarPanel();}
 }
 init();
+
+// ── AUTO-REFRESH CADA 60 SEGUNDOS ────────────────────────────
+// Actualiza KPIs, citas y chats en silencio sin recargar la página
+setInterval(()=>{
+  if(!STATE.token)return; // Solo si está logueado
+  cargarKPIs();
+  cargarCitas();
+  cargarChats();
+},60000);
 </script>
 </body>
 </html>
