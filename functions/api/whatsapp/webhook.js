@@ -384,9 +384,10 @@ REGLAS:
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            slug:       negocio.slug,
+            slug:        negocio.slug,
             descripcion: `Reserva ${datosGenerar.servicio || "servicio"} — ${negocio.nombre}`,
-            monto:      montoFinal
+            monto:       montoFinal,
+            canal:       "whatsapp"
           })
         });
 
