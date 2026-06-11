@@ -1131,13 +1131,15 @@ async function cargarChats(){
     if(!data.success)throw new Error(data.error);
     if(!data.chats.length){list.innerHTML=`<div class="empty-state"><i class="ti ti-message-dots"></i><p>Sin conversaciones aún</p></div>`;return;}
     list.innerHTML=data.chats.map(c=>{
-      const ultimo=c.historial?.slice(-1)[0]?.text||'Sin mensajes';
+      // Historial usa 'content' (WhatsApp/Groq) — compatible con ambos canales
+      const ultimoMsg=c.historial?.slice(-1)[0];
+      const ultimo=ultimoMsg?.content||ultimoMsg?.text||'Sin mensajes';
       return`<div class="chat-item" onclick="verChat(${JSON.stringify(c).replace(/"/g,'&quot;')})">
         <div class="chat-item-header">
           <div class="chat-item-id">${badgeCanal(c.canal)} ${c.cliente_nombre||'Cliente anónimo'} <span style="font-size:11px;color:#aaa">(${c.total_mensajes} msgs)</span></div>
           <div class="chat-item-fecha">${formatFecha(c.fecha)}</div>
         </div>
-        <div class="chat-item-preview">${ultimo}</div>
+        <div class="chat-item-preview">${ultimo.substring(0,80)}${ultimo.length>80?'...':''}</div>
       </div>`;
     }).join('');
   }catch(err){list.innerHTML=`<div class="empty-state"><i class="ti ti-alert-circle"></i><p>${err.message}</p></div>`;}
@@ -1145,9 +1147,17 @@ async function cargarChats(){
 
 function verChat(chat){
   const viewer=document.getElementById('chatViewer');
-  const bubbles=chat.historial.map(m=>`<div class="chat-bub ${m.role}">${m.text}</div>`).join('');
-  viewer.innerHTML=`<div class="card-title"><i class="ti ti-messages"></i> ${chat.cliente_nombre||'Cliente anónimo'}</div>
-    <div style="font-size:12px;color:#aaa;margin-bottom:12px">${formatFecha(chat.fecha)} · ${chat.total_mensajes} mensajes</div>
+  const bubbles=chat.historial.map(m=>{
+    const texto=m.content||m.text||'';
+    // Saltar marcadores internos de imágenes
+    if(texto.startsWith('[img:'))return'';
+    return`<div class="chat-bub ${m.role}">${texto}</div>`;
+  }).join('');
+  const canalBadge=badgeCanal(chat.canal);
+  const telDisplay=chat.canal==='whatsapp'?`📱 +${chat.cliente_tel}`:`🌐 ${chat.cliente_tel||'Web'}`;
+  viewer.innerHTML=`
+    <div class="card-title"><i class="ti ti-messages"></i> ${chat.cliente_nombre||'Cliente anónimo'} ${canalBadge}</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:12px">${telDisplay} · ${formatFecha(chat.fecha)} · ${chat.total_mensajes} mensajes</div>
     <div class="chat-bubble-list">${bubbles||'<div class="empty-state"><p>Sin mensajes</p></div>'}</div>`;
 }
 
