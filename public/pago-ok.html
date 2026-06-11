@@ -37,11 +37,10 @@
     <p class="note">Recibirás una confirmación por WhatsApp cuando tu cita sea aprobada por nuestro equipo.</p>
   </div>
   <script>
-    // Construir link de regreso a WhatsApp
+    // Abrir conversación de WhatsApp con el número de la clínica
     const params = new URLSearchParams(window.location.search);
-    const btnWa  = document.getElementById('btnWa');
-    // Abre WhatsApp en el número que inició la conversación (si está en mobile)
-    btnWa.href = 'https://wa.me/';
+    const numero = params.get('numero') || '50760291411';
+    document.getElementById('btnWa').href = `https://wa.me/${numero}`;
   </script>
 </body>
 </html>

@@ -324,7 +324,8 @@ REGLAS:
     let datosCita    = null;
 
     // ── CASO 1: CREAR CITA DIRECTA (solo_cita) ───────────────
-    const datosCrear = extraerEtiqueta(respuesta, "CREAR_CITA");
+    // Solo aplica en modo solo_cita — en adelanto/pago_completo siempre requiere pago
+    const datosCrear = modoReserva === 'solo_cita' ? extraerEtiqueta(respuesta, "CREAR_CITA") : null;
     if (datosCrear) {
       const svcEncontrado = servicios.find(s =>
         s.nombre.toLowerCase() === (datosCrear.servicio || "").toLowerCase() ||

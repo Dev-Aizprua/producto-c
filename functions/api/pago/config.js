@@ -35,7 +35,8 @@ export async function onRequestPost(context) {
   // URL de retorno — diferente para WhatsApp vs Web
   let returnUrl;
   if (canal === 'whatsapp') {
-    returnUrl = `https://producto-c.pages.dev/pago-ok.html?canal=whatsapp`;
+    const numeroClinica = (negocio?.whatsapp_destino || '').replace(/\D/g,'');
+    returnUrl = `https://producto-c.pages.dev/pago-ok.html?canal=whatsapp&numero=${numeroClinica}`;
   } else {
     returnUrl = `https://producto-c.pages.dev/${slug || 'dental-demo'}?pago=ok`;
   }
