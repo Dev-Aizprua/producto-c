@@ -146,7 +146,6 @@ export async function onRequestPost(context) {
 
     const textoRecibido = message.text?.body || "";
 
-    // ─── DEBOUNCE 8 SEGUNDOS ─────────────────────────────────
     let miId = null;
     try {
       const ins = await env.producto_c_db.prepare(
@@ -220,6 +219,37 @@ export async function onRequestPost(context) {
     const esPrimerMensaje = historial.length === 0;
     const modoReserva     = negocio.modo_reserva || "solo_cita";
     const montoReserva    = negocio.monto_reserva || 0;
+
+    // ─── ENVIAR IMAGEN SI PACIENTE MENCIONA UN SERVICIO ──────
+    const imagenesServicio = {
+      "limpieza dental": "https://images.pexels.com/photos/6627483/pexels-photo-6627483.jpeg?w=600&auto=compress",
+      "blanqueamiento":  "https://images.pexels.com/photos/3762453/pexels-photo-3762453.jpeg?w=600&auto=compress",
+      "implante dental": "https://images.pexels.com/photos/3845625/pexels-photo-3845625.jpeg?w=600&auto=compress",
+      "ortodoncia":      "https://images.pexels.com/photos/5355830/pexels-photo-5355830.jpeg?w=600&auto=compress",
+    };
+
+    const servicioMencionadoAhora = servicios.find(s =>
+      textoLower.includes(s.nombre.toLowerCase())
+    );
+
+    const imagenYaEnviada = historial.some(h =>
+      h.role === "assistant" &&
+      servicioMencionadoAhora &&
+      h.content.toLowerCase().includes(`[img:${servicioMencionadoAhora.nombre.toLowerCase()}]`)
+    );
+
+    if (servicioMencionadoAhora && !imagenYaEnviada) {
+      const imgUrl = servicioMencionadoAhora.imagen_url ||
+        imagenesServicio[servicioMencionadoAhora.nombre.toLowerCase()] || null;
+
+      if (imgUrl) {
+        const caption = `🦷 ${servicioMencionadoAhora.nombre}\n💰 Desde $${servicioMencionadoAhora.precio} USD | ⏱ ${servicioMencionadoAhora.duracion} min${servicioMencionadoAhora.descripcion ? `\n${servicioMencionadoAhora.descripcion}` : ""}`;
+        await enviarImagen(waToken, phoneNumberId, from, imgUrl, caption);
+        await new Promise(r => setTimeout(r, 800));
+        // Marcador invisible en historial para no reenviar la imagen
+        historial.push({ role: "assistant", content: `[img:${servicioMencionadoAhora.nombre.toLowerCase()}]` });
+      }
+    }
 
     // ─── DETECCIÓN DIRECTA DE CONFIRMACIÓN ───────────────────
     // Si el paciente confirma Y el historial ya tiene los 3 datos,
@@ -624,4 +654,26 @@ async function notificarTelegram(token, chatId, texto) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ chat_id: chatId, text: texto, parse_mode: "HTML" })
   });
+}
+
+// ─── ENVIAR IMAGEN CON CAPTION ────────────────────────────────────
+async function enviarImagen(waToken, phoneNumberId, to, imageUrl, caption) {
+  try {
+    const res = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${waToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to,
+        type: "image",
+        image: {
+          link: imageUrl,
+          caption: caption
+        }
+      })
+    });
+    const result = await res.json();
+    console.log("Imagen enviada:", JSON.stringify(result));
+    return result;
+  } catch(e) { console.log("Error enviarImagen:", e.message); }
 }
