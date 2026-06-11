@@ -784,13 +784,22 @@ async function cargarKPIs(){
     document.getElementById('kpiServicios').textContent=svcs.servicios?.filter(s=>s.activo).length||0;
     document.getElementById('kpiCitas').textContent=todas.length;
     document.getElementById('kpiChats').textContent=todosChats.length;
-    const sumPag=arr=>arr.filter(c=>c.estado_pago==='pagado').reduce((a,c)=>a+parseFloat(c.total||0),0);
+
+    // Ingresos — solo contar pagos realmente recibidos y confirmados
+    const estadosPagado = ['pagado', 'confirmada'];
+    // Pendiente de verificar — separado para mostrar en panel pero no como ingreso confirmado
+    const estadosPorVerificar = ['pago_por_verificar'];
+    const sumPag=arr=>arr.filter(c=>estadosPagado.includes(c.estado_pago)).reduce((a,c)=>a+parseFloat(c.total||0),0);
+    const sumPorVerificar=arr=>arr.filter(c=>estadosPorVerificar.includes(c.estado_pago)).reduce((a,c)=>a+parseFloat(c.total||0),0);
     document.getElementById('kpiIngresos').textContent=`$${sumPag(todas).toFixed(2)}`;
 
     // Estado por color
-    document.getElementById('cntPagadas').textContent=todas.filter(c=>c.estado_pago==='pagado').length;
-    document.getElementById('cntPendientes').textContent=todas.filter(c=>!c.estado_pago||c.estado_pago==='pendiente').length;
-    document.getElementById('cntCanceladas').textContent=todas.filter(c=>c.estado_pago==='cancelado').length;
+    const cntPagadas = todas.filter(c=>estadosPagado.includes(c.estado_pago)).length;
+    const cntPendientes = todas.filter(c=>['pendiente','esperando_pago','pago_por_verificar'].includes(c.estado_pago)||!c.estado_pago).length;
+    const cntCanceladas = todas.filter(c=>['cancelada','cancelado','expirada'].includes(c.estado_pago)).length;
+    document.getElementById('cntPagadas').textContent=cntPagadas;
+    document.getElementById('cntPendientes').textContent=cntPendientes;
+    document.getElementById('cntCanceladas').textContent=cntCanceladas;
 
     // Conversión
     const nc=todosChats.length,nr=todas.length;
@@ -848,14 +857,12 @@ async function cargarKPIs(){
     const tbody=document.getElementById('dashCitasTbody');
     const ultimas=todas.slice(0,5);
     if(!ultimas.length){tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;color:#aaa;padding:24px">Sin reservas aún</td></tr>`;return;}
-    const clases={pagado:'badge-success',pendiente:'badge-warning',cancelado:'badge-danger'};
     tbody.innerHTML=ultimas.map(c=>{
-      const e=c.estado_pago||'pendiente';
       return`<tr>
         <td><strong>${c.servicio_nombre||'—'}</strong></td>
         <td>${c.fecha_cita||'—'}</td>
         <td><strong>$${c.total||0}</strong></td>
-        <td><span class="badge ${clases[e]||'badge-gray'}">${e}</span></td>
+        <td>${badgePago(c.estado_pago)} ${badgeCanal(c.canal)}</td>
       </tr>`;
     }).join('');
   }catch(e){console.error('KPI error:',e);}
