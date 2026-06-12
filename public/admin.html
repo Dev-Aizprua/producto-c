@@ -1039,17 +1039,17 @@ async function subirImagen(input){
   const zone=document.getElementById('uploadZone');
   zone.querySelector('p').textContent='Subiendo imagen...';
   try{
-    const signData=await api('POST','/api/panel/cloudinary',{folder:'producto-c'});
-    if(!signData.success)throw new Error(signData.error);
     const form=new FormData();
-    form.append('file',file);form.append('api_key',signData.api_key);
-    form.append('timestamp',signData.timestamp);form.append('signature',signData.signature);
-    form.append('folder',signData.folder);
-    const res=await fetch(signData.upload_url,{method:'POST',body:form});
+    form.append('file',file);
+    const res=await fetch('/api/panel/cloudinary',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+STATE.token},
+      body:form
+    });
     const cData=await res.json();
-    if(!cData.secure_url)throw new Error('Error en Cloudinary');
-    document.getElementById('svcImagenUrl').value=cData.secure_url;
-    prev.src=cData.secure_url;prev.style.display='block';
+    if(!cData.success)throw new Error(cData.error||'Error en Cloudinary');
+    document.getElementById('svcImagenUrl').value=cData.url;
+    prev.src=cData.url;prev.style.display='block';
     zone.querySelector('p').textContent='✅ Imagen subida';
     showToast('Imagen subida');
   }catch(err){zone.querySelector('p').textContent='Haz clic o arrastra una imagen aquí';showToast('Error: '+err.message,'error');}
@@ -1195,15 +1195,6 @@ function init(){
   if(saved){STATE.token=saved;STATE.negocio={slug};mostrarPanel();}
 }
 init();
-
-// ── AUTO-REFRESH CADA 60 SEGUNDOS ────────────────────────────
-// Actualiza KPIs, citas y chats en silencio sin recargar la página
-setInterval(()=>{
-  if(!STATE.token)return; // Solo si está logueado
-  cargarKPIs();
-  cargarCitas();
-  cargarChats();
-},60000);
 </script>
 </body>
 </html>

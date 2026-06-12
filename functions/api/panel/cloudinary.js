@@ -1,8 +1,9 @@
 // ============================================================
 // functions/api/panel/cloudinary.js
-// POST /api/panel/cloudinary/sign
-// Genera firma SHA-1 para uploads directos desde el browser
-// Cloud: doaqu6s6c — Carpeta: producto-c/{slug}
+// POST /api/panel/cloudinary → subir imagen de servicio
+// Usa unsigned preset 'tienda' del cloud doaqu6s6c
+// Sin necesidad de CLOUDINARY_API_KEY ni CLOUDINARY_SECRET
+// Carpeta multi-tenant: producto-c/{slug}
 // ============================================================
 
 const cors = {
@@ -12,48 +13,67 @@ const cors = {
   'Content-Type': 'application/json',
 };
 
-async function sha1(text) {
-  const buffer = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
+const CLOUD_NAME = 'doaqu6s6c';
+const PRESET     = 'tienda';
 
 export async function onRequestPost(context) {
   const { request, env, data } = context;
 
-  let body;
-  try { body = await request.json(); }
-  catch { return Response.json({ success: false, error: 'JSON inválido' }, { status: 400, headers: cors }); }
+  try {
+    const formData = await request.formData();
+    const file = formData.get('file');
 
-  const { folder } = body;
-  const timestamp = Math.round(Date.now() / 1000);
-  const cloudName = env.CLOUDINARY_CLOUD || 'doaqu6s6c';
-  const apiKey    = env.CLOUDINARY_API_KEY;
-  const secret    = env.CLOUDINARY_SECRET;
+    if (!file) {
+      return Response.json({ success: false, error: 'No se recibió imagen' }, { status: 400, headers: cors });
+    }
 
-  if (!secret || !apiKey) {
-    return Response.json({ success: false, error: 'Cloudinary no configurado' }, { status: 503, headers: cors });
+    // Validar tamaño (máx 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      return Response.json({ success: false, error: 'La imagen supera 10MB' }, { status: 400, headers: cors });
+    }
+
+    // Validar tipo
+    const tiposPermitidos = ['image/jpeg','image/jpg','image/png','image/webp'];
+    if (!tiposPermitidos.includes(file.type)) {
+      return Response.json({ success: false, error: 'Formato no permitido. Usa JPG, PNG o WEBP' }, { status: 400, headers: cors });
+    }
+
+    // Carpeta multi-tenant — producto-c/{slug}
+    const negocio = await env.producto_c_db
+      .prepare('SELECT slug FROM negocios WHERE id = ? LIMIT 1')
+      .bind(data.negocio_id).first();
+
+    const carpeta = `producto-c/${negocio?.slug || 'general'}`;
+
+    // Subir a Cloudinary con preset unsigned — sin API key ni secret
+    const upload = new FormData();
+    upload.append('file', file);
+    upload.append('upload_preset', PRESET);
+    upload.append('folder', carpeta);
+
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+      { method: 'POST', body: upload }
+    );
+
+    if (!res.ok) {
+      const err = await res.text();
+      return Response.json({ success: false, error: 'Cloudinary: ' + err }, { status: 500, headers: cors });
+    }
+
+    const cloudData = await res.json();
+
+    return Response.json({
+      success:   true,
+      url:       cloudData.secure_url,
+      public_id: cloudData.public_id,
+      width:     cloudData.width,
+      height:    cloudData.height,
+    }, { headers: cors });
+
+  } catch (err) {
+    return Response.json({ success: false, error: err.message }, { status: 500, headers: cors });
   }
-
-  // Obtener slug del negocio para la carpeta
-  const negocio = await env.producto_c_db
-    .prepare('SELECT slug FROM negocios WHERE id = ? LIMIT 1')
-    .bind(data.negocio_id).first();
-
-  const carpeta = `producto-c/${negocio?.slug || 'general'}`;
-
-  // Construir string a firmar
-  const paramsToSign = `folder=${carpeta}&timestamp=${timestamp}`;
-  const signature = await sha1(paramsToSign + secret);
-
-  return Response.json({
-    success: true,
-    signature,
-    timestamp,
-    api_key: apiKey,
-    cloud_name: cloudName,
-    folder: carpeta,
-    upload_url: `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-  }, { headers: cors });
 }
 
 export async function onRequestOptions() {

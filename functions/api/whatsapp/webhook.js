@@ -400,7 +400,7 @@ export async function onRequestPost(context) {
       } catch(e) {}
 
       await marcarLeido(waToken, phoneNumberId, message.id);
-      await enviarTyping(waToken, phoneNumberId, from);
+      await enviarTyping(waToken, phoneNumberId, from, message.id);
       await new Promise(r => setTimeout(r, 2500));
       await enviarMensaje(waToken, phoneNumberId, from, respuestaDirecta);
       return new Response("EVENT_RECEIVED", { status: 200 });
@@ -621,7 +621,7 @@ REGLAS:
 
     // ─── DELAY HUMANO + ENVIAR ────────────────────────────────
     await marcarLeido(waToken, phoneNumberId, msgId);
-    await enviarTyping(waToken, phoneNumberId, from);
+    await enviarTyping(waToken, phoneNumberId, from, msgId);
     const palabras = respuesta.split(" ").length;
     const delayMs  = Math.min(Math.max(palabras * 80, 1500), 5000);
     await new Promise(r => setTimeout(r, delayMs));
@@ -662,19 +662,22 @@ async function marcarLeido(waToken, phoneNumberId, messageId) {
 
 // ─── INDICADOR "ESCRIBIENDO..." (puntitos) ──────────────────────
 // Formato oficial Meta Cloud API: type=typing_indicator + recipient_type
-async function enviarTyping(waToken, phoneNumberId, to) {
+async function enviarTyping(waToken, phoneNumberId, to, messageId) {
   if (!to) return;
   try {
-    const res = await fetch(`https://graph.facebook.com/v23.0/${phoneNumberId}/messages`, {
+    const body = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: to,
+      type: "typing_indicator",
+      typing_indicator: { type: "text" }
+    };
+    if (messageId) body.context = { message_id: messageId };
+
+    const res = await fetch(`https://graph.facebook.com/v25.0/${phoneNumberId}/messages`, {
       method: "POST",
       headers: { "Authorization": `Bearer ${waToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        recipient_type: "individual",
-        to: to,
-        type: "typing_indicator",
-        typing_indicator: { type: "text" }
-      })
+      body: JSON.stringify(body)
     });
     const result = await res.json();
     console.log("Typing response:", JSON.stringify(result));
