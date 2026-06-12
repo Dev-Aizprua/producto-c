@@ -665,7 +665,7 @@ async function marcarLeido(waToken, phoneNumberId, messageId) {
 async function enviarTyping(waToken, phoneNumberId, to) {
   if (!to) return;
   try {
-    const res = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+    const res = await fetch(`https://graph.facebook.com/v23.0/${phoneNumberId}/messages`, {
       method: "POST",
       headers: { "Authorization": `Bearer ${waToken}`, "Content-Type": "application/json" },
       body: JSON.stringify({
