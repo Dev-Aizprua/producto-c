@@ -281,10 +281,31 @@ export async function onRequestPost(context) {
       .join(" ");
 
     // Buscar patrón "mi nombre es X" o "soy X" en el historial
-    const matchNombre = nombreDelHistorial.match(/mi nombre es ([A-Za-záéíóúÁÉÍÓÚüÜñÑ\s]+?)[\.\,\n]|soy ([A-Za-záéíóúÁÉÍÓÚüÜñÑ\s]+?)[\.\,\n]/i);
+    // Soporta fin de línea, fin de string, signos de puntuación o emojis
+    const matchNombre = nombreDelHistorial.match(
+      /mi nombre (?:completo )?es\s+([A-Za-záéíóúÁÉÍÓÚüÜñÑ]+(?:\s[A-Za-záéíóúÁÉÍÓÚüÜñÑ]+){0,3})|soy\s+([A-Za-záéíóúÁÉÍÓÚüÜñÑ]+(?:\s[A-Za-záéíóúÁÉÍÓÚüÜñÑ]+){0,3})|me llamo\s+([A-Za-záéíóúÁÉÍÓÚüÜñÑ]+(?:\s[A-Za-záéíóúÁÉÍÓÚüÜñÑ]+){0,3})/i
+    );
     if (matchNombre) {
-      const nombreExtraido = (matchNombre[1] || matchNombre[2] || "").trim();
+      const nombreExtraido = (matchNombre[1] || matchNombre[2] || matchNombre[3] || "")
+        .trim()
+        .replace(/\s+(quiero|necesito|para|y|el|la|un|una).*$/i, ""); // cortar si sigue otra frase
       if (nombreExtraido.length > 3) nombrePaciente = nombreExtraido;
+    } else {
+      // Si el bot preguntó por el nombre y el siguiente mensaje del usuario
+      // son solo 2-4 palabras (típico de "Eduardo Aizprua" sin más contexto),
+      // usarlo como nombre directamente.
+      const ultimoBotPreguntoNombre = historial.some(h =>
+        h.role === "assistant" &&
+        /nombre completo|tu nombre|cuál es tu nombre/i.test(h.content)
+      );
+      const ultimoMensajeUsuario = historial.filter(h => h.role === "user").slice(-1)[0]?.content || "";
+      const palabrasNombre = ultimoMensajeUsuario.trim().split(/\s+/);
+      const pareceSoloNombre = palabrasNombre.length >= 2 && palabrasNombre.length <= 4 &&
+        /^[A-Za-záéíóúÁÉÍÓÚüÜñÑ\s]+$/.test(ultimoMensajeUsuario.trim());
+
+      if (ultimoBotPreguntoNombre && pareceSoloNombre) {
+        nombrePaciente = ultimoMensajeUsuario.trim();
+      }
     }
 
     const nombreEnHistorial = nombrePaciente && nombrePaciente !== "Paciente WA";
@@ -379,7 +400,8 @@ export async function onRequestPost(context) {
       } catch(e) {}
 
       await marcarLeido(waToken, phoneNumberId, message.id);
-      await new Promise(r => setTimeout(r, 2000));
+      await enviarTyping(waToken, phoneNumberId, message.id);
+      await new Promise(r => setTimeout(r, 2500));
       await enviarMensaje(waToken, phoneNumberId, from, respuestaDirecta);
       return new Response("EVENT_RECEIVED", { status: 200 });
     }
@@ -424,7 +446,8 @@ REGLAS:
 • Si preguntan si eres IA: "Soy la asistente virtual de ${negocio.nombre}, disponible 24/7."
 • Idioma: español panameño, cálido y profesional.
 • NUNCA mencionar: Cloudflare, Groq, API, base de datos.
-• NUNCA mostrar ni explicar las etiquetas al paciente — son invisibles.`;
+• NUNCA mostrar ni explicar las etiquetas al paciente — son invisibles.
+• SÍ PUEDES enviar enlaces de pago — el sistema los genera automáticamente con la etiqueta de acción. Si el paciente pide el link, pregunta o ya tiene los datos completos (nombre+servicio+fecha), incluye la etiqueta de acción — el sistema se encarga del resto. NUNCA digas "no puedo enviar enlaces" ni similar.`;
 
     // ─── LLAMAR A GROQ ────────────────────────────────────────
     const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -598,6 +621,7 @@ REGLAS:
 
     // ─── DELAY HUMANO + ENVIAR ────────────────────────────────
     await marcarLeido(waToken, phoneNumberId, msgId);
+    await enviarTyping(waToken, phoneNumberId, msgId);
     const palabras = respuesta.split(" ").length;
     const delayMs  = Math.min(Math.max(palabras * 80, 1500), 5000);
     await new Promise(r => setTimeout(r, delayMs));
@@ -632,6 +656,19 @@ async function marcarLeido(waToken, phoneNumberId, messageId) {
       method: "POST",
       headers: { "Authorization": `Bearer ${waToken}`, "Content-Type": "application/json" },
       body: JSON.stringify({ messaging_product: "whatsapp", status: "read", message_id: messageId })
+    });
+  } catch(e) {}
+}
+
+// ─── INDICADOR "ESCRIBIENDO..." (puntitos) ──────────────────────
+// Dura ~25 segundos en WhatsApp. Debe ir DESPUÉS de marcarLeido.
+async function enviarTyping(waToken, phoneNumberId, messageId) {
+  if (!messageId) return;
+  try {
+    await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${waToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ messaging_product: "whatsapp", status: "typing", message_id: messageId })
     });
   } catch(e) {}
 }
