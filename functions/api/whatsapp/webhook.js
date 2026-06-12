@@ -665,7 +665,7 @@ async function marcarLeido(waToken, phoneNumberId, messageId) {
 async function enviarTyping(waToken, phoneNumberId, to) {
   if (!to) return;
   try {
-    await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+    const res = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
       method: "POST",
       headers: { "Authorization": `Bearer ${waToken}`, "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -676,7 +676,9 @@ async function enviarTyping(waToken, phoneNumberId, to) {
         typing_indicator: { type: "text" }
       })
     });
-  } catch(e) {}
+    const result = await res.json();
+    console.log("Typing response:", JSON.stringify(result));
+  } catch(e) { console.log("Error typing:", e.message); }
 }
 
 async function enviarMensaje(waToken, phoneNumberId, to, texto) {
