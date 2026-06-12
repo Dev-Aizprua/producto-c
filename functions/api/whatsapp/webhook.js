@@ -400,7 +400,7 @@ export async function onRequestPost(context) {
       } catch(e) {}
 
       await marcarLeido(waToken, phoneNumberId, message.id);
-      await enviarTyping(waToken, phoneNumberId, message.id);
+      await enviarTyping(waToken, phoneNumberId, from);
       await new Promise(r => setTimeout(r, 2500));
       await enviarMensaje(waToken, phoneNumberId, from, respuestaDirecta);
       return new Response("EVENT_RECEIVED", { status: 200 });
@@ -621,7 +621,7 @@ REGLAS:
 
     // ─── DELAY HUMANO + ENVIAR ────────────────────────────────
     await marcarLeido(waToken, phoneNumberId, msgId);
-    await enviarTyping(waToken, phoneNumberId, msgId);
+    await enviarTyping(waToken, phoneNumberId, from);
     const palabras = respuesta.split(" ").length;
     const delayMs  = Math.min(Math.max(palabras * 80, 1500), 5000);
     await new Promise(r => setTimeout(r, delayMs));
@@ -661,14 +661,20 @@ async function marcarLeido(waToken, phoneNumberId, messageId) {
 }
 
 // ─── INDICADOR "ESCRIBIENDO..." (puntitos) ──────────────────────
-// Dura ~25 segundos en WhatsApp. Debe ir DESPUÉS de marcarLeido.
-async function enviarTyping(waToken, phoneNumberId, messageId) {
-  if (!messageId) return;
+// Formato oficial Meta Cloud API: type=typing_indicator + recipient_type
+async function enviarTyping(waToken, phoneNumberId, to) {
+  if (!to) return;
   try {
     await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
       method: "POST",
       headers: { "Authorization": `Bearer ${waToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ messaging_product: "whatsapp", status: "typing", message_id: messageId })
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: to,
+        type: "typing_indicator",
+        typing_indicator: { type: "text" }
+      })
     });
   } catch(e) {}
 }
