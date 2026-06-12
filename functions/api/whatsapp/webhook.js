@@ -192,7 +192,7 @@ export async function onRequestPost(context) {
     let servicios = [];
     try {
       const svc = await env.producto_c_db.prepare(
-        "SELECT id, nombre, descripcion, precio, duracion FROM servicios WHERE negocio_id = ? AND activo = 1 ORDER BY orden ASC"
+        "SELECT id, nombre, descripcion, precio, duracion, imagen_url FROM servicios WHERE negocio_id = ? AND activo = 1 ORDER BY orden ASC"
       ).bind(negocioId).all();
       servicios = svc.results || [];
     } catch(e) {}
