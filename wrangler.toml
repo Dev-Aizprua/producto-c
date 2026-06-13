@@ -7,3 +7,6 @@ compatibility_flags = ["nodejs_compat"]
 binding = "producto_c_db"
 database_name = "producto-c-db"
 database_id = "83e9fa16-42e4-4206-8d87-eeaf40b0bff1"
+
+[triggers]
+crons = ["*/10 * * * *"]
