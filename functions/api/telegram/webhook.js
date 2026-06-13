@@ -51,46 +51,42 @@ export async function onRequestPost(context) {
       return Response.json({ ok: true });
     }
 
-    if (accion === "pausar") {
+    if (accion === "pausar" || accion === "reanudar") {
       const numero    = resto[0];
       const negocioId = resto[1];
+      const citaId    = resto[2]; // necesario para reconstruir Confirmar/Rechazar
 
-      try {
-        await env.producto_c_db
-          .prepare("INSERT OR REPLACE INTO modos_manual (numero, negocio_id) VALUES (?, ?)")
-          .bind(numero, negocioId).run();
-      } catch(e) {
-        console.log("Error pausando bot:", e.message);
+      if (accion === "pausar") {
+        try {
+          await env.producto_c_db
+            .prepare("INSERT OR REPLACE INTO modos_manual (numero, negocio_id) VALUES (?, ?)")
+            .bind(numero, negocioId).run();
+        } catch(e) { console.log("Error pausando bot:", e.message); }
+      } else {
+        try {
+          await env.producto_c_db
+            .prepare("DELETE FROM modos_manual WHERE numero = ?")
+            .bind(numero).run();
+        } catch(e) { console.log("Error reanudando bot:", e.message); }
       }
 
-      const textoOriginal = callback.message?.text || "";
-      await editarMensajeTelegram(env.TELEGRAM_TOKEN, chatId, messageId,
-        `${textoOriginal}\n\n🛑 <b>Bot pausado para este número</b> — Eduardo tomó el control.`,
-        null
-      );
+      // Reconstruir el teclado: Confirmar/Rechazar arriba (igual que antes)
+      // + botón inferior cambia según el nuevo estado
+      const filaSuperior = [
+        { text: "✅ Confirmar Cita", callback_data: `confirmar:${citaId}` },
+        { text: "❌ Rechazar/Cancelar", callback_data: `rechazar:${citaId}` }
+      ];
 
-      await responderCallback(env.TELEGRAM_TOKEN, callbackId, "Bot pausado para este número");
-      return Response.json({ ok: true });
-    }
+      const filaInferior = accion === "pausar"
+        ? [{ text: "✅ Activar Bot de Nuevo", callback_data: `reanudar:${numero}:${negocioId}:${citaId}` }]
+        : [{ text: "🛑 Pausar Bot (Intervención Manual)", callback_data: `pausar:${numero}:${negocioId}:${citaId}` }];
 
-    if (accion === "reanudar") {
-      const numero = resto[0];
+      await editarTecladoTelegram(env.TELEGRAM_TOKEN, chatId, messageId, {
+        inline_keyboard: [filaSuperior, filaInferior]
+      });
 
-      try {
-        await env.producto_c_db
-          .prepare("DELETE FROM modos_manual WHERE numero = ?")
-          .bind(numero).run();
-      } catch(e) {
-        console.log("Error reanudando bot:", e.message);
-      }
-
-      const textoOriginal = callback.message?.text || "";
-      await editarMensajeTelegram(env.TELEGRAM_TOKEN, chatId, messageId,
-        `${textoOriginal}\n\n🤖 <b>Bot reanudado</b> — la IA vuelve a responder a este número.`,
-        null
-      );
-
-      await responderCallback(env.TELEGRAM_TOKEN, callbackId, "Bot reanudado");
+      const textoConfirm = accion === "pausar" ? "🛑 Bot pausado" : "🤖 Bot reanudado";
+      await responderCallback(env.TELEGRAM_TOKEN, callbackId, textoConfirm);
       return Response.json({ ok: true });
     }
 
@@ -106,7 +102,24 @@ export async function onRequestPost(context) {
 
 // ─── HELPERS ─────────────────────────────────────────────────────
 
-// Edita un mensaje existente — usado para quitar botones tras la acción
+// Edita SOLO el teclado de botones, sin tocar el texto del mensaje
+async function editarTecladoTelegram(token, chatId, messageId, replyMarkup) {
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/editMessageReplyMarkup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        message_id: messageId,
+        reply_markup: replyMarkup
+      })
+    });
+    const result = await res.json();
+    if (!result.ok) console.log("Error editMessageReplyMarkup:", JSON.stringify(result));
+  } catch(e) { console.log("Error editando teclado Telegram:", e.message); }
+}
+
+// Edita un mensaje existente — usado para quitar botones tras confirmar/rechazar
 async function editarMensajeTelegram(token, chatId, messageId, texto, replyMarkup) {
   try {
     const res = await fetch(`https://api.telegram.org/bot${token}/editMessageText`, {

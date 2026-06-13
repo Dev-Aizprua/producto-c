@@ -731,7 +731,7 @@ async function notificarTelegramConBotones(token, chatId, texto, citaId, numero,
               { text: "❌ Rechazar/Cancelar", callback_data: `rechazar:${citaId}` }
             ],
             [
-              { text: "🛑 Pausar Bot (Intervención Manual)", callback_data: `pausar:${numero}:${negocioId}` }
+              { text: "🛑 Pausar Bot (Intervención Manual)", callback_data: `pausar:${numero}:${negocioId}:${citaId}` }
             ]
           ]
         }
