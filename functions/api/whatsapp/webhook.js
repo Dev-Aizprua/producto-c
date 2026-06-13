@@ -346,8 +346,9 @@ export async function onRequestPost(context) {
       const fechaMatch = historialTexto.match(/mañana.*?(\d{1,2})\s*(am|pm|de la tarde|de la mañana)|(\d{1,2}[\/:]?\d{0,2})\s*(am|pm)/i);
       const fechaTexto = fechaMatch ? fechaMatch[0] : "Por confirmar";
 
+      let citaIdDirecta = null;
       try {
-        await env.producto_c_db.prepare(
+        const insertRes = await env.producto_c_db.prepare(
           `INSERT INTO citas (negocio_id, servicio_id, cliente_nombre, cliente_tel,
            fecha_cita, total, estado_pago, metodo_pago, session_token, canal)
            VALUES (?, ?, ?, ?, ?, ?, 'esperando_pago', 'paguelofacil', ?, 'whatsapp')`
@@ -360,6 +361,7 @@ export async function onRequestPost(context) {
           montoFinal,
           sessionToken
         ).run();
+        citaIdDirecta = insertRes.meta?.last_row_id;
       } catch(e) { console.log("Error creando cita directa:", e.message); }
 
       // Generar link de pago
@@ -389,6 +391,13 @@ export async function onRequestPost(context) {
 
       if (linkDirecto) {
         respuestaDirecta += `\n\n💳 Enlace de pago seguro:\n${linkDirecto}\n\n_Una vez confirmado el pago, tu cita quedará lista. ✅_`;
+      }
+
+      // Notificación Telegram con botones de acción
+      if (negocio.telegram_chat_id && env.TELEGRAM_TOKEN && citaIdDirecta) {
+        const fechaDisplay = fechaTexto || "Por confirmar";
+        const textoTg = `🔔 <b>NUEVA CITA REGISTRADA</b>\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n👤 Cliente: ${nombrePaciente}\n🦷 Servicio: ${servicioDetectado.nombre}\n📅 Fecha: ${fechaDisplay}\n💰 Total: $${montoFinal} USD\n📱 Canal: WhatsApp\n📞 +${from}\n\n⏳ Estado: Esperando pago`;
+        await notificarTelegramConBotones(env.TELEGRAM_TOKEN, negocio.telegram_chat_id, textoTg, citaIdDirecta, from, negocioId);
       }
 
       // Guardar historial
@@ -544,6 +553,9 @@ REGLAS:
       );
 
       const montoFinal = parseFloat(datosGenerar.monto) || montoReserva || svcEncontrado?.precio || 0;
+      let citaIdGenerar = null;
+      const nombreCitaGenerar = datosGenerar.nombre || nombrePaciente || "Paciente WA";
+      const fechaCitaGenerar  = datosGenerar.fecha || "Por confirmar";
 
       // Crear cita en estado "esperando_pago"
       try {
@@ -554,12 +566,13 @@ REGLAS:
         ).bind(
           negocioId,
           svcEncontrado?.id || null,
-          datosGenerar.nombre || nombrePaciente || "Paciente WA",
+          nombreCitaGenerar,
           from,
-          datosGenerar.fecha || "Por confirmar",
+          fechaCitaGenerar,
           montoFinal,
           sessionToken
         ).run();
+        citaIdGenerar = citaRes.meta?.last_row_id;
         datosCita = datosGenerar;
 
         // Generar link de Páguelo Fácil
@@ -585,6 +598,13 @@ REGLAS:
       // Agregar link al mensaje
       if (linkPago) {
         respuesta += `\n\n💳 *Enlace de pago seguro:*\n${linkPago}\n\n_Una vez confirmado el pago, tu cita quedará reservada. ✅_`;
+      }
+
+      // Notificación Telegram con botones de acción
+      if (negocio.telegram_chat_id && env.TELEGRAM_TOKEN && citaIdGenerar) {
+        const nombreServicioTg = svcEncontrado?.nombre || datosGenerar.servicio || "Servicio";
+        const textoTg = `🔔 <b>NUEVA CITA REGISTRADA</b>\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n👤 Cliente: ${nombreCitaGenerar}\n🦷 Servicio: ${nombreServicioTg}\n📅 Fecha: ${fechaCitaGenerar}\n💰 Total: $${montoFinal} USD\n📱 Canal: WhatsApp\n📞 +${from}\n\n⏳ Estado: Esperando pago`;
+        await notificarTelegramConBotones(env.TELEGRAM_TOKEN, negocio.telegram_chat_id, textoTg, citaIdGenerar, from, negocioId);
       }
     }
 
@@ -692,6 +712,32 @@ async function notificarTelegram(token, chatId, texto) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ chat_id: chatId, text: texto, parse_mode: "HTML" })
   });
+}
+
+// Notificación con botones inline — Confirmar / Rechazar / Pausar Bot
+async function notificarTelegramConBotones(token, chatId, texto, citaId, numero, negocioId) {
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: texto,
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: "✅ Confirmar Cita", callback_data: `confirmar:${citaId}` },
+              { text: "❌ Rechazar/Cancelar", callback_data: `rechazar:${citaId}` }
+            ],
+            [
+              { text: "🛑 Pausar Bot (Intervención Manual)", callback_data: `pausar:${numero}:${negocioId}` }
+            ]
+          ]
+        }
+      })
+    });
+  } catch(e) { console.log("Error notificarTelegramConBotones:", e.message); }
 }
 
 // ─── ENVIAR IMAGEN CON CAPTION ────────────────────────────────────
