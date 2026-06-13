@@ -109,7 +109,7 @@ export async function onRequestPost(context) {
 // Edita un mensaje existente — usado para quitar botones tras la acción
 async function editarMensajeTelegram(token, chatId, messageId, texto, replyMarkup) {
   try {
-    await fetch(`https://api.telegram.org/bot${token}/editMessageText`, {
+    const res = await fetch(`https://api.telegram.org/bot${token}/editMessageText`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -117,9 +117,11 @@ async function editarMensajeTelegram(token, chatId, messageId, texto, replyMarku
         message_id: messageId,
         text: texto,
         parse_mode: "HTML",
-        reply_markup: replyMarkup
+        reply_markup: replyMarkup || { inline_keyboard: [] }
       })
     });
+    const result = await res.json();
+    if (!result.ok) console.log("Error editMessageText:", JSON.stringify(result));
   } catch(e) { console.log("Error editando mensaje Telegram:", e.message); }
 }
 
