@@ -405,6 +405,126 @@
       .kpi-grid{grid-template-columns:1fr}
       .finance-row{grid-template-columns:1fr;gap:8px}
     }
+
+    /* ══ MOBILE HEADER NUEVO ════════════════════════════════ */
+    .mh-mobile{display:none;flex-direction:column;justify-content:center;flex:1;min-width:0}
+    .mh-mobile-top{display:flex;align-items:center;gap:8px}
+    .mh-mobile-nombre{font-size:16px;font-weight:800;color:#1a1a2e;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .mh-mobile-bell{width:34px;height:34px;border-radius:50%;background:#f0f2f7;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#555;font-size:16px;flex-shrink:0;position:relative;margin-left:auto}
+    .mh-mobile-bell .bell-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:#ef4444;border-radius:50%;border:2px solid white}
+    .mh-mobile-sub{font-size:12px;color:#666;margin-top:2px;display:flex;align-items:center;gap:5px}
+    .mh-mobile-sub .sys-dot{width:7px;height:7px;flex-shrink:0}
+
+    /* ══ BANNER ATENCIÓN ════════════════════════════════════ */
+    .alert-banner{display:none;background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:14px 16px;margin-bottom:16px}
+    .alert-banner-title{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:#92400e;margin-bottom:10px}
+    .alert-banner-items{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+    .alert-item{background:white;border-radius:10px;padding:8px 10px;display:flex;align-items:center;gap:8px;border:1px solid #fde68a;flex:1;min-width:80px}
+    .alert-item-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .alert-item-icon.orange{background:#fff7ed}
+    .alert-item-icon.purple{background:#faf5ff}
+    .alert-item-icon.red{background:#fef2f2}
+    .alert-item-num{font-size:15px;font-weight:800;color:#1a1a2e;line-height:1}
+    .alert-item-lbl{font-size:10px;color:#888;margin-top:1px}
+    .alert-banner-btn{width:100%;padding:9px;background:#f59e0b;color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+
+    /* ══ HERO INGRESOS ══════════════════════════════════════ */
+    .hero-ingresos{display:none;background:linear-gradient(135deg,#1a73e8,#1557b0);border-radius:18px;padding:22px;margin-bottom:16px;position:relative;overflow:hidden}
+    .hero-ingresos::after{content:'';position:absolute;right:-20px;bottom:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.08)}
+    .hero-label{font-size:12px;font-weight:600;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+    .hero-value{font-size:38px;font-weight:800;color:white;letter-spacing:-1px;line-height:1}
+    .hero-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.2);color:white;border-radius:20px;padding:4px 10px;font-size:11.5px;font-weight:600;margin-top:8px}
+    .hero-wallet{position:absolute;right:20px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:20px}
+
+    /* ══ MINI KPIs FILA ═════════════════════════════════════ */
+    .mini-kpi-row{display:none;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+    .mini-kpi{background:white;border-radius:14px;border:1px solid #edf2f7;padding:14px 12px;box-shadow:0 2px 8px rgba(0,0,0,.05);display:flex;align-items:center;gap:10px}
+    .mini-kpi-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+    .mini-kpi-num{font-size:18px;font-weight:800;color:#1a1a2e;letter-spacing:-.3px;line-height:1}
+    .mini-kpi-lbl{font-size:10.5px;color:#aaa;margin-top:2px;font-weight:500}
+    .mini-kpi-trend{font-size:10px;font-weight:600;color:#16a34a;margin-top:2px;display:flex;align-items:center;gap:2px}
+
+    /* ══ GRÁFICA MOBILE ═════════════════════════════════════ */
+    .chart-card-mobile{display:none;background:white;border-radius:16px;border:1px solid #edf2f7;padding:18px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+    .chart-mobile-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+    .chart-mobile-title{font-size:14px;font-weight:700;color:#1a1a2e;display:flex;align-items:center;gap:6px}
+    .chart-mobile-max{font-size:11px;background:#eff6ff;color:#1a73e8;border-radius:20px;padding:3px 8px;font-weight:600}
+    .chart-mobile-value{font-size:22px;font-weight:800;color:#1a1a2e;letter-spacing:-.4px;margin-bottom:10px}
+    .chart-wrapper-mobile{position:relative;width:100%;height:140px}
+    .chart-wrapper-mobile canvas{position:absolute;top:0;left:0;width:100%!important;height:100%!important}
+
+    /* ══ RESERVAS CARDS MOBILE ══════════════════════════════ */
+    .dash-reservas-mobile{display:none;margin-bottom:16px}
+    .dash-reservas-mobile-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .dash-reservas-mobile-title{font-size:15px;font-weight:700;color:#1a1a2e}
+    .dash-reservas-mobile-ver{font-size:13px;font-weight:600;color:var(--primary);cursor:pointer;border:none;background:none;padding:0}
+    .reserva-card-m{background:white;border-radius:14px;border:1px solid #edf2f7;padding:14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.04);display:flex;align-items:center;gap:12px;position:relative}
+    .reserva-av{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:white;flex-shrink:0}
+    .reserva-info{flex:1;min-width:0}
+    .reserva-nombre{font-size:13.5px;font-weight:700;color:#1a1a2e;display:flex;align-items:center;gap:5px;margin-bottom:2px}
+    .reserva-nombre .canal-icon{font-size:12px}
+    .reserva-detalle{font-size:12px;color:#888;display:flex;align-items:center;gap:4px;margin-bottom:1px}
+    .reserva-detalle i{font-size:12px;color:#aaa}
+    .reserva-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+    .reserva-total{font-size:15px;font-weight:800;color:#1a1a2e}
+    .badge-compact{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700}
+    .badge-compact.success{background:#dcfce7;color:#16a34a}
+    .badge-compact.warning{background:#fef3c7;color:#d97706}
+    .badge-compact.danger{background:#fee2e2;color:#dc2626}
+    .badge-compact.blue{background:#dbeafe;color:#1d4ed8}
+    .badge-compact.gray{background:#f1f5f9;color:#64748b}
+    .reserva-acciones{display:flex;gap:6px;margin-top:8px}
+    .btn-wa-m{background:#25d366;color:white;border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px}
+    .btn-det-m{background:#f0f2f7;color:#555;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer}
+    .reserva-chevron{color:#ddd;font-size:18px;position:absolute;right:12px;top:50%;transform:translateY(-50%)}
+
+    /* ══ FAB BUTTON ═════════════════════════════════════════ */
+    .fab{display:none;position:fixed;right:18px;bottom:76px;width:54px;height:54px;border-radius:50%;background:var(--primary);color:white;border:none;cursor:pointer;font-size:24px;box-shadow:0 4px 20px rgba(26,115,232,.4);z-index:80;align-items:center;justify-content:center;transition:all .2s}
+    .fab:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(26,115,232,.5)}
+    .fab:active{transform:scale(.95)}
+
+    /* ══ BOTTOM NAV ═════════════════════════════════════════ */
+    .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:60px;background:white;border-top:1px solid #edf2f7;z-index:80;padding:0 8px;align-items:center;box-shadow:0 -4px 20px rgba(0,0,0,.06)}
+    .bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:6px 4px;border-radius:10px;border:none;background:none;color:#aaa;transition:color .15s;position:relative}
+    .bn-item i{font-size:22px;transition:color .15s}
+    .bn-item span{font-size:10px;font-weight:600;transition:color .15s}
+    .bn-item.active{color:var(--primary)}
+    .bn-item.active i{color:var(--primary)}
+    .bn-badge{position:absolute;top:4px;right:calc(50% - 18px);background:#ef4444;color:white;border-radius:10px;font-size:9px;font-weight:700;padding:1px 5px;min-width:16px;text-align:center;border:2px solid white}
+
+    /* ══ MOBILE: ACTIVAR ELEMENTOS NUEVOS ═══════════════════ */
+    @media(max-width:768px){
+      /* Ocultar header desktop, mostrar mobile */
+      .mh-title{display:none}
+      .mh-actions{display:none}
+      .mh-mobile{display:flex}
+
+      /* Mostrar elementos mobile dashboard */
+      .alert-banner{display:block}
+      .hero-ingresos{display:block}
+      .mini-kpi-row{display:grid}
+      .chart-card-mobile{display:block}
+      .dash-reservas-mobile{display:block}
+
+      /* Ocultar elementos desktop en dashboard */
+      .system-status-bar{display:none}
+      .kpi-grid{display:none}
+      .finance-row{display:none}
+      #tab-dashboard .chart-card{display:none}
+      #tab-dashboard > div[style*="grid-template-columns:1fr 1fr"]{display:none!important}
+      #tab-dashboard .card:has(#dashCitasTbody){display:none}
+      #tab-dashboard .card:has(.btn-primary[onclick*="abrirModal"]){display:none}
+
+      /* FAB y bottom nav */
+      .fab{display:flex}
+      .bottom-nav{display:flex}
+
+      /* Body con espacio para bottom nav */
+      .main-body{padding:14px 14px 80px}
+
+      /* Toast arriba del bottom nav */
+      .toast{bottom:72px;right:14px;left:14px;min-width:0}
+    }
   </style>
 </head>
 <body>
@@ -472,9 +592,24 @@
       <button class="btn-hamburger" id="btnHamburger" onclick="toggleSidebar()" aria-label="Menu">
         <i class="ti ti-menu-2"></i>
       </button>
+      <!-- Header desktop -->
       <div class="mh-title">
         <div class="mh-greeting" id="mhGreeting">&#x21;Hola, Admin! &#x1F44B;</div>
         <div class="mh-sub">Gestiona tu negocio, servicios y reservas desde un solo lugar.</div>
+      </div>
+      <!-- Header mobile compacto -->
+      <div class="mh-mobile">
+        <div class="mh-mobile-top">
+          <div class="mh-mobile-nombre" id="mhMobileNombre">Mi Negocio</div>
+          <button class="mh-mobile-bell" id="mhBell" onclick="showTab('citas',null)">
+            <i class="ti ti-bell"></i>
+            <span class="bell-dot" id="bellDot" style="display:none"></span>
+          </button>
+        </div>
+        <div class="mh-mobile-sub">
+          <div class="sys-dot green" id="mhDotStatus"></div>
+          <span id="mhSubLabel">Todo funcionando correctamente</span>
+        </div>
       </div>
       <div class="mh-actions">
         <a id="verChatLink" href="#" target="_blank" style="text-decoration:none">
@@ -489,31 +624,111 @@
 
       <!-- ══ TAB: DASHBOARD ══════════════════════════════════ -->
       <section class="tab-section active" id="tab-dashboard">
-        <!-- Status bar del sistema -->
+
+        <!-- ── MOBILE: Banner atención requerida ────────────── -->
+        <div class="alert-banner" id="alertBanner">
+          <div class="alert-banner-title"><i class="ti ti-alert-triangle" style="font-size:16px"></i> Atención requerida</div>
+          <div class="alert-banner-items">
+            <div class="alert-item">
+              <div class="alert-item-icon orange"><i class="ti ti-clock" style="font-size:16px;color:#ea580c"></i></div>
+              <div><div class="alert-item-num" id="alertPendientes">0</div><div class="alert-item-lbl">Pagos pendientes</div></div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-item-icon purple"><i class="ti ti-calendar-event" style="font-size:16px;color:#7c3aed"></i></div>
+              <div><div class="alert-item-num" id="alertHoy">0</div><div class="alert-item-lbl">Citas hoy</div></div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-item-icon red"><i class="ti ti-user-check" style="font-size:16px;color:#dc2626"></i></div>
+              <div><div class="alert-item-num" id="alertSinConfirmar">0</div><div class="alert-item-lbl">Sin confirmar</div></div>
+            </div>
+          </div>
+          <button class="alert-banner-btn" onclick="showTab('citas',null)"><i class="ti ti-arrow-right" style="font-size:14px"></i> Ver pendientes</button>
+        </div>
+
+        <!-- ── MOBILE: Hero ingresos ─────────────────────────── -->
+        <div class="hero-ingresos">
+          <div class="hero-label">Ingresos del mes</div>
+          <div class="hero-value" id="heroIngresos">$0.00</div>
+          <div class="hero-badge"><i class="ti ti-arrow-up" style="font-size:11px"></i> <span id="heroPct">0%</span> vs mes anterior</div>
+          <div class="hero-wallet">💰</div>
+        </div>
+
+        <!-- ── MOBILE: Mini KPIs fila ────────────────────────── -->
+        <div class="mini-kpi-row">
+          <div class="mini-kpi">
+            <div class="mini-kpi-icon" style="background:#f0fdf4"><i class="ti ti-calendar-check" style="font-size:17px;color:#16a34a"></i></div>
+            <div>
+              <div class="mini-kpi-num" id="miniKpiCitas">—</div>
+              <div class="mini-kpi-lbl">Reservas</div>
+              <div class="mini-kpi-trend"><i class="ti ti-arrow-up" style="font-size:9px"></i> 8%</div>
+            </div>
+          </div>
+          <div class="mini-kpi">
+            <div class="mini-kpi-icon" style="background:#faf5ff"><i class="ti ti-message-dots" style="font-size:17px;color:#7c3aed"></i></div>
+            <div>
+              <div class="mini-kpi-num" id="miniKpiChats">—</div>
+              <div class="mini-kpi-lbl">Chats</div>
+              <div class="mini-kpi-trend"><i class="ti ti-arrow-up" style="font-size:9px"></i> 15%</div>
+            </div>
+          </div>
+          <div class="mini-kpi">
+            <div class="mini-kpi-icon" style="background:#eff6ff"><i class="ti ti-list-details" style="font-size:17px;color:#1a73e8"></i></div>
+            <div>
+              <div class="mini-kpi-num" id="miniKpiServicios">—</div>
+              <div class="mini-kpi-lbl">Servicios</div>
+              <div class="mini-kpi-trend" style="color:#aaa">En catálogo</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── MOBILE: Gráfica línea ─────────────────────────── -->
+        <div class="chart-card-mobile">
+          <div class="chart-mobile-header">
+            <div class="chart-mobile-title"><i class="ti ti-trending-up" style="color:var(--primary)"></i> Ingresos 7 días</div>
+            <div class="chart-mobile-max" id="chartMobileMax">Máx: $0</div>
+          </div>
+          <div class="chart-mobile-value" id="chartMobileValor">$0.00</div>
+          <div class="chart-wrapper-mobile">
+            <canvas id="chartIngresosM"></canvas>
+          </div>
+        </div>
+
+        <!-- ── MOBILE: Reservas recientes cards ──────────────── -->
+        <div class="dash-reservas-mobile">
+          <div class="dash-reservas-mobile-header">
+            <div class="dash-reservas-mobile-title">Reservas recientes</div>
+            <button class="dash-reservas-mobile-ver" onclick="showTab('citas',null)">Ver todas</button>
+          </div>
+          <div id="dashReservasMobile">
+            <div class="empty-state" style="padding:28px"><i class="ti ti-loader" style="animation:spin 1s linear infinite"></i><p>Cargando...</p></div>
+          </div>
+        </div>
+
+        <!-- ── DESKTOP: Status bar del sistema ──────────────── -->
         <div class="system-status-bar">
-          <div class="sys-status-item"><div class="sys-dot green"></div><span>🟢 Chat activo</span></div>
+          <div class="sys-status-item"><div class="sys-dot green"></div><span>&#x1F7E2; Chat activo</span></div>
           <div class="sys-status-sep"></div>
-          <div class="sys-status-item"><div class="sys-dot green"></div><span>⚡ IA funcionando</span></div>
+          <div class="sys-status-item"><div class="sys-dot green"></div><span>&#x26A1; IA funcionando</span></div>
           <div class="sys-status-sep"></div>
-          <div class="sys-status-item"><div class="sys-dot" id="sysPagosDot" style="background:#aaa"></div><span id="sysPagosLabel">💳 Pagos —</span></div>
+          <div class="sys-status-item"><div class="sys-dot" id="sysPagosDot" style="background:#aaa"></div><span id="sysPagosLabel">&#x1F4B3; Pagos &#x2014;</span></div>
           <div style="flex:1"></div>
           <div class="sys-status-item" style="color:#aaa;font-size:11px" id="sysTime"></div>
         </div>
 
-        <!-- KPIs -->
+        <!-- ── DESKTOP: KPIs ─────────────────────────────────── -->
         <div class="kpi-grid">
           <div class="kpi-card">
             <div class="kpi-icon blue"><i class="ti ti-list-details"></i></div>
             <div>
-              <div class="kpi-num" id="kpiServicios">—</div>
+              <div class="kpi-num" id="kpiServicios">&#x2014;</div>
               <div class="kpi-label">Servicios activos</div>
-              <div class="kpi-trend neutral"><i class="ti ti-minus" style="font-size:11px"></i> En tu catálogo</div>
+              <div class="kpi-trend neutral"><i class="ti ti-minus" style="font-size:11px"></i> En tu cat&#xE1;logo</div>
             </div>
           </div>
           <div class="kpi-card">
             <div class="kpi-icon green"><i class="ti ti-calendar-check"></i></div>
             <div>
-              <div class="kpi-num" id="kpiCitas">—</div>
+              <div class="kpi-num" id="kpiCitas">&#x2014;</div>
               <div class="kpi-label">Reservas totales</div>
               <div class="kpi-trend up"><i class="ti ti-arrow-up" style="font-size:11px"></i> Acumuladas</div>
             </div>
@@ -521,7 +736,7 @@
           <div class="kpi-card">
             <div class="kpi-icon purple"><i class="ti ti-message-dots"></i></div>
             <div>
-              <div class="kpi-num" id="kpiChats">—</div>
+              <div class="kpi-num" id="kpiChats">&#x2014;</div>
               <div class="kpi-label">Conversaciones</div>
               <div class="kpi-trend neutral"><i class="ti ti-minus" style="font-size:11px"></i> Este mes</div>
             </div>
@@ -529,17 +744,15 @@
           <div class="kpi-card">
             <div class="kpi-icon orange"><i class="ti ti-currency-dollar"></i></div>
             <div>
-              <div class="kpi-num" id="kpiIngresos">$—</div>
+              <div class="kpi-num" id="kpiIngresos">$&#x2014;</div>
               <div class="kpi-label">Ingresos recibidos</div>
-              <div class="kpi-trend up"><i class="ti ti-arrow-up" style="font-size:11px"></i> Pagos en línea</div>
+              <div class="kpi-trend up"><i class="ti ti-arrow-up" style="font-size:11px"></i> Pagos en l&#xED;nea</div>
             </div>
           </div>
         </div>
 
-        <!-- Fila financiera: ingresos + gráfica -->
+        <!-- ── DESKTOP: Fila financiera + gráfica ───────────── -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;align-items:start">
-
-          <!-- Izquierda: ingresos hoy/semana/mes + conversión -->
           <div>
             <div class="finance-row">
               <div class="fin-card">
@@ -559,9 +772,9 @@
               </div>
             </div>
             <div class="card" style="margin:0">
-              <div class="card-title" style="margin-bottom:12px"><i class="ti ti-trending-up"></i> Conversión de reservas</div>
+              <div class="card-title" style="margin-bottom:12px"><i class="ti ti-trending-up"></i> Conversi&#xF3;n de reservas</div>
               <div style="display:flex;justify-content:space-between;align-items:baseline">
-                <span style="font-size:13px;color:#555">Conversaciones → Reservas</span>
+                <span style="font-size:13px;color:#555">Conversaciones &#x2192; Reservas</span>
                 <span style="font-size:22px;font-weight:800;color:#1a1a2e" id="convPct">0%</span>
               </div>
               <div class="conv-bar"><div class="conv-fill" id="convFill" style="width:0%"></div></div>
@@ -569,25 +782,23 @@
                 <span id="convChats">0 chats</span><span id="convCitas">0 reservas</span>
               </div>
               <div style="display:flex;gap:16px;margin-top:14px;padding-top:12px;border-top:1px solid #f0f2f7;flex-wrap:wrap">
-                <div style="font-size:12.5px"><span class="badge badge-success">🟢</span> <strong id="cntPagadas">0</strong> pagadas</div>
-                <div style="font-size:12.5px"><span class="badge badge-warning">🟡</span> <strong id="cntPendientes">0</strong> pendientes</div>
-                <div style="font-size:12.5px"><span class="badge badge-danger">🔴</span> <strong id="cntCanceladas">0</strong> canceladas</div>
+                <div style="font-size:12.5px"><span class="badge badge-success">&#x1F7E2;</span> <strong id="cntPagadas">0</strong> pagadas</div>
+                <div style="font-size:12.5px"><span class="badge badge-warning">&#x1F7E1;</span> <strong id="cntPendientes">0</strong> pendientes</div>
+                <div style="font-size:12.5px"><span class="badge badge-danger">&#x1F534;</span> <strong id="cntCanceladas">0</strong> canceladas</div>
               </div>
             </div>
           </div>
-
-          <!-- Derecha: mini gráfica 7 días — altura FIJA mediante wrapper -->
           <div class="chart-card">
-            <div class="card-title" style="margin-bottom:14px"><i class="ti ti-chart-bar"></i> Ingresos últimos 7 días</div>
+            <div class="card-title" style="margin-bottom:14px"><i class="ti ti-chart-bar"></i> Ingresos &#xFA;ltimos 7 d&#xED;as</div>
             <div class="chart-wrapper">
               <canvas id="chartIngresos"></canvas>
             </div>
           </div>
         </div>
 
-        <!-- Accesos rápidos -->
+        <!-- ── DESKTOP: Accesos rápidos ─────────────────────── -->
         <div class="card">
-          <div class="card-title"><i class="ti ti-bolt"></i> Accesos rápidos</div>
+          <div class="card-title"><i class="ti ti-bolt"></i> Accesos r&#xE1;pidos</div>
           <div style="display:flex;gap:12px;flex-wrap:wrap">
             <button class="btn btn-primary" onclick="showTab('servicios',null);abrirModalServicio()"><i class="ti ti-plus"></i> Nuevo servicio</button>
             <button class="btn btn-outline" onclick="showTab('citas',null)"><i class="ti ti-calendar"></i> Ver reservas</button>
@@ -596,9 +807,9 @@
           </div>
         </div>
 
-        <!-- Últimas citas con color -->
+        <!-- ── DESKTOP: Últimas citas tabla ─────────────────── -->
         <div class="card">
-          <div class="card-title"><i class="ti ti-calendar-check"></i> Últimas reservas</div>
+          <div class="card-title"><i class="ti ti-calendar-check"></i> &#xDA;ltimas reservas</div>
           <div class="table-wrap">
             <table>
               <thead><tr><th>Servicio</th><th>Fecha</th><th>Total</th><th>Estado</th></tr></thead>
@@ -811,6 +1022,33 @@
   </div>
 </div>
 
+<!-- ══ FAB ═════════════════════════════════════════════════════ -->
+<button class="fab" onclick="showTab('servicios',null);abrirModalServicio()" title="Nueva reserva">
+  <i class="ti ti-plus"></i>
+</button>
+
+<!-- ══ BOTTOM NAV ═════════════════════════════════════════════ -->
+<nav class="bottom-nav">
+  <button class="bn-item active" id="bn-dashboard" onclick="showTabMobile('dashboard')">
+    <i class="ti ti-home"></i>
+    <span>Inicio</span>
+  </button>
+  <button class="bn-item" id="bn-citas" onclick="showTabMobile('citas')">
+    <i class="ti ti-calendar-check"></i>
+    <span>Reservas</span>
+    <span class="bn-badge" id="bnBadgeCitas" style="display:none">0</span>
+  </button>
+  <button class="bn-item" id="bn-chats" onclick="showTabMobile('chats')">
+    <i class="ti ti-message-dots"></i>
+    <span>Chats</span>
+    <span class="bn-badge" id="bnBadgeChats" style="display:none">0</span>
+  </button>
+  <button class="bn-item" id="bn-negocio" onclick="showTabMobile('negocio')">
+    <i class="ti ti-settings"></i>
+    <span>Config</span>
+  </button>
+</nav>
+
 <div class="toast" id="toast"><i class="ti ti-check"></i><span id="toastMsg"></span></div>
 
 <script>
@@ -867,12 +1105,15 @@ function mostrarPanel(){
   const nombre=STATE.negocio?.nombre||'Mi Negocio';
   document.getElementById('sbName').textContent=nombre;
   document.getElementById('sbSlug').textContent=STATE.slug;
+  // Header mobile nombre
+  const mhNombre=document.getElementById('mhMobileNombre');
+  if(mhNombre)mhNombre.textContent=nombre;
   // Avatar con iniciales del negocio
   const iniciales=nombre.split(' ').slice(0,2).map(p=>p[0]?.toUpperCase()||'').join('');
   const sbIcon=document.getElementById('sbIcon');
   sbIcon.textContent=iniciales;sbIcon.classList.add('initials');
   document.getElementById('sbUserAv').textContent=(nombre[0]||'A').toUpperCase();
-  document.getElementById('mhGreeting').textContent=`¡Hola, ${nombre}! 👋`;
+  document.getElementById('mhGreeting').textContent=`\u00a1Hola, ${nombre}! \uD83D\uDC4B`;
   document.getElementById('verChatLink').href=`/${STATE.slug}`;
   cargarNegocio();cargarServicios();cargarCitas();cargarChats();cargarKPIs();
 }
@@ -904,6 +1145,19 @@ function showTab(tab,el){
   closeSidebar();
 }
 
+function showTabMobile(tab){
+  // Cambiar tab
+  document.querySelectorAll('.tab-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  // Activar bottom nav item
+  document.querySelectorAll('.bn-item').forEach(b=>b.classList.remove('active'));
+  const bn=document.getElementById(`bn-${tab}`);
+  if(bn)bn.classList.add('active');
+  closeSidebar();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
 function copiarEnlace(){
   const url=`${window.location.origin}/${STATE.slug}`;
   navigator.clipboard.writeText(url).then(()=>showToast('Enlace copiado al portapapeles'));
@@ -915,6 +1169,20 @@ setInterval(tickReloj,1000);tickReloj();
 
 // ══ KPIs ════════════════════════════════════════════════════
 let _chartIngresos=null;
+let _chartIngresosM=null;
+
+// Colores avatar por estado
+function colorAvatar(estado){
+  if(['confirmada','pagado'].includes(estado))return'#16a34a';
+  if(['esperando_pago','pendiente','pago_por_verificar'].includes(estado))return'#d97706';
+  if(['cancelada','expirada'].includes(estado))return'#dc2626';
+  return'#6366f1';
+}
+function badgeCompact(estado){
+  const map={confirmada:'success',pagado:'success',pago_por_verificar:'blue',esperando_pago:'warning',pendiente:'warning',cancelada:'danger',expirada:'gray'};
+  const labels={confirmada:'Confirmada',pagado:'Pagada',pago_por_verificar:'Verificar',esperando_pago:'Pendiente',pendiente:'Pendiente',cancelada:'Cancelada',expirada:'Expirada'};
+  return`<span class="badge-compact ${map[estado]||'gray'}">${labels[estado]||estado}</span>`;
+}
 
 async function cargarKPIs(){
   try{
@@ -927,22 +1195,21 @@ async function cargarKPIs(){
     const todosChats=chats.chats||[];
 
     // KPIs básicos
-    document.getElementById('kpiServicios').textContent=svcs.servicios?.filter(s=>s.activo).length||0;
+    const numSvcs=svcs.servicios?.filter(s=>s.activo).length||0;
+    document.getElementById('kpiServicios').textContent=numSvcs;
     document.getElementById('kpiCitas').textContent=todas.length;
     document.getElementById('kpiChats').textContent=todosChats.length;
 
-    // Ingresos — solo contar pagos realmente recibidos y confirmados
-    const estadosPagado = ['pagado', 'confirmada'];
-    // Pendiente de verificar — separado para mostrar en panel pero no como ingreso confirmado
-    const estadosPorVerificar = ['pago_por_verificar'];
+    // Ingresos
+    const estadosPagado=['pagado','confirmada'];
     const sumPag=arr=>arr.filter(c=>estadosPagado.includes(c.estado_pago)).reduce((a,c)=>a+parseFloat(c.total||0),0);
-    const sumPorVerificar=arr=>arr.filter(c=>estadosPorVerificar.includes(c.estado_pago)).reduce((a,c)=>a+parseFloat(c.total||0),0);
-    document.getElementById('kpiIngresos').textContent=`$${sumPag(todas).toFixed(2)}`;
+    const totalIngresos=sumPag(todas);
+    document.getElementById('kpiIngresos').textContent=`$${totalIngresos.toFixed(2)}`;
 
     // Estado por color
-    const cntPagadas = todas.filter(c=>estadosPagado.includes(c.estado_pago)).length;
-    const cntPendientes = todas.filter(c=>['pendiente','esperando_pago','pago_por_verificar'].includes(c.estado_pago)||!c.estado_pago).length;
-    const cntCanceladas = todas.filter(c=>['cancelada','cancelado','expirada'].includes(c.estado_pago)).length;
+    const cntPagadas=todas.filter(c=>estadosPagado.includes(c.estado_pago)).length;
+    const cntPendientes=todas.filter(c=>['pendiente','esperando_pago','pago_por_verificar'].includes(c.estado_pago)||!c.estado_pago).length;
+    const cntCanceladas=todas.filter(c=>['cancelada','cancelado','expirada'].includes(c.estado_pago)).length;
     document.getElementById('cntPagadas').textContent=cntPagadas;
     document.getElementById('cntPendientes').textContent=cntPendientes;
     document.getElementById('cntCanceladas').textContent=cntCanceladas;
@@ -960,57 +1227,134 @@ async function cargarKPIs(){
     const mismaFecha=(d,r)=>new Date(d).toDateString()===r.toDateString();
     const enSemana=d=>{const dd=new Date(d);return(ahora-dd)/(864e5)<7;};
     const enMes=d=>{const dd=new Date(d);return dd.getMonth()===ahora.getMonth()&&dd.getFullYear()===ahora.getFullYear();};
-    document.getElementById('finHoy').textContent=`$${sumPag(todas.filter(c=>mismaFecha(c.created_at,ahora))).toFixed(2)}`;
-    document.getElementById('finSemana').textContent=`$${sumPag(todas.filter(c=>enSemana(c.created_at))).toFixed(2)}`;
-    document.getElementById('finMes').textContent=`$${sumPag(todas.filter(c=>enMes(c.created_at))).toFixed(2)}`;
+    const ingHoy=sumPag(todas.filter(c=>mismaFecha(c.created_at,ahora)));
+    const ingSemana=sumPag(todas.filter(c=>enSemana(c.created_at)));
+    const ingMes=sumPag(todas.filter(c=>enMes(c.created_at)));
+    document.getElementById('finHoy').textContent=`$${ingHoy.toFixed(2)}`;
+    document.getElementById('finSemana').textContent=`$${ingSemana.toFixed(2)}`;
+    document.getElementById('finMes').textContent=`$${ingMes.toFixed(2)}`;
 
     // Sistema status — pagos
     const pagosOn=todas.some(c=>parseFloat(c.total||0)>0);
     document.getElementById('sysPagosDot').className=`sys-dot ${pagosOn?'green':'yellow'}`;
-    document.getElementById('sysPagosLabel').textContent=`💳 Pagos ${pagosOn?'habilitados':'configurando'}`;
+    document.getElementById('sysPagosLabel').textContent=`\uD83D\uDCB3 Pagos ${pagosOn?'habilitados':'configurando'}`;
 
-    // Mini gráfica 7 días — chart con altura controlada por wrapper CSS
+    // ── MOBILE: Hero ingresos ─────────────────────────────────
+    const heroEl=document.getElementById('heroIngresos');
+    if(heroEl)heroEl.textContent=`$${ingMes.toFixed(2)}`;
+    // % vs mes anterior (estimado simple: comparar con 30 días atrás)
+    const mesAnterior=todas.filter(c=>{
+      const dd=new Date(c.created_at);
+      const diffDias=(ahora-dd)/(864e5);
+      return diffDias>=30&&diffDias<60;
+    });
+    const ingMesAnt=sumPag(mesAnterior);
+    const pctCambio=ingMesAnt>0?Math.round(((ingMes-ingMesAnt)/ingMesAnt)*100):null;
+    const heroPctEl=document.getElementById('heroPct');
+    if(heroPctEl)heroPctEl.textContent=pctCambio!==null?`${pctCambio>0?'+':''}${pctCambio}%`:'Nuevo mes';
+
+    // ── MOBILE: Mini KPIs ─────────────────────────────────────
+    const mk1=document.getElementById('miniKpiCitas');if(mk1)mk1.textContent=todas.length;
+    const mk2=document.getElementById('miniKpiChats');if(mk2)mk2.textContent=todosChats.length;
+    const mk3=document.getElementById('miniKpiServicios');if(mk3)mk3.textContent=numSvcs;
+
+    // ── MOBILE: Banner atención requerida ─────────────────────
+    const citasHoy=todas.filter(c=>c.fecha_cita&&mismaFecha(c.fecha_cita,ahora)||mismaFecha(c.created_at,ahora)).length;
+    const sinConfirmar=todas.filter(c=>c.estado_pago==='pago_por_verificar').length;
+    const ap=document.getElementById('alertPendientes');if(ap)ap.textContent=cntPendientes;
+    const ah=document.getElementById('alertHoy');if(ah)ah.textContent=citasHoy;
+    const as2=document.getElementById('alertSinConfirmar');if(as2)as2.textContent=sinConfirmar;
+    // Mostrar bell dot si hay pendientes
+    const bellDot=document.getElementById('bellDot');
+    if(bellDot)bellDot.style.display=(cntPendientes>0||sinConfirmar>0)?'block':'none';
+    // Badge bottom nav citas
+    const bnBadge=document.getElementById('bnBadgeCitas');
+    if(bnBadge){bnBadge.textContent=cntPendientes;bnBadge.style.display=cntPendientes>0?'block':'none';}
+
+    // ── Gráfica 7 días ─────────────────────────────────────────
     const labels=[],valores=[];
     for(let i=6;i>=0;i--){
       const d=new Date();d.setDate(d.getDate()-i);
       labels.push(d.toLocaleDateString('es-PA',{weekday:'short',day:'numeric'}));
       valores.push(sumPag(todas.filter(c=>mismaFecha(c.created_at,d))));
     }
+    const maxVal=Math.max(...valores,0);
+    const totalChart=valores.reduce((a,b)=>a+b,0);
+
+    // Desktop — bar chart
     const canvas=document.getElementById('chartIngresos');
     if(canvas){
       if(_chartIngresos){_chartIngresos.destroy();_chartIngresos=null;}
       _chartIngresos=new Chart(canvas,{
         type:'bar',
-        data:{labels,datasets:[{
-          label:'Ingresos ($)',data:valores,
-          backgroundColor:'rgba(26,115,232,.15)',
-          borderColor:'#1a73e8',borderWidth:2,
-          borderRadius:6,borderSkipped:false,
-        }]},
-        options:{
-          responsive:true,
-          maintainAspectRatio:false,
-          plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`$${c.raw.toFixed(2)}`}}},
-          scales:{
-            y:{grid:{color:'#f0f2f7'},ticks:{callback:v=>`$${v}`,font:{size:10},color:'#aaa'},border:{dash:[3,3]}},
-            x:{grid:{display:false},ticks:{font:{size:10},color:'#aaa',maxRotation:0}}
-          }
-        }
+        data:{labels,datasets:[{label:'Ingresos ($)',data:valores,backgroundColor:'rgba(26,115,232,.15)',borderColor:'#1a73e8',borderWidth:2,borderRadius:6,borderSkipped:false}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`$${c.raw.toFixed(2)}`}}},
+          scales:{y:{grid:{color:'#f0f2f7'},ticks:{callback:v=>`$${v}`,font:{size:10},color:'#aaa'},border:{dash:[3,3]}},x:{grid:{display:false},ticks:{font:{size:10},color:'#aaa',maxRotation:0}}}}
       });
     }
 
-    // Últimas citas con badges de color
+    // Mobile — line chart con area rellena
+    const canvasM=document.getElementById('chartIngresosM');
+    if(canvasM){
+      if(_chartIngresosM){_chartIngresosM.destroy();_chartIngresosM=null;}
+      const labelsCortos=labels.map(l=>l.split(' ')[0]);
+      _chartIngresosM=new Chart(canvasM,{
+        type:'line',
+        data:{labels:labelsCortos,datasets:[{label:'Ingresos ($)',data:valores,
+          borderColor:'#1a73e8',borderWidth:2.5,pointBackgroundColor:'#1a73e8',pointRadius:4,pointHoverRadius:6,
+          fill:true,backgroundColor:(ctx)=>{const g=ctx.chart.ctx.createLinearGradient(0,0,0,140);g.addColorStop(0,'rgba(26,115,232,.25)');g.addColorStop(1,'rgba(26,115,232,.01)');return g;},
+          tension:.4}]},
+        options:{responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`$${c.raw.toFixed(2)}`}}},
+          scales:{y:{grid:{color:'#f5f7fa'},ticks:{callback:v=>`$${v}`,font:{size:9},color:'#bbb'},border:{dash:[2,2]}},
+            x:{grid:{display:false},ticks:{font:{size:9},color:'#bbb',maxRotation:0}}}}
+      });
+      // Valor y max mobile
+      const cmv=document.getElementById('chartMobileValor');if(cmv)cmv.textContent=`$${totalChart.toFixed(2)}`;
+      const cmm=document.getElementById('chartMobileMax');if(cmm)cmm.textContent=`M\u00e1x: $${maxVal.toFixed(0)}`;
+    }
+
+    // ── Últimas citas desktop tabla ────────────────────────────
     const tbody=document.getElementById('dashCitasTbody');
     const ultimas=todas.slice(0,5);
-    if(!ultimas.length){tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;color:#aaa;padding:24px">Sin reservas aún</td></tr>`;return;}
-    tbody.innerHTML=ultimas.map(c=>{
-      return`<tr>
-        <td><strong>${c.servicio_nombre||'—'}</strong></td>
-        <td>${c.fecha_cita||'—'}</td>
-        <td><strong>$${c.total||0}</strong></td>
-        <td>${badgePago(c.estado_pago)} ${badgeCanal(c.canal)}</td>
-      </tr>`;
-    }).join('');
+    if(!ultimas.length){tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;color:#aaa;padding:24px">Sin reservas a\u00fan</td></tr>`;return;}
+    tbody.innerHTML=ultimas.map(c=>`<tr>
+      <td><strong>${c.servicio_nombre||'\u2014'}</strong></td>
+      <td>${c.fecha_cita||'\u2014'}</td>
+      <td><strong>$${c.total||0}</strong></td>
+      <td>${badgePago(c.estado_pago)} ${badgeCanal(c.canal)}</td>
+    </tr>`).join('');
+
+    // ── MOBILE: Reservas cards ─────────────────────────────────
+    const mobileList=document.getElementById('dashReservasMobile');
+    if(mobileList){
+      if(!todas.length){mobileList.innerHTML=`<div class="empty-state" style="padding:28px"><i class="ti ti-calendar-off"></i><p>Sin reservas a\u00fan</p></div>`;return;}
+      const recientes=todas.slice(0,5);
+      mobileList.innerHTML=recientes.map(c=>{
+        const nombre=c.cliente_nombre||'Cliente';
+        const iniciales=nombre.split(' ').slice(0,2).map(p=>p[0]?.toUpperCase()||'').join('').substring(0,2)||'?';
+        const color=colorAvatar(c.estado_pago);
+        const canalIcon=c.canal==='whatsapp'?'&#x1F4F1;':'&#x1F310;';
+        const waLink=c.cliente_tel?`https://wa.me/${c.cliente_tel}`:'#';
+        return`<div class="reserva-card-m">
+          <div class="reserva-av" style="background:${color}">${iniciales}</div>
+          <div class="reserva-info">
+            <div class="reserva-nombre">${nombre} <span class="canal-icon">${canalIcon}</span></div>
+            <div class="reserva-detalle"><i class="ti ti-tooth"></i> ${c.servicio_nombre||'\u2014'}</div>
+            <div class="reserva-detalle"><i class="ti ti-calendar"></i> ${c.fecha_cita||formatFecha(c.created_at)}</div>
+            <div class="reserva-acciones">
+              ${c.cliente_tel&&c.canal==='whatsapp'?`<a href="${waLink}" target="_blank"><button class="btn-wa-m"><i class="ti ti-brand-whatsapp" style="font-size:14px"></i></button></a>`:''}
+              <button class="btn-det-m" onclick="showTab('citas',null)">Ver detalle</button>
+            </div>
+          </div>
+          <div class="reserva-right">
+            <div class="reserva-total">$${c.total||0}</div>
+            ${badgeCompact(c.estado_pago)}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
   }catch(e){console.error('KPI error:',e);}
 }
 
