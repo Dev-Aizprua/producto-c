@@ -446,7 +446,7 @@ export async function onRequestPost(context) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             slug:        negocio.slug,
-            descripcion: `Reserva ${servicioDetectado.nombre} — ${negocio.nombre}`,
+            descripcion: `Reserva ${servicioDetectado.nombre} - ${negocio.nombre}`,
             monto:       montoFinal,
             canal:       "whatsapp"
           })
@@ -655,7 +655,7 @@ REGLAS:
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             slug:        negocio.slug,
-            descripcion: `Reserva ${datosGenerar.servicio || "servicio"} — ${negocio.nombre}`,
+            descripcion: `Reserva ${datosGenerar.servicio || "servicio"} - ${negocio.nombre}`,
             monto:       montoFinal,
             canal:       "whatsapp"
           })
