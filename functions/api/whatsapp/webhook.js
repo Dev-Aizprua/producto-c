@@ -222,6 +222,7 @@ export async function onRequestPost(context) {
       // Si no hay cita esperando pago, dejar que el flujo normal lo maneje
     }
 
+    let miId = null;
     try {
       const ins = await env.producto_c_db.prepare(
         "INSERT INTO buffer_wa (negocio_id, numero, contenido, fecha, procesado) VALUES (?, ?, ?, ?, 0)"
