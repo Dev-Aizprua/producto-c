@@ -232,6 +232,13 @@ export async function onRequestPost(context) {
 
     await new Promise(r => setTimeout(r, 8000));
 
+    // Limpiar mensajes atascados de más de 5 minutos
+    try {
+      await env.producto_c_db.prepare(
+        `UPDATE buffer_wa SET procesado = 1 WHERE negocio_id = ? AND numero = ? AND procesado = 0 AND fecha < datetime('now', '-5 minutes')`
+      ).bind(negocioId, from).run();
+    } catch(e) {}
+
     let mensajesBuffer = [];
     try {
       const buf = await env.producto_c_db.prepare(
