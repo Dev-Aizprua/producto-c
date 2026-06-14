@@ -54,11 +54,6 @@ export async function onRequestPost(context) {
     if (delaySegundos > 60) {
       console.log(`[DELAY META] Webhook llegó con ${delaySegundos}s de retraso (${Math.floor(delaySegundos/60)} min) — from:${from}`);
     }
-    // Alerta Telegram si el retraso supera 5 minutos (incidencia Meta probable)
-    // Se dispara ANTES de identificar el negocio para no bloquear el flujo,
-    // usando el chat_id del negocio demo como fallback si negocio aún no está cargado.
-    // La notificación real se envía después de identificar el negocio (ver abajo).
-    const _delayAlertaPendiente = delaySegundos > 300;
 
     // ─── IDENTIFICAR NEGOCIO POR wa_phone_id ─────────────────
     let negocio = null;
@@ -75,24 +70,6 @@ export async function onRequestPost(context) {
 
     const negocioId = negocio.id;
     const waToken   = negocio.wa_token;
-
-    // ─── ALERTA DE RETRASO META ───────────────────────────────
-    // Si el webhook llegó con >5 min de retraso, notificamos al dueño.
-    // Posible causa: incidencia transitoria de Meta (error is_transient:true code:2).
-    if (_delayAlertaPendiente && negocio.telegram_chat_id && env.TELEGRAM_TOKEN) {
-      const minutos = Math.floor(delaySegundos / 60);
-      const textoAlerta =
-        `🚨 <b>WEBHOOK RETRASADO — ${minutos} min</b>\n` +
-        `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-        `⏱ Retraso: ${delaySegundos}s (${minutos} min)\n` +
-        `📱 Negocio: ${negocio.nombre}\n` +
-        `📞 Número origen: +${from}\n\n` +
-        `⚠️ <i>Posible incidencia Meta/WhatsApp Business API. ` +
-        `Si el bot dejó de responder, puede ser una falla transitoria del proveedor.</i>`;
-      try {
-        await notificarTelegram(env.TELEGRAM_TOKEN, negocio.telegram_chat_id, textoAlerta);
-      } catch(e) { console.log("Error alerta delay Telegram:", e.message); }
-    }
 
     // ─── MODO MANUAL ─────────────────────────────────────────
     try {
@@ -177,50 +154,6 @@ export async function onRequestPost(context) {
     }
 
     const textoRecibido = message.text?.body || "";
-
-    // ─── AUTO-DETECCIÓN DE PAGO ───────────────────────────────
-    // pago-ok.html envía al paciente de vuelta a WhatsApp con este texto exacto.
-    // Lo detectamos aquí para actualizar la cita sin depender del webhook de PF.
-    if (textoRecibido.trim() === "He completado mi pago ✅") {
-      let citaActualizada = null;
-      try {
-        citaActualizada = await env.producto_c_db.prepare(
-          `SELECT id FROM citas WHERE negocio_id = ? AND cliente_tel = ? AND estado_pago = 'esperando_pago'
-           ORDER BY id DESC LIMIT 1`
-        ).bind(negocioId, from).first();
-      } catch(e) {}
-
-      if (citaActualizada) {
-        try {
-          await env.producto_c_db.prepare(
-            `UPDATE citas SET estado_pago = 'pago_por_verificar' WHERE id = ?`
-          ).bind(citaActualizada.id).run();
-        } catch(e) { console.log("Error actualizando pago:", e.message); }
-
-        // Notificar a Telegram que hay un pago pendiente de verificación
-        if (negocio.telegram_chat_id && env.TELEGRAM_TOKEN) {
-          const textoTgPago =
-            `🔵 <b>PAGO POR VERIFICAR</b>\n` +
-            `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-            `📞 Paciente: +${from}${nombrePerfil ? ` (${nombrePerfil})` : ""}\n` +
-            `🆔 Cita #${citaActualizada.id}\n\n` +
-            `💳 <i>El paciente reporta haber completado el pago. Verifica en Páguelo Fácil y confirma la cita desde los botones anteriores.</i>`;
-          try {
-            await notificarTelegram(env.TELEGRAM_TOKEN, negocio.telegram_chat_id, textoTgPago);
-          } catch(e) {}
-        }
-
-        // Responder al paciente confirmando recepción
-        await marcarLeido(waToken, phoneNumberId, message.id);
-        await new Promise(r => setTimeout(r, 1500));
-        await enviarMensaje(waToken, phoneNumberId, from,
-          `✅ ¡Recibimos tu notificación de pago! Estamos verificando tu transacción y en breve confirmamos tu cita. 😊`
-        );
-        return new Response("EVENT_RECEIVED", { status: 200 });
-      }
-
-      // Si no hay cita esperando pago, dejar que el flujo normal lo maneje
-    }
 
     let miId = null;
     try {
@@ -798,7 +731,7 @@ async function notificarTelegramConBotones(token, chatId, texto, citaId, numero,
               { text: "❌ Rechazar/Cancelar", callback_data: `rechazar:${citaId}` }
             ],
             [
-              { text: "🛑 Pausar Bot (Intervención Manual)", callback_data: `pausar:${numero}:${negocioId}:${citaId}` }
+              { text: "🛑 Pausar Bot (Intervención Manual)", callback_data: `pausar:${numero}:${negocioId}` }
             ]
           ]
         }
@@ -827,141 +760,4 @@ async function enviarImagen(waToken, phoneNumberId, to, imageUrl, caption) {
     console.log("Imagen enviada:", JSON.stringify(result));
     return result;
   } catch(e) { console.log("Error enviarImagen:", e.message); }
-}
-// ============================================================
-// MONITOREO PROACTIVO 24/7 — Cron Trigger cada 10 minutos
-// Cloudflare ejecuta este handler automáticamente.
-// Verifica: Groq (IA) + D1 (base de datos)
-// Notifica a Telegram si algo falla, con silenciador anti-spam.
-// ============================================================
-
-export async function scheduled(event, env, ctx) {
-  ctx.waitUntil(ejecutarChequeoSalud(env));
-}
-
-async function ejecutarChequeoSalud(env) {
-  const TELEGRAM_TOKEN  = env.TELEGRAM_TOKEN;
-  const GROQ_API_KEY    = env.GROQ_API_KEY;
-  const DB              = env.producto_c_db;
-
-  // Chat ID del dueño — dental-demo (Eduardo)
-  // En el futuro puede leerse de D1 para ser multi-tenant
-  const CHAT_ID_DUENO   = "8483416774";
-
-  // Silenciador: solo notificar si pasaron >20 min desde la última alerta
-  // Se guarda en D1 tabla health_checks (la creamos si no existe)
-  const MINUTOS_SILENCIO = 20;
-
-  const errores = [];
-
-  // ── CHEQUEO 1: D1 (base de datos) ────────────────────────
-  try {
-    await DB.prepare("SELECT 1").first();
-  } catch(e) {
-    errores.push(`🗄️ <b>D1 (Base de datos)</b>\n   Error: ${e.message}`);
-  }
-
-  // ── CHEQUEO 2: Groq (IA) — ping mínimo de 1 token ────────
-  try {
-    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${GROQ_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [{ role: "user", content: "ping" }],
-        max_tokens: 1
-      })
-    });
-
-    if (!groqRes.ok) {
-      const groqData = await groqRes.json().catch(() => ({}));
-      const codigo   = groqData.error?.code || groqRes.status;
-      const mensaje  = groqData.error?.message || "Sin respuesta";
-
-      if (groqRes.status === 429) {
-        errores.push(`🤖 <b>Groq (IA)</b>\n   ⚠️ Rate limit excedido (429) — posible saturación`);
-      } else {
-        errores.push(`🤖 <b>Groq (IA)</b>\n   Error ${codigo}: ${mensaje.slice(0, 80)}`);
-      }
-    }
-  } catch(e) {
-    errores.push(`🤖 <b>Groq (IA)</b>\n   Sin conexión: ${e.message}`);
-  }
-
-  // ── Si todo está bien: silencio total, solo log ───────────
-  if (errores.length === 0) {
-    console.log(`[HEALTH CHECK] ✅ OK — ${new Date().toISOString()}`);
-    return;
-  }
-
-  // ── Hay errores: verificar silenciador antes de notificar ─
-  try {
-    // Crear tabla si no existe (primera vez)
-    await DB.prepare(`
-      CREATE TABLE IF NOT EXISTS health_checks (
-        id INTEGER PRIMARY KEY,
-        ultima_alerta TEXT,
-        ultimo_error TEXT
-      )
-    `).run();
-
-    const registro = await DB.prepare(
-      "SELECT ultima_alerta FROM health_checks WHERE id = 1"
-    ).first();
-
-    const ahora        = Date.now();
-    const ultimaAlerta = registro?.ultima_alerta ? Number(registro.ultima_alerta) : 0;
-    const minutosPasados = (ahora - ultimaAlerta) / 60000;
-
-    if (minutosPasados < MINUTOS_SILENCIO) {
-      console.log(`[HEALTH CHECK] ❌ Error detectado pero silenciado (última alerta hace ${Math.floor(minutosPasados)} min)`);
-      return;
-    }
-
-    // Actualizar timestamp de última alerta
-    if (registro) {
-      await DB.prepare(
-        "UPDATE health_checks SET ultima_alerta = ?, ultimo_error = ? WHERE id = 1"
-      ).bind(String(ahora), errores.join(" | ")).run();
-    } else {
-      await DB.prepare(
-        "INSERT INTO health_checks (id, ultima_alerta, ultimo_error) VALUES (1, ?, ?)"
-      ).bind(String(ahora), errores.join(" | ")).run();
-    }
-  } catch(e) {
-    console.log("[HEALTH CHECK] Error en silenciador:", e.message);
-    // Si falla el silenciador, notificamos igual para no perder la alerta
-  }
-
-  // ── Enviar alerta a Telegram ──────────────────────────────
-  const hora = new Date().toLocaleTimeString("es-PA", {
-    timeZone: "America/Panama",
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-
-  const textoAlerta =
-    `🔴 <b>ALERTA DE SISTEMA — ${hora}</b>\n` +
-    `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-    errores.join("\n\n") +
-    `\n\n🕐 <i>Chequeo automático cada 10 min.\n` +
-    `Próxima alerta en mín. ${MINUTOS_SILENCIO} min si persiste.</i>`;
-
-  try {
-    await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: CHAT_ID_DUENO,
-        text: textoAlerta,
-        parse_mode: "HTML"
-      })
-    });
-    console.log(`[HEALTH CHECK] ❌ Alerta enviada a Telegram — ${errores.length} error(es)`);
-  } catch(e) {
-    console.log("[HEALTH CHECK] Error enviando alerta Telegram:", e.message);
-  }
 }
