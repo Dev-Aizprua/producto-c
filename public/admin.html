@@ -274,9 +274,137 @@
     .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
     @keyframes spin{to{transform:rotate(360deg)}}
 
-    /* ══ RESPONSIVE ══════════════════════════════════════════ */
-    @media(max-width:1100px){.two-col{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:768px){.sidebar{transform:translateX(-100%)}.main-content{margin-left:0}.form-row{grid-template-columns:1fr}.modo-grid{grid-template-columns:1fr}}
+    /* ══ HAMBURGER BUTTON ════════════════════════════════════ */
+    .btn-hamburger{display:none;background:none;border:none;cursor:pointer;padding:8px;border-radius:8px;color:#1a1a2e;transition:background .15s;flex-shrink:0}
+    .btn-hamburger:hover{background:#f0f2f7}
+    .btn-hamburger i{font-size:22px}
+
+    /* ══ SIDEBAR OVERLAY ═════════════════════════════════════ */
+    .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99;backdrop-filter:blur(2px)}
+    .sidebar-overlay.open{display:block}
+
+    /* ══ RESPONSIVE 1100px ════════════════════════════════════ */
+    @media(max-width:1100px){
+      .two-col{grid-template-columns:1fr}
+      .kpi-grid{grid-template-columns:repeat(2,1fr)}
+    }
+
+    /* ══ RESPONSIVE 768px — MOBILE ═══════════════════════════ */
+    @media(max-width:768px){
+
+      /* Sidebar como drawer */
+      .sidebar{transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);z-index:100}
+      .sidebar.open{transform:translateX(0)}
+      .main-content{margin-left:0}
+
+      /* Header mobile */
+      .main-header{padding:0 14px;gap:10px}
+      .mh-greeting{font-size:15px}
+      .mh-sub{display:none}
+      .mh-actions .btn-ghost{display:none}
+      .mh-actions .btn-primary{padding:8px 12px;font-size:12px}
+      .mh-actions .btn-primary i{display:none}
+      .btn-hamburger{display:flex;align-items:center;justify-content:center}
+
+      /* Body padding */
+      .main-body{padding:14px}
+
+      /* Status bar — scroll horizontal */
+      .system-status-bar{
+        padding:10px 14px;
+        gap:10px;
+        overflow-x:auto;
+        flex-wrap:nowrap;
+        scrollbar-width:none;
+        -webkit-overflow-scrolling:touch;
+      }
+      .system-status-bar::-webkit-scrollbar{display:none}
+      .sys-status-item{white-space:nowrap;font-size:11.5px}
+      .sys-status-sep{display:none}
+      #sysTime{display:none}
+
+      /* KPI grid — 2 columnas compactas */
+      .kpi-grid{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+      .kpi-card{padding:14px;gap:10px}
+      .kpi-icon{width:40px;height:40px;font-size:18px;border-radius:11px}
+      .kpi-num{font-size:21px}
+      .kpi-label{font-size:11.5px}
+      .kpi-trend{font-size:10.5px}
+
+      /* Finance row — 3 cards en fila pequeña */
+      .finance-row{gap:8px;margin-bottom:14px}
+      .fin-card{padding:12px 10px}
+      .fin-label{font-size:10px}
+      .fin-value{font-size:17px}
+      .fin-sub{font-size:10px}
+
+      /* Dashboard 2-col grid → columna única */
+      #tab-dashboard > div[style*="grid-template-columns:1fr 1fr"]{
+        display:flex!important;
+        flex-direction:column!important;
+        gap:14px!important;
+        margin-bottom:14px!important;
+      }
+
+      /* Gráfica — altura menor en mobile */
+      .chart-wrapper{height:140px}
+      .chart-card{padding:16px}
+
+      /* Conversión card */
+      .card{padding:16px;margin-bottom:14px}
+      .card-title{font-size:14px;margin-bottom:14px}
+
+      /* Accesos rápidos — wrap en 2 cols */
+      #tab-dashboard .card:has(.btn-primary[onclick*="abrirModal"]) > div{
+        display:grid!important;
+        grid-template-columns:1fr 1fr!important;
+        gap:8px!important;
+      }
+
+      /* Tabla últimas reservas — más compacta */
+      table{font-size:12px}
+      thead th{padding:8px 10px;font-size:10px}
+      tbody td{padding:10px 10px}
+
+      /* Tab chats — columna única */
+      #tab-chats > div[style*="grid-template-columns"]{
+        display:flex!important;
+        flex-direction:column!important;
+        gap:14px!important;
+      }
+
+      /* Forms */
+      .form-row{grid-template-columns:1fr}
+      .modo-grid{grid-template-columns:1fr}
+
+      /* Section header */
+      .section-hdr h2{font-size:15px}
+
+      /* Toast — bottom full */
+      .toast{right:14px;left:14px;bottom:16px;min-width:0}
+
+      /* Modal */
+      .modal{padding:20px;border-radius:16px}
+      .modal-overlay{padding:12px}
+
+      /* Servicios grid — 1 col */
+      .svc-grid{grid-template-columns:1fr}
+
+      /* Modo cards — compacto */
+      .modo-card{padding:14px}
+      .modo-card-icon{font-size:22px;margin-bottom:6px}
+      .modo-card-title{font-size:13px}
+      .modo-card-desc{font-size:11.5px}
+
+      /* Preview oculto en móvil (se muestra en config) */
+      .two-col > div:last-child{position:static}
+    }
+
+    /* ══ RESPONSIVE 380px — MOBILE PEQUEÑO ═══════════════════ */
+    @media(max-width:380px){
+      .kpi-grid{grid-template-columns:1fr}
+      .finance-row{grid-template-columns:1fr;gap:8px}
+    }
   </style>
 </head>
 <body>
@@ -300,6 +428,9 @@
     <div class="login-error" id="loginError"></div>
   </div>
 </div>
+
+<!-- ══ SIDEBAR OVERLAY ═══════════════════════════════════════ -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
 <!-- ══ PANEL ═════════════════════════════════════════════════ -->
 <div class="panel-layout" id="panelLayout">
@@ -338,8 +469,11 @@
   <!-- Main -->
   <main class="main-content">
     <header class="main-header">
+      <button class="btn-hamburger" id="btnHamburger" onclick="toggleSidebar()" aria-label="Menu">
+        <i class="ti ti-menu-2"></i>
+      </button>
       <div class="mh-title">
-        <div class="mh-greeting" id="mhGreeting">¡Hola, Admin! 👋</div>
+        <div class="mh-greeting" id="mhGreeting">&#x21;Hola, Admin! &#x1F44B;</div>
         <div class="mh-sub">Gestiona tu negocio, servicios y reservas desde un solo lugar.</div>
       </div>
       <div class="mh-actions">
@@ -347,7 +481,7 @@
           <button class="btn btn-ghost btn-sm"><i class="ti ti-eye"></i> Ver chat</button>
         </a>
         <button class="btn btn-ghost btn-sm" onclick="copiarEnlace()"><i class="ti ti-share"></i> Compartir</button>
-        <button class="btn btn-primary btn-sm" onclick="showTab('negocio',null)"><i class="ti ti-settings"></i> Configuración</button>
+        <button class="btn btn-primary btn-sm" onclick="showTab('negocio',null)"><i class="ti ti-settings"></i> Configuraci&#xF3;n</button>
       </div>
     </header>
 
@@ -751,11 +885,23 @@ function doLogout(){
   document.getElementById('loginPassword').value='';
 }
 
+function toggleSidebar(){
+  const sb=document.querySelector('.sidebar');
+  const ov=document.getElementById('sidebarOverlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('open');
+}
+function closeSidebar(){
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
 function showTab(tab,el){
   document.querySelectorAll('.tab-section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
   document.getElementById(`tab-${tab}`).classList.add('active');
   if(el)el.classList.add('active');
+  closeSidebar();
 }
 
 function copiarEnlace(){
