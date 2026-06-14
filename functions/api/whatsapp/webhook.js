@@ -181,7 +181,7 @@ export async function onRequestPost(context) {
     // ─── AUTO-DETECCIÓN DE PAGO ───────────────────────────────
     // pago-ok.html envía al paciente de vuelta a WhatsApp con este texto exacto.
     // Lo detectamos aquí para actualizar la cita sin depender del webhook de PF.
-    if (textoRecibido.trim() === "He completado mi pago ✅") {
+    if (textoRecibido.trim() === "PAGO_COMPLETADO" || textoRecibido.trim() === "He completado mi pago") {
       let citaActualizada = null;
       try {
         citaActualizada = await env.producto_c_db.prepare(

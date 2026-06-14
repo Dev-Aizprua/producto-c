@@ -161,7 +161,7 @@
   };
 
   const numero  = waNumeros[slug] || "50760291411";
-  const mensaje = encodeURIComponent("He completado mi pago ✅");
+  const mensaje = encodeURIComponent("He completado mi pago");
   const url     = `https://wa.me/${numero}?text=${mensaje}`;
 
   document.getElementById("btnWA").href = url;
