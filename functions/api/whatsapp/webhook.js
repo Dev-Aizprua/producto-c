@@ -31,11 +31,6 @@ export async function onRequestPost(context) {
     const entry  = body.entry?.[0];
     const change = entry?.changes?.[0];
 
-    // LOG TEMPORAL DE DIAGNÓSTICO — remover después
-    console.log("[DIAG] change.value keys:", JSON.stringify(Object.keys(change?.value || {})));
-    console.log("[DIAG] statuses:", JSON.stringify(change?.value?.statuses));
-    console.log("[DIAG] messages:", JSON.stringify(change?.value?.messages));
-
     // Ignorar notificaciones de status (delivered, read, sent)
     if (change?.value?.statuses) {
       return new Response("EVENT_RECEIVED", { status: 200 });
