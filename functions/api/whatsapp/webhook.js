@@ -505,6 +505,79 @@ export async function onRequestPost(context) {
       return new Response("EVENT_RECEIVED", { status: 200 });
     }
 
+    // ─── INTERCEPTACIÓN DE TEMAS CRÍTICOS ────────────────────
+    // Estos temas Valeria NO puede responder — no tiene la información.
+    // Se responde directo sin pasar por Groq para evitar alucinaciones.
+    const temasCriticos = [
+      // Financiamiento
+      { palabras: ["cuota", "cuotas", "financiamiento", "financiar", "abono", "abonos",
+                   "pagar en parte", "pagar en partes", "mensualidad", "mensualidades",
+                   "crédito", "credito", "aplazado", "diferido"],
+        respuesta: "No tengo información registrada sobre opciones de financiamiento o pagos en cuotas. Con gusto puedo solicitar que un miembro del equipo te contacte para confirmarlo. 😊 ¿Te puedo ayudar con algo más?"
+      },
+      // Descuentos y promociones
+      { palabras: ["descuento", "descuentos", "promoción", "promocion", "oferta", "ofertas",
+                   "rebaja", "rebajas", "precio especial", "más barato", "mas barato"],
+        respuesta: "No tengo información sobre descuentos o promociones activas en este momento. Para confirmar si hay alguna disponible, un miembro del equipo puede ayudarte. ¿Te gustaría que registre tu consulta?"
+      },
+      // Garantías y seguros
+      { palabras: ["garantía", "garantia", "garantías", "garantias", "seguro", "seguro médico",
+                   "seguro dental", "cobertura", "aseguradora", "reembolso"],
+        respuesta: "No tengo información registrada sobre garantías o coberturas de seguro. Te recomiendo consultar directamente con nuestro equipo para que te orienten correctamente. 😊"
+      },
+      // Cancelaciones y reembolsos
+      { palabras: ["cancelar", "cancelación", "cancelacion", "reembolso", "devolver", "devolución",
+                   "devolucion", "reprogramar", "cambiar cita", "reagendar"],
+        respuesta: "Para cancelaciones o cambios de cita, lo mejor es que un miembro del equipo te asista directamente. ¿Gustas que registre tu solicitud para que te contacten?"
+      },
+      // Horarios y disponibilidad específica
+      { palabras: ["horario", "horarios", "qué días", "que dias", "abren", "cierran",
+                   "están abiertos", "estan abiertos", "días de atención", "dias de atencion"],
+        respuesta: "No tengo los horarios de atención configurados en este momento. Un miembro del equipo puede confirmarte la disponibilidad exacta. ¿Te gustaría que registre tu interés?"
+      }
+    ];
+
+    const temaCriticoDetectado = temasCriticos.find(t =>
+      t.palabras.some(p => textoLower.includes(p))
+    );
+
+    if (temaCriticoDetectado) {
+      await marcarLeido(waToken, phoneNumberId, message.id);
+      await new Promise(r => setTimeout(r, 1500));
+      await enviarMensaje(waToken, phoneNumberId, from, temaCriticoDetectado.respuesta);
+
+      // Notificar a Telegram que el paciente hizo una consulta fuera del catálogo
+      if (negocio.telegram_chat_id && env.TELEGRAM_TOKEN) {
+        try {
+          await notificarTelegram(env.TELEGRAM_TOKEN, negocio.telegram_chat_id,
+            `⚠️ <b>CONSULTA FUERA DE CATÁLOGO</b>\n📞 +${from}${nombrePaciente ? ` (${nombrePaciente})` : ""}\n💬 "${textoConsolidado}"\n\n<i>Valeria derivó al equipo — responde si puedes.</i>`
+          );
+        } catch(e) {}
+      }
+
+      // Guardar en historial
+      try {
+        const nuevoH = [...historial,
+          { role: "user", content: textoConsolidado },
+          { role: "assistant", content: temaCriticoDetectado.respuesta }
+        ];
+        const chatEx = await env.producto_c_db.prepare(
+          `SELECT id FROM chats WHERE negocio_id = ? AND cliente_tel = ? AND completado = 0 LIMIT 1`
+        ).bind(negocioId, from).first();
+        if (chatEx) {
+          await env.producto_c_db.prepare(
+            `UPDATE chats SET historial_json = ?, fecha = ? WHERE id = ?`
+          ).bind(JSON.stringify(nuevoH), new Date().toISOString(), chatEx.id).run();
+        } else {
+          await env.producto_c_db.prepare(
+            `INSERT INTO chats (negocio_id, session_token, cliente_nombre, cliente_tel, historial_json, fecha, completado, canal) VALUES (?, ?, ?, ?, ?, ?, 0, 'whatsapp')`
+          ).bind(negocioId, sessionToken, nombrePaciente || "Paciente WA", from, JSON.stringify(nuevoH), new Date().toISOString()).run();
+        }
+      } catch(e) {}
+
+      return new Response("EVENT_RECEIVED", { status: 200 });
+    }
+
     // ─── CONSTRUIR SYSTEM PROMPT ─────────────────────────────
     let instruccionPago = "";
     if (modoReserva === "solo_cita") {
@@ -538,9 +611,30 @@ Si ya conversaron antes:
 ━━━ CATÁLOGO DE SERVICIOS ━━━
 ${catalogoTexto || "Consultar disponibilidad con el equipo."}
 
-━━━ REGLA DE ORO ━━━
-Primero entiende qué necesita el paciente. Luego orienta. Finalmente invita a reservar.
-NUNCA preguntes si quiere agendar antes de entender su situación.
+━━━ REGLA DE HIERRO — LO QUE VALERIA NO SABE ━━━
+NUNCA inventes información. Si no está explícitamente en este prompt o en el catálogo, no lo sabes.
+Esto aplica sin excepción para:
+• Financiamiento, cuotas, abonos, crédito
+• Descuentos, promociones, ofertas
+• Garantías, coberturas de seguro, reembolsos
+• Horarios exactos de atención
+• Disponibilidad real de especialistas
+• Políticas de cancelación
+• Procedimientos clínicos no descritos en el catálogo
+• Cualquier característica de los servicios no mencionada explícitamente
+
+Si el paciente pregunta algo de esta lista, responde:
+"No tengo esa información registrada. Con gusto solicito que un miembro del equipo te confirme ese detalle. 😊"
+
+━━━ DISPONIBILIDAD DE CITAS ━━━
+NO confirmes disponibilidad de horarios — no tienes acceso a la agenda real.
+Cuando el paciente proponga una fecha/hora, registra su solicitud y aclara que el equipo confirmará.
+Ejemplo correcto: "Perfecto, registraré tu solicitud para el viernes 19 a las 2pm. Un miembro del equipo te confirmará la disponibilidad. 😊"
+NUNCA digas: "El miércoles está disponible" o "Tenemos ese horario libre"
+
+━━━ SOLO USA INFORMACIÓN DEL CATÁLOGO ━━━
+Al describir servicios, usa ÚNICAMENTE lo que aparece en el catálogo de abajo.
+No agregues beneficios, características, duración de resultados, ni detalles clínicos que no estén escritos explícitamente.
 
 ━━━ CÓMO RESPONDER SEGÚN LA SITUACIÓN ━━━
 
