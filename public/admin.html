@@ -525,6 +525,115 @@
       /* Toast arriba del bottom nav */
       .toast{bottom:72px;right:14px;left:14px;min-width:0}
     }
+    /* ══ MOBILE: TAB CITAS ══════════════════════════════════ */
+    .citas-mobile{display:none}
+    .citas-m-header{margin-bottom:14px}
+    .citas-m-title{font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:12px}
+    .citas-m-stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+    .citas-stat{background:white;border:1px solid #edf2f7;border-radius:10px;padding:8px 12px;display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;min-width:60px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+    .citas-stat-num{font-size:18px;font-weight:800;color:#1a1a2e}
+    .citas-stat-lbl{font-size:10px;color:#aaa;font-weight:500;text-align:center}
+    .citas-stat-num.green{color:#16a34a}
+    .citas-stat-num.orange{color:#d97706}
+    .citas-stat-num.blue{color:#1a73e8}
+
+    /* Filtros horizontales */
+    .filtros-scroll{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;margin-bottom:14px;-webkit-overflow-scrolling:touch}
+    .filtros-scroll::-webkit-scrollbar{display:none}
+    .filtro-chip{flex-shrink:0;padding:7px 14px;border-radius:20px;font-size:12.5px;font-weight:600;border:1.5px solid #e8ecf0;background:white;color:#777;cursor:pointer;transition:all .15s;white-space:nowrap}
+    .filtro-chip.active{background:var(--primary);color:white;border-color:var(--primary)}
+
+    /* Tarjeta de reserva compacta */
+    .cita-card-m{background:white;border-radius:14px;border:1px solid #edf2f7;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.04);overflow:hidden;transition:box-shadow .15s}
+    .cita-card-m:hover{box-shadow:0 4px 16px rgba(0,0,0,.08)}
+    .cita-card-top{display:flex;align-items:center;gap:12px;padding:14px;cursor:pointer}
+    .cita-av-m{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:white;flex-shrink:0}
+    .cita-main{flex:1;min-width:0}
+    .cita-cliente-row{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+    .cita-nombre-m{font-size:13.5px;font-weight:700;color:#1a1a2e}
+    .cita-canal-m{font-size:11px}
+    .cita-servicio-m{font-size:12px;color:#666;display:flex;align-items:center;gap:4px;margin-bottom:2px}
+    .cita-fecha-m{font-size:11.5px;color:#aaa;display:flex;align-items:center;gap:4px}
+    .cita-right-m{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+    .cita-total-m{font-size:15px;font-weight:800;color:#1a1a2e}
+    .cita-chevron-m{font-size:16px;color:#ccc;transition:transform .2s}
+    .cita-card-m.expanded .cita-chevron-m{transform:rotate(90deg)}
+
+    /* Panel expandible */
+    .cita-expand{display:none;border-top:1px solid #f5f7fa;padding:14px;background:#fafbfc}
+    .cita-card-m.expanded .cita-expand{display:block}
+    .cita-expand-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+    .cita-expand-item{background:white;border-radius:10px;padding:10px 12px;border:1px solid #edf2f7}
+    .cita-expand-lbl{font-size:10px;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+    .cita-expand-val{font-size:13px;font-weight:600;color:#1a1a2e}
+    .cita-expand-actions{display:flex;gap:8px}
+    .btn-wa-cita{flex:1;background:#25d366;color:white;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+    .btn-confirmar-cita{flex:1;background:#16a34a;color:white;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer}
+    .btn-cancelar-cita{background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;font-size:13px;cursor:pointer}
+
+    /* ══ MOBILE: TAB CHATS ═══════════════════════════════════ */
+    .chats-mobile{display:none}
+    .chats-m-header{margin-bottom:14px}
+    .chats-m-title{font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:10px}
+    .chats-search{position:relative;margin-bottom:12px}
+    .chats-search input{width:100%;padding:10px 14px 10px 38px;border:1.5px solid #e8ecf0;border-radius:12px;font-size:14px;color:#1a1a2e;outline:none;font-family:inherit;background:#f8f9fc;transition:border-color .15s}
+    .chats-search input:focus{border-color:var(--primary);background:white}
+    .chats-search i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#aaa;font-size:17px}
+
+    /* Item de chat estilo WhatsApp */
+    .chat-wa-item{display:flex;align-items:center;gap:12px;padding:13px 14px;background:white;border-bottom:1px solid #f5f7fa;cursor:pointer;transition:background .1s;position:relative}
+    .chat-wa-item:first-child{border-radius:14px 14px 0 0}
+    .chat-wa-item:last-child{border-radius:0 0 14px 14px;border-bottom:none}
+    .chat-wa-item:only-child{border-radius:14px}
+    .chat-wa-item:hover{background:#f8f9fc}
+    .chat-wa-item.activo{background:#eff6ff}
+    .chat-wa-av{width:46px;height:46px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:white;flex-shrink:0;position:relative}
+    .chat-wa-canal-dot{position:absolute;bottom:0;right:0;width:16px;height:16px;border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:8px}
+    .chat-wa-canal-dot.wa{background:#25d366}
+    .chat-wa-canal-dot.web{background:#1a73e8}
+    .chat-wa-body{flex:1;min-width:0}
+    .chat-wa-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
+    .chat-wa-nombre{font-size:14px;font-weight:700;color:#1a1a2e}
+    .chat-wa-tiempo{font-size:11px;color:#aaa;flex-shrink:0}
+    .chat-wa-preview{font-size:12.5px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+    .chat-wa-tags{display:flex;gap:5px;flex-wrap:wrap}
+    .chat-tag{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600}
+    .chat-tag.ia{background:#f0fdf4;color:#16a34a}
+    .chat-tag.esperando{background:#fef3c7;color:#d97706}
+    .chat-tag.atencion{background:#fee2e2;color:#dc2626}
+    .chat-tag.pago{background:#dbeafe;color:#1d4ed8}
+    .chat-wa-unread{background:var(--primary);color:white;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+
+    /* Detalle chat mobile */
+    .chat-detail-m{display:none;background:white;border-radius:14px;border:1px solid #edf2f7;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+    .chat-detail-m.open{display:block}
+    .chat-detail-back{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #f5f7fa;cursor:pointer}
+    .chat-detail-back i{font-size:20px;color:var(--primary)}
+    .chat-detail-back span{font-size:14px;font-weight:600;color:var(--primary)}
+    .chat-detail-info{padding:12px 14px;background:#f8f9fc;border-bottom:1px solid #f0f2f7;display:flex;align-items:center;gap:10px}
+    .chat-detail-av{width:40px;height:40px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:white;flex-shrink:0}
+    .chat-detail-nombre{font-size:14px;font-weight:700;color:#1a1a2e}
+    .chat-detail-tel{font-size:12px;color:#aaa;margin-top:1px}
+    .chat-bubbles-m{padding:14px;display:flex;flex-direction:column;gap:8px;max-height:360px;overflow-y:auto}
+    .bubble-m{max-width:82%;padding:9px 13px;border-radius:12px;font-size:13px;line-height:1.5}
+    .bubble-m.bot{background:#f0f2f5;border-radius:2px 12px 12px 12px;align-self:flex-start;color:#1a1a2e}
+    .bubble-m.user{background:#e8f0fe;border-radius:12px 2px 12px 12px;align-self:flex-end;color:#1a1a2e}
+
+    /* Lista chats wrapper */
+    .chats-wa-list{background:white;border-radius:14px;border:1px solid #edf2f7;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+
+    /* ══ MOBILE: ACTIVAR CHATS Y CITAS NUEVOS ════════════════ */
+    @media(max-width:768px){
+      /* Ocultar versiones desktop de citas y chats */
+      #tab-citas .section-hdr{display:none}
+      #tab-citas .card{display:none}
+      #tab-chats .section-hdr{display:none}
+      #tab-chats > div[style]{display:none!important}
+
+      /* Mostrar versiones mobile */
+      .citas-mobile{display:block}
+      .chats-mobile{display:block}
+    }
   </style>
 </head>
 <body>
@@ -834,12 +943,38 @@
 
       <!-- ══ TAB: CITAS ══════════════════════════════════════ -->
       <section class="tab-section" id="tab-citas">
+
+        <!-- ── MOBILE ─────────────────────────────────────── -->
+        <div class="citas-mobile">
+          <div class="citas-m-header">
+            <div class="citas-m-title">&#x1F4C5; Reservas</div>
+            <div class="citas-m-stats">
+              <div class="citas-stat"><div class="citas-stat-num blue" id="cstatTotal">0</div><div class="citas-stat-lbl">Total</div></div>
+              <div class="citas-stat"><div class="citas-stat-num orange" id="cstatHoy">0</div><div class="citas-stat-lbl">Hoy</div></div>
+              <div class="citas-stat"><div class="citas-stat-num orange" id="cstatPend">0</div><div class="citas-stat-lbl">Pendientes</div></div>
+              <div class="citas-stat"><div class="citas-stat-num green" id="cstatConf">0</div><div class="citas-stat-lbl">Confirmadas</div></div>
+            </div>
+            <div class="filtros-scroll" id="citasFiltros">
+              <button class="filtro-chip active" onclick="filtrarCitasM('todas',this)">Todas</button>
+              <button class="filtro-chip" onclick="filtrarCitasM('hoy',this)">&#x1F4C5; Hoy</button>
+              <button class="filtro-chip" onclick="filtrarCitasM('pendientes',this)">&#x23F3; Pendientes</button>
+              <button class="filtro-chip" onclick="filtrarCitasM('por_verificar',this)">&#x1F535; Verificar</button>
+              <button class="filtro-chip" onclick="filtrarCitasM('confirmadas',this)">&#x2705; Confirmadas</button>
+              <button class="filtro-chip" onclick="filtrarCitasM('canceladas',this)">&#x274C; Canceladas</button>
+            </div>
+          </div>
+          <div id="citasMobileList">
+            <div class="empty-state" style="padding:32px"><i class="ti ti-loader" style="animation:spin 1s linear infinite"></i><p>Cargando...</p></div>
+          </div>
+        </div>
+
+        <!-- ── DESKTOP ─────────────────────────────────────── -->
         <div class="section-hdr"><h2>Reservas</h2></div>
         <div class="card">
           <div class="card-title"><i class="ti ti-calendar-check"></i> Todas las reservas</div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Cliente</th><th>Teléfono</th><th>Servicio</th><th>Fecha cita</th><th>Total</th><th>Estado</th><th>Canal</th><th>Acción</th></tr></thead>
+              <thead><tr><th>Cliente</th><th>Tel&#xE9;fono</th><th>Servicio</th><th>Fecha cita</th><th>Total</th><th>Estado</th><th>Canal</th><th>Acci&#xF3;n</th></tr></thead>
               <tbody id="citasTbody"><tr><td colspan="8" style="text-align:center;color:#aaa;padding:32px">Cargando...</td></tr></tbody>
             </table>
           </div>
@@ -848,6 +983,33 @@
 
       <!-- ══ TAB: CHATS ══════════════════════════════════════ -->
       <section class="tab-section" id="tab-chats">
+
+        <!-- ── MOBILE ─────────────────────────────────────── -->
+        <div class="chats-mobile">
+          <!-- Vista lista -->
+          <div id="chatsMobileVista">
+            <div class="chats-m-header">
+              <div class="chats-m-title">&#x1F4AC; Conversaciones</div>
+              <div class="chats-search">
+                <i class="ti ti-search"></i>
+                <input type="text" placeholder="Buscar conversaci&#xF3;n..." id="chatsSearchInput" oninput="filtrarChatsM(this.value)" />
+              </div>
+            </div>
+            <div class="chats-wa-list" id="chatsMobileList">
+              <div class="empty-state" style="padding:32px"><i class="ti ti-loader" style="animation:spin 1s linear infinite"></i><p>Cargando...</p></div>
+            </div>
+          </div>
+          <!-- Vista detalle -->
+          <div class="chat-detail-m" id="chatDetailM">
+            <div class="chat-detail-back" onclick="cerrarChatDetailM()">
+              <i class="ti ti-arrow-left"></i><span>Conversaciones</span>
+            </div>
+            <div class="chat-detail-info" id="chatDetailInfo"></div>
+            <div class="chat-bubbles-m" id="chatBubblesM"></div>
+          </div>
+        </div>
+
+        <!-- ── DESKTOP ─────────────────────────────────────── -->
         <div class="section-hdr"><h2>Conversaciones</h2></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
           <div class="card" style="margin:0">
@@ -857,8 +1019,8 @@
             </div>
           </div>
           <div class="card" style="margin:0" id="chatViewer">
-            <div class="card-title"><i class="ti ti-messages"></i> Detalle de conversación</div>
-            <div class="empty-state"><i class="ti ti-arrow-left"></i><p>Selecciona una conversación</p></div>
+            <div class="card-title"><i class="ti ti-messages"></i> Detalle de conversaci&#xF3;n</div>
+            <div class="empty-state"><i class="ti ti-arrow-left"></i><p>Selecciona una conversaci&#xF3;n</p></div>
           </div>
         </div>
       </section>
@@ -1546,23 +1708,130 @@ async function subirImagen(input){
 }
 
 // ══ CITAS ════════════════════════════════════════════════════
+let _todasCitas=[];
+
 async function cargarCitas(){
   const tbody=document.getElementById('citasTbody');
   try{
     const data=await api('GET','/api/panel/citas');
     if(!data.success)throw new Error(data.error);
-    if(!data.citas.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:#aaa;padding:32px">Sin reservas aún</td></tr>`;return;}
-    tbody.innerHTML=data.citas.map(c=>`<tr>
-      <td><strong>${c.cliente_nombre||'—'}</strong></td>
-      <td>${c.cliente_tel||'—'}</td>
-      <td>${c.servicio_nombre||'—'}</td>
-      <td>${c.fecha_cita||'—'}</td>
+    _todasCitas=data.citas||[];
+
+    // Desktop tabla
+    if(!_todasCitas.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:#aaa;padding:32px">Sin reservas a\u00fan</td></tr>`;}
+    else{tbody.innerHTML=_todasCitas.map(c=>`<tr>
+      <td><strong>${c.cliente_nombre||'\u2014'}</strong></td>
+      <td>${c.cliente_tel||'\u2014'}</td>
+      <td>${c.servicio_nombre||'\u2014'}</td>
+      <td>${c.fecha_cita||'\u2014'}</td>
       <td><strong>$${c.total||0}</strong></td>
       <td>${badgePago(c.estado_pago)}</td>
       <td>${badgeCanal(c.canal)}</td>
       <td>${accionCita(c)}</td>
-    </tr>`).join('');
+    </tr>`).join('');}
+
+    // Mobile: stats + lista
+    renderCitasMobile(_todasCitas);
   }catch(err){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:#e00;padding:32px">${err.message}</td></tr>`;}
+}
+
+function renderCitasMobile(citas){
+  const ahora=new Date();
+  const mismaFecha=(d,r)=>new Date(d).toDateString()===r.toDateString();
+  // Stats
+  const statTotal=citas.length;
+  const statHoy=citas.filter(c=>c.fecha_cita&&mismaFecha(c.fecha_cita,ahora)).length;
+  const statPend=citas.filter(c=>['esperando_pago','pendiente','pago_por_verificar'].includes(c.estado_pago)).length;
+  const statConf=citas.filter(c=>['confirmada','pagado'].includes(c.estado_pago)).length;
+  const cs=id=>document.getElementById(id);
+  if(cs('cstatTotal'))cs('cstatTotal').textContent=statTotal;
+  if(cs('cstatHoy'))cs('cstatHoy').textContent=statHoy;
+  if(cs('cstatPend'))cs('cstatPend').textContent=statPend;
+  if(cs('cstatConf'))cs('cstatConf').textContent=statConf;
+
+  // Lista cards
+  const list=document.getElementById('citasMobileList');
+  if(!list)return;
+  if(!citas.length){list.innerHTML=`<div class="empty-state" style="padding:40px"><i class="ti ti-calendar-off"></i><p>Sin reservas a\u00fan</p></div>`;return;}
+  list.innerHTML=citas.map(c=>{
+    const nombre=c.cliente_nombre||'Cliente';
+    const iniciales=nombre.split(' ').slice(0,2).map(p=>p[0]?.toUpperCase()||'').join('').substring(0,2)||'?';
+    const color=colorAvatar(c.estado_pago);
+    const canalIcon=c.canal==='whatsapp'?'\uD83D\uDCF1':'\uD83C\uDF10';
+    const waLink=c.cliente_tel?`https://wa.me/${c.cliente_tel}`:'#';
+    const estadoMap={confirmada:['success','Confirmada'],pagado:['success','Pagada'],pago_por_verificar:['blue','Verificar pago'],esperando_pago:['warning','Esperando pago'],pendiente:['warning','Pendiente'],cancelada:['danger','Cancelada'],expirada:['gray','Expirada']};
+    const [ecls,elbl]=estadoMap[c.estado_pago]||['gray',c.estado_pago||'Pendiente'];
+
+    // Botones de acción inline según estado
+    let accionesExpand='';
+    if(c.estado_pago==='pago_por_verificar'){
+      accionesExpand=`<button class="btn-confirmar-cita" onclick="actualizarCitaM(${c.id},'confirmada')">&#x2705; Confirmar pago</button>
+        <button class="btn-cancelar-cita" onclick="actualizarCitaM(${c.id},'cancelada')">&#x274C;</button>`;
+    }else if(c.estado_pago==='esperando_pago'){
+      accionesExpand=`<button class="btn-confirmar-cita" onclick="actualizarCitaM(${c.id},'pago_por_verificar')" style="background:#1d4ed8">Marcar pagado</button>`;
+    }else if(['confirmada','pagado'].includes(c.estado_pago)){
+      accionesExpand=`<button class="btn-cancelar-cita" onclick="actualizarCitaM(${c.id},'cancelada')">Cancelar cita</button>`;
+    }
+
+    return`<div class="cita-card-m" id="citaM-${c.id}">
+      <div class="cita-card-top" onclick="toggleCitaM(${c.id})">
+        <div class="cita-av-m" style="background:${color}">${iniciales}</div>
+        <div class="cita-main">
+          <div class="cita-cliente-row">
+            <span class="cita-nombre-m">${nombre}</span>
+            <span class="cita-canal-m">${canalIcon}</span>
+          </div>
+          <div class="cita-servicio-m"><i class="ti ti-tooth" style="font-size:11px;color:#aaa"></i> ${c.servicio_nombre||'\u2014'}</div>
+          <div class="cita-fecha-m"><i class="ti ti-calendar" style="font-size:11px"></i> ${c.fecha_cita||formatFecha(c.created_at)}</div>
+        </div>
+        <div class="cita-right-m">
+          <div class="cita-total-m">$${c.total||0}</div>
+          <span class="badge-compact ${ecls}">${elbl}</span>
+          <i class="ti ti-chevron-right cita-chevron-m"></i>
+        </div>
+      </div>
+      <div class="cita-expand">
+        <div class="cita-expand-grid">
+          <div class="cita-expand-item"><div class="cita-expand-lbl">Tel\u00e9fono</div><div class="cita-expand-val">${c.cliente_tel||'\u2014'}</div></div>
+          <div class="cita-expand-item"><div class="cita-expand-lbl">Canal</div><div class="cita-expand-val">${c.canal==='whatsapp'?'\uD83D\uDCF1 WhatsApp':'\uD83C\uDF10 Web'}</div></div>
+          <div class="cita-expand-item"><div class="cita-expand-lbl">Total</div><div class="cita-expand-val">$${c.total||0}</div></div>
+          <div class="cita-expand-item"><div class="cita-expand-lbl">Registrada</div><div class="cita-expand-val">${formatFecha(c.created_at)}</div></div>
+        </div>
+        <div class="cita-expand-actions">
+          ${c.cliente_tel&&c.canal==='whatsapp'?`<a href="${waLink}" target="_blank" style="flex:0 0 auto"><button class="btn-wa-cita"><i class="ti ti-brand-whatsapp"></i> WA</button></a>`:''}
+          ${accionesExpand}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleCitaM(id){
+  const card=document.getElementById(`citaM-${id}`);
+  if(card)card.classList.toggle('expanded');
+}
+
+function filtrarCitasM(tipo,btn){
+  document.querySelectorAll('.filtro-chip').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  const ahora=new Date();
+  const mismaFecha=(d,r)=>new Date(d).toDateString()===r.toDateString();
+  let filtradas=_todasCitas;
+  if(tipo==='hoy') filtradas=_todasCitas.filter(c=>c.fecha_cita&&mismaFecha(c.fecha_cita,ahora));
+  else if(tipo==='pendientes') filtradas=_todasCitas.filter(c=>['esperando_pago','pendiente'].includes(c.estado_pago));
+  else if(tipo==='por_verificar') filtradas=_todasCitas.filter(c=>c.estado_pago==='pago_por_verificar');
+  else if(tipo==='confirmadas') filtradas=_todasCitas.filter(c=>['confirmada','pagado'].includes(c.estado_pago));
+  else if(tipo==='canceladas') filtradas=_todasCitas.filter(c=>['cancelada','expirada'].includes(c.estado_pago));
+  renderCitasMobile(filtradas);
+}
+
+async function actualizarCitaM(citaId,nuevoEstado){
+  try{
+    const res=await api('PUT','/api/panel/citas',{cita_id:citaId,estado_pago:nuevoEstado});
+    if(!res.success)throw new Error(res.error);
+    showToast('Estado actualizado');
+    cargarCitas();
+  }catch(err){showToast('Error: '+err.message,'error');}
 }
 
 function badgePago(e){
@@ -1614,40 +1883,162 @@ async function actualizarCita(citaId, nuevoEstado){
 }
 
 // ══ CHATS ════════════════════════════════════════════════════
+let _todosChatsData=[];
+
+function tiempoRelativo(iso){
+  if(!iso)return'';
+  const diff=(Date.now()-new Date(iso))/1000;
+  if(diff<60)return'ahora';
+  if(diff<3600)return`hace ${Math.floor(diff/60)} min`;
+  if(diff<86400)return`hace ${Math.floor(diff/3600)}h`;
+  return new Date(iso).toLocaleDateString('es-PA',{day:'numeric',month:'short'});
+}
+
+function tagChat(chat){
+  const ultimo=chat.historial?.slice(-1)[0];
+  const texto=ultimo?.content||ultimo?.text||'';
+  if(texto.includes('[CREAR_CITA]')||texto.includes('cita confirmada'))return{cls:'pago',lbl:'Cita agendada'};
+  if(texto.includes('pago')||texto.includes('Páguelo'))return{cls:'pago',lbl:'Pago enviado'};
+  if(chat.completado)return{cls:'ia',lbl:'Respondido por IA'};
+  if(ultimo?.role==='user')return{cls:'atencion',lbl:'Requiere atención'};
+  return{cls:'ia',lbl:'Respondido por IA'};
+}
+
 async function cargarChats(){
   const list=document.getElementById('chatList');
   try{
     const data=await api('GET','/api/panel/chats');
     if(!data.success)throw new Error(data.error);
-    if(!data.chats.length){list.innerHTML=`<div class="empty-state"><i class="ti ti-message-dots"></i><p>Sin conversaciones aún</p></div>`;return;}
-    list.innerHTML=data.chats.map(c=>{
-      // Historial usa 'content' (WhatsApp/Groq) — compatible con ambos canales
-      const ultimoMsg=c.historial?.slice(-1)[0];
-      const ultimo=ultimoMsg?.content||ultimoMsg?.text||'Sin mensajes';
-      return`<div class="chat-item" onclick="verChat(${JSON.stringify(c).replace(/"/g,'&quot;')})">
-        <div class="chat-item-header">
-          <div class="chat-item-id">${badgeCanal(c.canal)} ${c.cliente_nombre||'Cliente anónimo'} <span style="font-size:11px;color:#aaa">(${c.total_mensajes} msgs)</span></div>
-          <div class="chat-item-fecha">${formatFecha(c.fecha)}</div>
+    _todosChatsData=data.chats||[];
+
+    // Desktop — lista existente
+    if(!_todosChatsData.length){
+      list.innerHTML=`<div class="empty-state"><i class="ti ti-message-dots"></i><p>Sin conversaciones a\u00fan</p></div>`;
+    }else{
+      list.innerHTML=_todosChatsData.map(c=>{
+        const ultimoMsg=c.historial?.slice(-1)[0];
+        const ultimo=ultimoMsg?.content||ultimoMsg?.text||'Sin mensajes';
+        return`<div class="chat-item" onclick="verChat(${JSON.stringify(c).replace(/"/g,'&quot;')})">
+          <div class="chat-item-header">
+            <div class="chat-item-id">${badgeCanal(c.canal)} ${c.cliente_nombre||'Cliente an\u00f3nimo'} <span style="font-size:11px;color:#aaa">(${c.total_mensajes} msgs)</span></div>
+            <div class="chat-item-fecha">${formatFecha(c.fecha)}</div>
+          </div>
+          <div class="chat-item-preview">${ultimo.substring(0,80)}${ultimo.length>80?'...':''}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // Mobile — lista estilo WhatsApp
+    renderChatsMobile(_todosChatsData);
+
+    // Badge bottom nav chats
+    const noLeidos=_todosChatsData.filter(c=>!c.completado&&c.historial?.slice(-1)[0]?.role==='user').length;
+    const bnChats=document.getElementById('bnBadgeChats');
+    if(bnChats){bnChats.textContent=noLeidos;bnChats.style.display=noLeidos>0?'block':'none';}
+
+  }catch(err){
+    list.innerHTML=`<div class="empty-state"><i class="ti ti-alert-circle"></i><p>${err.message}</p></div>`;
+  }
+}
+
+function renderChatsMobile(chats){
+  const mobileList=document.getElementById('chatsMobileList');
+  if(!mobileList)return;
+  if(!chats.length){
+    mobileList.innerHTML=`<div class="empty-state" style="padding:40px"><i class="ti ti-message-dots"></i><p>Sin conversaciones a\u00fan</p></div>`;
+    return;
+  }
+  mobileList.innerHTML=chats.map((c,idx)=>{
+    const nombre=c.cliente_nombre||'Cliente an\u00f3nimo';
+    const iniciales=nombre.split(' ').slice(0,2).map(p=>p[0]?.toUpperCase()||'').join('').substring(0,2)||'?';
+    const ultimoMsg=c.historial?.slice(-1)[0];
+    const preview=ultimoMsg?.content||ultimoMsg?.text||'Sin mensajes';
+    const esWA=c.canal==='whatsapp';
+    const tag=tagChat(c);
+    const noLeido=!c.completado&&ultimoMsg?.role==='user';
+    // Color avatar por canal
+    const avColor=esWA?'#25d366':'#1a73e8';
+    return`<div class="chat-wa-item${noLeido?' activo':''}" onclick="abrirChatDetailM(${idx})">
+      <div class="chat-wa-av" style="background:${avColor}">
+        ${iniciales}
+        <div class="chat-wa-canal-dot ${esWA?'wa':'web'}">${esWA?'\uD83D\uDCF1':'\uD83C\uDF10'}</div>
+      </div>
+      <div class="chat-wa-body">
+        <div class="chat-wa-top">
+          <div class="chat-wa-nombre">${nombre}</div>
+          <div class="chat-wa-tiempo">${tiempoRelativo(c.fecha)}</div>
         </div>
-        <div class="chat-item-preview">${ultimo.substring(0,80)}${ultimo.length>80?'...':''}</div>
-      </div>`;
-    }).join('');
-  }catch(err){list.innerHTML=`<div class="empty-state"><i class="ti ti-alert-circle"></i><p>${err.message}</p></div>`;}
+        <div class="chat-wa-preview">${preview.replace(/\[.*?\]/g,'').trim().substring(0,60)||'...'}</div>
+        <div class="chat-wa-tags">
+          <span class="chat-tag ${tag.cls}">${tag.lbl}</span>
+          ${c.total_mensajes>0?`<span class="chat-tag" style="background:#f1f5f9;color:#64748b">${c.total_mensajes} msgs</span>`:''}
+        </div>
+      </div>
+      ${noLeido?`<div class="chat-wa-unread">!</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function filtrarChatsM(query){
+  const q=query.toLowerCase().trim();
+  if(!q){renderChatsMobile(_todosChatsData);return;}
+  const filtrados=_todosChatsData.filter(c=>
+    (c.cliente_nombre||'').toLowerCase().includes(q)||
+    (c.cliente_tel||'').includes(q)||
+    (c.historial||[]).some(m=>(m.content||m.text||'').toLowerCase().includes(q))
+  );
+  renderChatsMobile(filtrados);
+}
+
+function abrirChatDetailM(idx){
+  const chat=_todosChatsData[idx];
+  if(!chat)return;
+  // Ocultar lista, mostrar detalle
+  document.getElementById('chatsMobileVista').style.display='none';
+  const det=document.getElementById('chatDetailM');
+  det.classList.add('open');
+  // Info header
+  const nombre=chat.cliente_nombre||'Cliente an\u00f3nimo';
+  const iniciales=nombre.split(' ').slice(0,2).map(p=>p[0]?.toUpperCase()||'').join('').substring(0,2)||'?';
+  const esWA=chat.canal==='whatsapp';
+  document.getElementById('chatDetailInfo').innerHTML=`
+    <div class="chat-detail-av" style="background:${esWA?'#25d366':'#1a73e8'}">${iniciales}</div>
+    <div>
+      <div class="chat-detail-nombre">${nombre}</div>
+      <div class="chat-detail-tel">${chat.cliente_tel?`+${chat.cliente_tel}`:'Sin tel\u00e9fono'} \u00b7 ${chat.total_mensajes} mensajes</div>
+    </div>
+    ${esWA&&chat.cliente_tel?`<a href="https://wa.me/${chat.cliente_tel}" target="_blank" style="margin-left:auto">
+      <button style="background:#25d366;color:white;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="ti ti-brand-whatsapp"></i> Abrir</button>
+    </a>`:''}`;
+  // Burbujas
+  const bubbles=document.getElementById('chatBubblesM');
+  const msgs=(chat.historial||[]).filter(m=>!(m.content||m.text||'').startsWith('[img:'));
+  bubbles.innerHTML=msgs.map(m=>{
+    const texto=m.content||m.text||'';
+    const esUser=m.role==='user';
+    return`<div class="bubble-m ${esUser?'user':'bot'}">${texto.replace(/\[.*?\]/g,'').trim()}</div>`;
+  }).join('');
+  // Scroll al final
+  setTimeout(()=>{bubbles.scrollTop=bubbles.scrollHeight;},50);
+}
+
+function cerrarChatDetailM(){
+  document.getElementById('chatsMobileVista').style.display='block';
+  document.getElementById('chatDetailM').classList.remove('open');
 }
 
 function verChat(chat){
   const viewer=document.getElementById('chatViewer');
   const bubbles=chat.historial.map(m=>{
     const texto=m.content||m.text||'';
-    // Saltar marcadores internos de imágenes
     if(texto.startsWith('[img:'))return'';
     return`<div class="chat-bub ${m.role}">${texto}</div>`;
   }).join('');
   const canalBadge=badgeCanal(chat.canal);
-  const telDisplay=chat.canal==='whatsapp'?`📱 +${chat.cliente_tel}`:`🌐 ${chat.cliente_tel||'Web'}`;
+  const telDisplay=chat.canal==='whatsapp'?`\uD83D\uDCF1 +${chat.cliente_tel}`:`\uD83C\uDF10 ${chat.cliente_tel||'Web'}`;
   viewer.innerHTML=`
-    <div class="card-title"><i class="ti ti-messages"></i> ${chat.cliente_nombre||'Cliente anónimo'} ${canalBadge}</div>
-    <div style="font-size:12px;color:#aaa;margin-bottom:12px">${telDisplay} · ${formatFecha(chat.fecha)} · ${chat.total_mensajes} mensajes</div>
+    <div class="card-title"><i class="ti ti-messages"></i> ${chat.cliente_nombre||'Cliente an\u00f3nimo'} ${canalBadge}</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:12px">${telDisplay} \u00b7 ${formatFecha(chat.fecha)} \u00b7 ${chat.total_mensajes} mensajes</div>
     <div class="chat-bubble-list">${bubbles||'<div class="empty-state"><p>Sin mensajes</p></div>'}</div>`;
 }
 
