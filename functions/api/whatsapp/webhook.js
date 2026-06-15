@@ -393,8 +393,16 @@ export async function onRequestPost(context) {
 
     const nombreEnHistorial = nombrePaciente && nombrePaciente !== "Paciente WA";
 
-    // Si tenemos los 3 datos y el paciente confirma — actuar directamente
-    if (esConfirmacion && servicioDetectado && tieneFecha && nombreEnHistorial && modoReserva !== "solo_cita") {
+    // Verificar que el bot ya presentó el resumen de confirmación
+    // Evita disparar el link cuando Valeria apenas está recopilando datos
+    const botYaPresentoResumen = historial.some(h =>
+      h.role === "assistant" &&
+      /confirmas|confirmar la cita|para confirmar|resumen/i.test(h.content) &&
+      (servicioDetectado ? h.content.toLowerCase().includes(servicioDetectado.nombre.toLowerCase()) : true)
+    );
+
+    // Si tenemos los 3 datos, el bot ya presentó resumen Y el paciente confirma — actuar directamente
+    if (esConfirmacion && servicioDetectado && tieneFecha && nombreEnHistorial && modoReserva !== "solo_cita" && botYaPresentoResumen) {
 
       // Verificar que NO existe ya una cita esperando_pago para este número
       // Evita generar link duplicado cuando el paciente dice "ok" o "gracias" después
