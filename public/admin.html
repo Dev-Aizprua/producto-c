@@ -473,7 +473,7 @@
     .mini-kpi-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
     .mini-kpi-num{font-size:18px;font-weight:800;color:#1a1a2e;letter-spacing:-.3px;line-height:1}
     .mini-kpi-lbl{font-size:10.5px;color:#aaa;margin-top:2px;font-weight:500}
-    .mini-kpi-trend{font-size:10px;font-weight:600;color:#16a34a;margin-top:2px;display:flex;align-items:center;gap:2px}
+    .mini-kpi-trend{font-size:9px;font-weight:600;color:#16a34a;margin-top:2px;display:flex;align-items:center;gap:2px;line-height:1.2}
 
     /* ══ GRÁFICA MOBILE ═════════════════════════════════════ */
     .chart-card-mobile{display:none;background:white;border-radius:16px;border:1px solid #edf2f7;padding:18px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
@@ -510,7 +510,7 @@
     .reserva-chevron{color:#ddd;font-size:18px;position:absolute;right:12px;top:50%;transform:translateY(-50%)}
 
     /* ══ FAB BUTTON ═════════════════════════════════════════ */
-    .fab{display:none;position:fixed;right:18px;bottom:76px;width:54px;height:54px;border-radius:50%;background:var(--primary);color:white;border:none;cursor:pointer;font-size:24px;box-shadow:0 4px 20px rgba(26,115,232,.4);z-index:80;align-items:center;justify-content:center;transition:all .2s}
+    .fab{display:none;position:fixed;right:16px;bottom:72px;width:48px;height:48px;border-radius:50%;background:var(--primary);color:white;border:none;cursor:pointer;font-size:22px;box-shadow:0 4px 20px rgba(26,115,232,.4);z-index:80;align-items:center;justify-content:center;transition:all .2s}
     .fab:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(26,115,232,.5)}
     .fab:active{transform:scale(.95)}
     .fab.open{transform:rotate(45deg)}
@@ -1718,7 +1718,7 @@ async function cargarKPIs(){
     if(mk1t&&trendCitas!==null){
       const dir=trendCitas>=0?'up':'down';
       const signo=trendCitas>=0?'+':'';
-      mk1t.innerHTML=`<i class="ti ti-arrow-${dir}" style="font-size:9px"></i> ${signo}${trendCitas}% vs semana anterior`;
+      mk1t.innerHTML=`<i class="ti ti-arrow-${dir}" style="font-size:9px"></i> ${signo}${trendCitas}% sem. ant.`;
       mk1t.style.color=trendCitas>=0?'#16a34a':'#dc2626';
     }
 
