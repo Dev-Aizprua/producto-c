@@ -322,6 +322,9 @@ export async function onRequestPost(context) {
       } catch(e) {}
     }
 
+    // Solo primer nombre — para saludos naturales ("Hola Eduardo" no "Hola Eduardo Aizprua")
+    const primerNombrePaciente = nombrePaciente ? nombrePaciente.trim().split(/\s+/)[0] : null;
+
     // ─── ENVIAR IMAGEN SI PACIENTE MENCIONA UN SERVICIO ──────
     const imagenesServicio = {
       "limpieza dental": "https://images.pexels.com/photos/6627483/pexels-photo-6627483.jpeg?w=600&auto=compress",
@@ -488,7 +491,7 @@ export async function onRequestPost(context) {
         ? `un adelanto de $${montoFinal}`
         : `el pago de $${montoFinal}`;
 
-      let respuestaDirecta = `¡Perfecto, ${nombrePaciente}! Tu cita de ${servicioDetectado.nombre} está reservada. Para confirmarla necesito ${montoTexto}.`;
+      let respuestaDirecta = `¡Perfecto, ${primerNombrePaciente || nombrePaciente}! Tu cita de ${servicioDetectado.nombre} está reservada. Para confirmarla necesito ${montoTexto}.`;
 
       if (linkDirecto) {
         respuestaDirecta += `\n\n💳 Enlace de pago seguro:\n${linkDirecto}\n\n_Una vez confirmado el pago, tu cita quedará lista. ✅_`;
@@ -627,10 +630,12 @@ Si es PRIMER CONTACTO y NO es recurrente (paciente totalmente nuevo):
 — Saluda con calidez y presenta. Ejemplo: "¡Hola! 😊 Bienvenido a ${negocio.nombre}. Soy Valeria, con mucho gusto te ayudo. ¿Qué tratamiento te interesa?"
 
 Si es PRIMER CONTACTO pero SÍ es recurrente (volvió después de tiempo, chat anterior ya cerrado):
-— Salúdalo por nombre, sin presentarte de nuevo (ya te conoce). Ejemplo: "¡Hola${nombrePaciente ? ` ${nombrePaciente}` : ""}! 😊 Qué gusto verte de nuevo. ¿En qué puedo ayudarte hoy?"
+— Salúdalo por su PRIMER NOMBRE solamente, sin presentarte de nuevo (ya te conoce). Ejemplo: "¡Hola${primerNombrePaciente ? ` ${primerNombrePaciente}` : ""}! 😊 Qué gusto verte de nuevo. ¿En qué puedo ayudarte hoy?"
 
 Si NO es primer contacto (conversación ya en curso):
-— Ve directo y personal, sin saludo repetido. Ejemplo: "Claro${nombrePaciente ? ` ${nombrePaciente}` : ""}, ¿en qué más te ayudo?"
+— Ve directo y personal con su PRIMER NOMBRE, sin saludo repetido. Ejemplo: "Claro${primerNombrePaciente ? ` ${primerNombrePaciente}` : ""}, ¿en qué más te ayudo?"
+
+⚠️ Usa siempre solo el PRIMER NOMBRE del paciente al dirigirte a él de forma natural. Nunca el nombre completo en la conversación — eso suena formal/robótico. El nombre completo solo se usa internamente para el registro de la cita.
 
 ━━━ CATÁLOGO DE SERVICIOS ━━━
 ${catalogoTexto || "Consultar disponibilidad con el equipo."}
