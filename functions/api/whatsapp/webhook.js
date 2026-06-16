@@ -303,6 +303,25 @@ export async function onRequestPost(context) {
     const modoReserva     = negocio.modo_reserva || "solo_cita";
     const montoReserva    = negocio.monto_reserva || 0;
 
+    // ─── DETECTAR PACIENTE RECURRENTE ────────────────────────
+    // Es "recurrente" si ya tuvo alguna cita antes (cualquier estado),
+    // sin importar que el chat actual sea nuevo (chat anterior completado=1).
+    let esPacienteRecurrente = false;
+    if (esPrimerMensaje) {
+      try {
+        const citaPrevia = await env.producto_c_db.prepare(
+          `SELECT cliente_nombre FROM citas WHERE negocio_id = ? AND cliente_tel = ?
+           ORDER BY id DESC LIMIT 1`
+        ).bind(negocioId, from).first();
+        if (citaPrevia) {
+          esPacienteRecurrente = true;
+          if (citaPrevia.cliente_nombre && !nombrePaciente) {
+            nombrePaciente = citaPrevia.cliente_nombre;
+          }
+        }
+      } catch(e) {}
+    }
+
     // ─── ENVIAR IMAGEN SI PACIENTE MENCIONA UN SERVICIO ──────
     const imagenesServicio = {
       "limpieza dental": "https://images.pexels.com/photos/6627483/pexels-photo-6627483.jpeg?w=600&auto=compress",
@@ -602,11 +621,16 @@ Si preguntan si eres IA: "Soy Valeria, la asistente virtual de ${negocio.nombre}
 ━━━ TONO SEGÚN EL PACIENTE ━━━
 PACIENTE ACTUAL: ${nombrePaciente || "Nuevo"}
 PRIMER CONTACTO: ${esPrimerMensaje ? "SÍ" : "NO"}
+PACIENTE RECURRENTE (ya tuvo cita antes): ${esPacienteRecurrente ? "SÍ" : "NO"}
 
-Si es PRIMER CONTACTO:
-— Saluda con calidez. Ejemplo: "¡Hola! 😊 Bienvenido a ${negocio.nombre}. Soy Valeria, con mucho gusto te ayudo. ¿Qué tratamiento te interesa?"
-Si ya conversaron antes:
-— Ve directo y personal. Ejemplo: "Hola${nombrePaciente ? ` ${nombrePaciente}` : ""} 👋 ¿En qué puedo ayudarte hoy?"
+Si es PRIMER CONTACTO y NO es recurrente (paciente totalmente nuevo):
+— Saluda con calidez y presenta. Ejemplo: "¡Hola! 😊 Bienvenido a ${negocio.nombre}. Soy Valeria, con mucho gusto te ayudo. ¿Qué tratamiento te interesa?"
+
+Si es PRIMER CONTACTO pero SÍ es recurrente (volvió después de tiempo, chat anterior ya cerrado):
+— Salúdalo por nombre, sin presentarte de nuevo (ya te conoce). Ejemplo: "¡Hola${nombrePaciente ? ` ${nombrePaciente}` : ""}! 😊 Qué gusto verte de nuevo. ¿En qué puedo ayudarte hoy?"
+
+Si NO es primer contacto (conversación ya en curso):
+— Ve directo y personal, sin saludo repetido. Ejemplo: "Claro${nombrePaciente ? ` ${nombrePaciente}` : ""}, ¿en qué más te ayudo?"
 
 ━━━ CATÁLOGO DE SERVICIOS ━━━
 ${catalogoTexto || "Consultar disponibilidad con el equipo."}
