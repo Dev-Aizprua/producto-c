@@ -415,18 +415,27 @@
     .mh-mobile-sub{font-size:12px;color:#666;margin-top:2px;display:flex;align-items:center;gap:5px}
     .mh-mobile-sub .sys-dot{width:7px;height:7px;flex-shrink:0}
 
-    /* ══ BANNER ATENCIÓN ════════════════════════════════════ */
-    .alert-banner{display:none;background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:14px 16px;margin-bottom:16px}
-    .alert-banner-title{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:#92400e;margin-bottom:10px}
-    .alert-banner-items{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-    .alert-item{background:white;border-radius:10px;padding:8px 10px;display:flex;align-items:center;gap:8px;border:1px solid #fde68a;flex:1;min-width:80px}
-    .alert-item-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-    .alert-item-icon.orange{background:#fff7ed}
-    .alert-item-icon.purple{background:#faf5ff}
-    .alert-item-icon.red{background:#fef2f2}
-    .alert-item-num{font-size:15px;font-weight:800;color:#1a1a2e;line-height:1}
-    .alert-item-lbl{font-size:10px;color:#888;margin-top:1px}
-    .alert-banner-btn{width:100%;padding:9px;background:#f59e0b;color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+    /* ══ BANNER ATENCIÓN COMPACTO ═══════════════════════════ */
+    .alert-banner{display:none;border-radius:14px;padding:12px 14px;margin-bottom:14px}
+    .alert-banner.urgente{background:#fff1f2;border:1px solid #fecaca}
+    .alert-banner.advertencia{background:#fffbeb;border:1px solid #fde68a}
+    .alert-banner.ok{background:#f0fdf4;border:1px solid #bbf7d0}
+    .alert-banner-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .alert-banner-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+    .alert-banner-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+    .alert-banner-ico.urgente{background:#fee2e2}
+    .alert-banner-ico.advertencia{background:#fef3c7}
+    .alert-banner-ico.ok{background:#dcfce7}
+    .alert-banner-txt{min-width:0}
+    .alert-banner-titulo{font-size:13px;font-weight:700;margin-bottom:1px}
+    .alert-banner-titulo.urgente{color:#dc2626}
+    .alert-banner-titulo.advertencia{color:#92400e}
+    .alert-banner-titulo.ok{color:#16a34a}
+    .alert-banner-sub{font-size:11.5px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .alert-banner-btn-sm{flex-shrink:0;padding:7px 12px;border-radius:10px;font-size:12px;font-weight:700;border:none;cursor:pointer;white-space:nowrap}
+    .alert-banner-btn-sm.urgente{background:#dc2626;color:white}
+    .alert-banner-btn-sm.advertencia{background:#f59e0b;color:white}
+    .alert-banner-btn-sm.ok{background:#16a34a;color:white}
 
     /* ══ SALUDO + ESTADO NEGOCIO ════════════════════════════ */
     .dash-saludo{display:none;margin-bottom:14px}
@@ -504,6 +513,10 @@
     .fab{display:none;position:fixed;right:18px;bottom:76px;width:54px;height:54px;border-radius:50%;background:var(--primary);color:white;border:none;cursor:pointer;font-size:24px;box-shadow:0 4px 20px rgba(26,115,232,.4);z-index:80;align-items:center;justify-content:center;transition:all .2s}
     .fab:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(26,115,232,.5)}
     .fab:active{transform:scale(.95)}
+    .fab.open{transform:rotate(45deg)}
+    .fab-menu-item{display:flex;align-items:center;gap:10px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .fab-menu-ico{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,.15);flex-shrink:0}
+    .fab-menu-lbl{background:#1a1a2e;color:white;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 
     /* ══ BOTTOM NAV ═════════════════════════════════════════ */
     .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:60px;background:white;border-top:1px solid #edf2f7;z-index:80;padding:0 8px;align-items:center;box-shadow:0 -4px 20px rgba(0,0,0,.06)}
@@ -660,6 +673,17 @@
       .citas-mobile{display:block}
       .chats-mobile{display:block}
     }
+    /* ══ ACTIVIDAD RECIENTE ═════════════════════════════════ */
+    .actividad-item{background:white;border-radius:12px;border:1px solid #edf2f7;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+    .actividad-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .actividad-ico.pago{background:#dcfce7}
+    .actividad-ico.cita{background:#eff6ff}
+    .actividad-ico.chat{background:#faf5ff}
+    .actividad-ico.pendiente{background:#fef3c7}
+    .actividad-txt{flex:1;min-width:0}
+    .actividad-desc{font-size:12.5px;font-weight:600;color:#1a1a2e;margin-bottom:2px}
+    .actividad-tiempo{font-size:11px;color:#aaa}
+
     /* ══ ZKBIO STYLE: ACCESOS RÁPIDOS COMO ICONOS ══════════ */
     .accesos-rapidos-m{display:none;margin-bottom:16px}
     .accesos-rapidos-m-title{font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:10px;display:flex;align-items:center;gap:6px}
@@ -681,7 +705,7 @@
     .dash-section-hdr-link{font-size:12px;font-weight:600;color:var(--primary);border:none;background:none;cursor:pointer;padding:0}
 
     /* ══ ZKBIO STYLE: HERO CON ILUSTRACIÓN ═════════════════ */
-    .hero-ilustracion{position:absolute;right:0;top:0;bottom:0;width:130px;display:flex;align-items:center;justify-content:center;opacity:.22;pointer-events:none}
+    .hero-ilustracion{position:absolute;right:-8px;top:50%;transform:translateY(-55%);width:140px;height:130px;display:flex;align-items:center;justify-content:center;opacity:.35;pointer-events:none}
 
     /* ══ ZKBIO STYLE: BODY FONDO ════════════════════════════ */
     @media(max-width:768px){
@@ -853,24 +877,18 @@
           </div>
         </div>
 
-        <!-- ── MOBILE: Banner atención requerida ────────────── -->
-        <div class="alert-banner" id="alertBanner" style="display:none">
-          <div class="alert-banner-title"><i class="ti ti-alert-triangle" style="font-size:16px"></i> Atenci&#xF3;n requerida</div>
-          <div class="alert-banner-items">
-            <div class="alert-item">
-              <div class="alert-item-icon orange"><i class="ti ti-clock" style="font-size:16px;color:#ea580c"></i></div>
-              <div><div class="alert-item-num" id="alertPendientes">0</div><div class="alert-item-lbl">Pagos pendientes</div></div>
+        <!-- ── MOBILE: Banner atención compacto ─────────────── -->
+        <div class="alert-banner advertencia" id="alertBanner" style="display:none">
+          <div class="alert-banner-row">
+            <div class="alert-banner-left">
+              <div class="alert-banner-ico advertencia" id="alertIco">&#x26A0;&#xFE0F;</div>
+              <div class="alert-banner-txt">
+                <div class="alert-banner-titulo advertencia" id="alertTitulo">Atenci&#xF3;n requerida</div>
+                <div class="alert-banner-sub" id="alertSub">Cargando...</div>
+              </div>
             </div>
-            <div class="alert-item">
-              <div class="alert-item-icon purple"><i class="ti ti-calendar-event" style="font-size:16px;color:#7c3aed"></i></div>
-              <div><div class="alert-item-num" id="alertHoy">0</div><div class="alert-item-lbl">Citas hoy</div></div>
-            </div>
-            <div class="alert-item">
-              <div class="alert-item-icon red"><i class="ti ti-user-check" style="font-size:16px;color:#dc2626"></i></div>
-              <div><div class="alert-item-num" id="alertSinConfirmar">0</div><div class="alert-item-lbl">Sin confirmar</div></div>
-            </div>
+            <button class="alert-banner-btn-sm advertencia" id="alertBtn" onclick="showTabMobile('citas')">Ver</button>
           </div>
-          <button class="alert-banner-btn" onclick="showTabMobile('citas')"><i class="ti ti-arrow-right" style="font-size:14px"></i> Ver pendientes</button>
         </div>
 
         <!-- ── MOBILE: Hero ingresos rediseñado ─────────────── -->
@@ -981,6 +999,14 @@
           <div id="dashReservasMobile">
             <div class="empty-state" style="padding:28px"><i class="ti ti-loader" style="animation:spin 1s linear infinite"></i><p>Cargando...</p></div>
           </div>
+        </div>
+
+        <!-- ── MOBILE: Actividad reciente ───────────────────── -->
+        <div class="dash-reservas-mobile" style="margin-bottom:80px">
+          <div class="dash-section-hdr">
+            <div class="dash-section-hdr-title">Actividad reciente</div>
+          </div>
+          <div id="actividadList"></div>
         </div>
 
         <!-- ── DESKTOP: Status bar del sistema ──────────────── -->
@@ -1366,9 +1392,24 @@
   </div>
 </div>
 
-<!-- ══ FAB ═════════════════════════════════════════════════════ -->
-<button class="fab" onclick="showTab('servicios',null);abrirModalServicio()" title="Nueva reserva">
-  <i class="ti ti-plus"></i>
+<!-- ══ FAB CON MENÚ ════════════════════════════════════════════ -->
+<div id="fabMenu" style="display:none;position:fixed;right:18px;bottom:140px;z-index:81;flex-direction:column;align-items:flex-end;gap:10px">
+  <div class="fab-menu-item" onclick="showTabMobile('servicios');abrirModalServicio();cerrarFabMenu()">
+    <span class="fab-menu-lbl">Nuevo servicio</span>
+    <div class="fab-menu-ico" style="background:#eff6ff"><i class="ti ti-list-details" style="color:#1a73e8;font-size:18px"></i></div>
+  </div>
+  <div class="fab-menu-item" onclick="showTabMobile('citas');cerrarFabMenu()">
+    <span class="fab-menu-lbl">Ver reservas</span>
+    <div class="fab-menu-ico" style="background:#f0fdf4"><i class="ti ti-calendar-check" style="color:#16a34a;font-size:18px"></i></div>
+  </div>
+  <div class="fab-menu-item" onclick="showTabMobile('chats');cerrarFabMenu()">
+    <span class="fab-menu-lbl">Ver chats</span>
+    <div class="fab-menu-ico" style="background:#faf5ff"><i class="ti ti-message-dots" style="color:#7c3aed;font-size:18px"></i></div>
+  </div>
+</div>
+<div id="fabOverlay" onclick="cerrarFabMenu()" style="display:none;position:fixed;inset:0;z-index:79;background:rgba(0,0,0,.25)"></div>
+<button class="fab" id="fabBtn" onclick="toggleFabMenu()">
+  <i class="ti ti-plus" id="fabIcon" style="transition:transform .2s"></i>
 </button>
 
 <!-- ══ BOTTOM NAV ═════════════════════════════════════════════ -->
@@ -1489,6 +1530,28 @@ function showTab(tab,el){
   closeSidebar();
 }
 
+function toggleFabMenu(){
+  const menu=document.getElementById('fabMenu');
+  const overlay=document.getElementById('fabOverlay');
+  const btn=document.getElementById('fabBtn');
+  const ico=document.getElementById('fabIcon');
+  const abierto=menu.style.display==='flex';
+  menu.style.display=abierto?'none':'flex';
+  overlay.style.display=abierto?'none':'block';
+  if(ico)ico.style.transform=abierto?'rotate(0deg)':'rotate(45deg)';
+  if(btn)btn.style.background=abierto?'var(--primary)':'#dc2626';
+}
+function cerrarFabMenu(){
+  const menu=document.getElementById('fabMenu');
+  const overlay=document.getElementById('fabOverlay');
+  const ico=document.getElementById('fabIcon');
+  const btn=document.getElementById('fabBtn');
+  if(menu)menu.style.display='none';
+  if(overlay)overlay.style.display='none';
+  if(ico)ico.style.transform='rotate(0deg)';
+  if(btn)btn.style.background='var(--primary)';
+}
+
 function showTabMobile(tab){
   // Cambiar tab
   document.querySelectorAll('.tab-section').forEach(s=>s.classList.remove('active'));
@@ -1590,25 +1653,43 @@ async function cargarKPIs(){
     if(cntPendientes>0)subTxt.push(`${cntPendientes} pago${cntPendientes>1?'s':''} pendiente${cntPendientes>1?'s':''}`);
     if(saludoSub)saludoSub.textContent=subTxt.length?subTxt.join(' \u00b7 '):`${nombreNegocio} operando correctamente`;
 
-    // MOBILE: Estado del negocio badge
+    // MOBILE: Estado del negocio badge — umbrales dinámicos
     const badge=document.getElementById('dashEstadoBadge');
     const dot=document.getElementById('dashEstadoDot');
     const txt=document.getElementById('dashEstadoTxt');
-    const hayUrgente=sinConfirmar>0||cntPendientes>5;
-    const hayAlerta=cntPendientes>0||citasHoy>0;
     if(badge&&dot&&txt){
-      if(hayUrgente){badge.className='dash-estado-badge rojo';dot.className='dash-estado-dot rojo';txt.textContent='Acci\u00f3n urgente';}
-      else if(hayAlerta){badge.className='dash-estado-badge amarillo';dot.className='dash-estado-dot amarillo';txt.textContent='Atenci\u00f3n requerida';}
+      if(cntPendientes>20||sinConfirmar>5){badge.className='dash-estado-badge rojo';dot.className='dash-estado-dot rojo';txt.textContent='Acci\u00f3n urgente';}
+      else if(cntPendientes>10||sinConfirmar>2){badge.className='dash-estado-badge rojo';dot.className='dash-estado-dot rojo';txt.textContent='Prioridad alta';}
+      else if(cntPendientes>0||sinConfirmar>0||citasHoy>0){badge.className='dash-estado-badge amarillo';dot.className='dash-estado-dot amarillo';txt.textContent='Atenci\u00f3n requerida';}
       else{badge.className='dash-estado-badge verde';dot.className='dash-estado-dot verde';txt.textContent='Operando bien';}
     }
 
-    // MOBILE: Banner atencion (solo si hay pendientes)
+    // MOBILE: Banner compacto con lógica dinámica
     const banner=document.getElementById('alertBanner');
     if(banner){
-      banner.style.display=(cntPendientes>0||sinConfirmar>0||citasHoy>0)?'block':'none';
-      const ap=document.getElementById('alertPendientes');if(ap)ap.textContent=cntPendientes;
-      const ah=document.getElementById('alertHoy');if(ah)ah.textContent=citasHoy;
-      const as2=document.getElementById('alertSinConfirmar');if(as2)as2.textContent=sinConfirmar;
+      const hayProblemas=cntPendientes>0||sinConfirmar>0||citasHoy>0;
+      if(!hayProblemas){
+        banner.className='alert-banner ok';banner.style.display='block';
+        const ico=document.getElementById('alertIco');if(ico){ico.textContent='\u2705';ico.className='alert-banner-ico ok';}
+        const tit=document.getElementById('alertTitulo');if(tit){tit.textContent='Todo al d\u00eda';tit.className='alert-banner-titulo ok';}
+        const sub=document.getElementById('alertSub');if(sub)sub.textContent='Sin pendientes por atender';
+        const btn=document.getElementById('alertBtn');if(btn){btn.textContent='Ver agenda';btn.className='alert-banner-btn-sm ok';}
+        setTimeout(()=>{if(banner)banner.style.display='none';},4000);
+      }else{
+        banner.style.display='block';
+        let nivel=cntPendientes>10||sinConfirmar>2?'urgente':'advertencia';
+        let icoTxt=nivel==='urgente'?'\uD83D\uDEA8':'\u26A0\uFE0F';
+        let titTxt=nivel==='urgente'?'Prioridad alta':'Atenci\u00f3n requerida';
+        banner.className=`alert-banner ${nivel}`;
+        const ico=document.getElementById('alertIco');if(ico){ico.textContent=icoTxt;ico.className=`alert-banner-ico ${nivel}`;}
+        const tit=document.getElementById('alertTitulo');if(tit){tit.textContent=titTxt;tit.className=`alert-banner-titulo ${nivel}`;}
+        let subPartes=[];
+        if(sinConfirmar>0)subPartes.push(`${sinConfirmar} pago${sinConfirmar>1?'s':''} por verificar`);
+        else if(cntPendientes>0)subPartes.push(`${cntPendientes} pago${cntPendientes>1?'s':''} pendiente${cntPendientes>1?'s':''}`);
+        if(citasHoy>0)subPartes.push(`${citasHoy} cita${citasHoy>1?'s':''} hoy`);
+        const sub=document.getElementById('alertSub');if(sub)sub.textContent=subPartes.join(' \u00b7 ');
+        const btn=document.getElementById('alertBtn');if(btn){btn.textContent='Resolver';btn.className=`alert-banner-btn-sm ${nivel}`;}
+      }
     }
     const bellDot=document.getElementById('bellDot');
     if(bellDot)bellDot.style.display=(cntPendientes>0||sinConfirmar>0)?'block':'none';
@@ -1634,7 +1715,46 @@ async function cargarKPIs(){
     const semActualCnt=todas.filter(c=>enSemana(c.created_at)).length;
     const trendCitas=semAnteriorCnt>0?Math.round(((semActualCnt-semAnteriorCnt)/semAnteriorCnt)*100):null;
     const mk1t=document.getElementById('miniKpiCitasTrend');
-    if(mk1t&&trendCitas!==null){mk1t.innerHTML=`<i class="ti ti-arrow-${trendCitas>=0?'up':'down'}" style="font-size:9px"></i> ${trendCitas>=0?'+':''}${trendCitas}% semana`;mk1t.style.color=trendCitas>=0?'#16a34a':'#dc2626';}
+    if(mk1t&&trendCitas!==null){
+      const dir=trendCitas>=0?'up':'down';
+      const signo=trendCitas>=0?'+':'';
+      mk1t.innerHTML=`<i class="ti ti-arrow-${dir}" style="font-size:9px"></i> ${signo}${trendCitas}% vs semana anterior`;
+      mk1t.style.color=trendCitas>=0?'#16a34a':'#dc2626';
+    }
+
+    // MOBILE: Actividad reciente — últimos 3 eventos mezclando citas y chats
+    const actList=document.getElementById('actividadList');
+    if(actList){
+      const eventos=[];
+      // Últimas citas como eventos
+      todas.slice(0,5).forEach(c=>{
+        const esConf=c.estado_pago==='confirmada'||c.estado_pago==='pagado';
+        const esPend=c.estado_pago==='esperando_pago'||c.estado_pago==='pendiente';
+        const esVerif=c.estado_pago==='pago_por_verificar';
+        let ico='cita',emoji='\uD83D\uDCC5',desc='';
+        if(esConf){ico='pago';emoji='\uD83D\uDCB0';desc=`${c.cliente_nombre||'Cliente'} confirm\u00f3 pago`;}
+        else if(esVerif){ico='pendiente';emoji='\uD83D\uDD35';desc=`${c.cliente_nombre||'Cliente'} envi\u00f3 pago — verificar`;}
+        else if(esPend){ico='pendiente';emoji='\u23F3';desc=`Nueva reserva de ${c.cliente_nombre||'Cliente'}`;}
+        else{ico='cita';emoji='\uD83D\uDCC5';desc=`Cita de ${c.cliente_nombre||'Cliente'}`;}
+        eventos.push({ico,emoji,desc,fecha:c.created_at});
+      });
+      // Últimos chats
+      todosChats.slice(0,2).forEach(ch=>{
+        const canal=ch.canal==='whatsapp'?'\uD83D\uDCF1':'\uD83C\uDF10';
+        eventos.push({ico:'chat',emoji:canal,desc:`${ch.cliente_nombre||'Cliente'} escribi\u00f3 por ${ch.canal==='whatsapp'?'WhatsApp':'web'}`,fecha:ch.fecha});
+      });
+      // Ordenar por fecha desc y tomar 4
+      eventos.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+      const top=eventos.slice(0,4);
+      if(!top.length){actList.innerHTML=`<div class="empty-state" style="padding:20px"><p>Sin actividad reciente</p></div>`;}
+      else{actList.innerHTML=top.map(e=>`<div class="actividad-item">
+        <div class="actividad-ico ${e.ico}">${e.emoji}</div>
+        <div class="actividad-txt">
+          <div class="actividad-desc">${e.desc}</div>
+          <div class="actividad-tiempo">${tiempoRelativo(e.fecha)}</div>
+        </div>
+      </div>`).join('');}
+    }
 
     // MOBILE: Proximas citas del dia
     const listPC=document.getElementById('proximasCitasList');
