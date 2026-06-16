@@ -428,13 +428,35 @@
     .alert-item-lbl{font-size:10px;color:#888;margin-top:1px}
     .alert-banner-btn{width:100%;padding:9px;background:#f59e0b;color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
 
+    /* ══ SALUDO + ESTADO NEGOCIO ════════════════════════════ */
+    .dash-saludo{display:none;margin-bottom:14px}
+    .dash-saludo-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+    .dash-saludo-text{font-size:20px;font-weight:800;color:#1a1a2e;letter-spacing:-.3px}
+    .dash-estado-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700}
+    .dash-estado-badge.verde{background:#dcfce7;color:#16a34a}
+    .dash-estado-badge.amarillo{background:#fef3c7;color:#d97706}
+    .dash-estado-badge.rojo{background:#fee2e2;color:#dc2626}
+    .dash-estado-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+    .dash-estado-dot.verde{background:#16a34a}
+    .dash-estado-dot.amarillo{background:#d97706}
+    .dash-estado-dot.rojo{background:#dc2626}
+    .dash-saludo-sub{font-size:12.5px;color:#888}
+
     /* ══ HERO INGRESOS ══════════════════════════════════════ */
-    .hero-ingresos{display:none;background:linear-gradient(135deg,#1a73e8,#1557b0);border-radius:18px;padding:22px;margin-bottom:16px;position:relative;overflow:hidden}
-    .hero-ingresos::after{content:'';position:absolute;right:-20px;bottom:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.08)}
-    .hero-label{font-size:12px;font-weight:600;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
-    .hero-value{font-size:38px;font-weight:800;color:white;letter-spacing:-1px;line-height:1}
-    .hero-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.2);color:white;border-radius:20px;padding:4px 10px;font-size:11.5px;font-weight:600;margin-top:8px}
-    .hero-wallet{position:absolute;right:20px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:20px}
+    .hero-ingresos{display:none;border-radius:20px;padding:0;margin-bottom:14px;position:relative;overflow:hidden;background:linear-gradient(135deg,#1a73e8 0%,#1557b0 60%,#0d47a1 100%)}
+    .hero-ingresos-inner{padding:20px 20px 0}
+    .hero-top-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+    .hero-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.08em}
+    .hero-periodo{font-size:11px;background:rgba(255,255,255,.15);color:white;border-radius:20px;padding:3px 10px;font-weight:600}
+    .hero-value{font-size:40px;font-weight:800;color:white;letter-spacing:-1.5px;line-height:1;margin-bottom:8px}
+    .hero-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.18);color:white;border-radius:20px;padding:4px 10px;font-size:11.5px;font-weight:600}
+    .hero-deco{position:absolute;right:-15px;top:-15px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.06)}
+    .hero-deco2{position:absolute;right:30px;bottom:-30px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.04)}
+    .hero-sub-row{display:flex;border-top:1px solid rgba(255,255,255,.12);margin-top:14px}
+    .hero-sub-item{flex:1;padding:12px 8px 10px;text-align:center;position:relative}
+    .hero-sub-item+.hero-sub-item::before{content:'';position:absolute;left:0;top:20%;height:60%;width:1px;background:rgba(255,255,255,.12)}
+    .hero-sub-num{font-size:17px;font-weight:800;color:white;line-height:1;margin-bottom:3px}
+    .hero-sub-lbl{font-size:10px;color:rgba(255,255,255,.6);font-weight:500}
 
     /* ══ MINI KPIs FILA ═════════════════════════════════════ */
     .mini-kpi-row{display:none;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
@@ -501,10 +523,12 @@
 
       /* Mostrar elementos mobile dashboard */
       .alert-banner{display:block}
+      .dash-saludo{display:block}
       .hero-ingresos{display:block}
       .mini-kpi-row{display:grid}
       .chart-card-mobile{display:block}
       .dash-reservas-mobile{display:block}
+      .proximas-citas-m{display:block}
 
       /* Ocultar elementos desktop en dashboard */
       .system-status-bar{display:none}
@@ -634,6 +658,33 @@
       .citas-mobile{display:block}
       .chats-mobile{display:block}
     }
+    /* ══ PRÓXIMAS CITAS MOBILE ══════════════════════════════ */
+    .proximas-citas-m{display:none;margin-bottom:14px}
+    .proximas-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .proximas-title{font-size:14px;font-weight:700;color:#1a1a2e}
+    .proximas-ver{font-size:12.5px;font-weight:600;color:var(--primary);border:none;background:none;cursor:pointer;padding:0}
+    .proxima-item{background:white;border-radius:12px;border:1px solid #edf2f7;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+    .proxima-hora{font-size:12px;font-weight:700;color:var(--primary);min-width:44px;text-align:center;background:#eff6ff;border-radius:8px;padding:5px 4px}
+    .proxima-info{flex:1;min-width:0}
+    .proxima-nombre{font-size:13px;font-weight:700;color:#1a1a2e}
+    .proxima-servicio{font-size:11.5px;color:#888;margin-top:1px}
+    .proxima-monto{font-size:13px;font-weight:700;color:#1a1a2e;flex-shrink:0}
+
+    /* ══ CHATS MOBILE POR PRIORIDAD ═════════════════════════ */
+    .chats-prioridad-tabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none}
+    .chats-prioridad-tabs::-webkit-scrollbar{display:none}
+    .chat-ptab{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px}
+    .chat-ptab.rojo{background:#fee2e2;color:#dc2626}
+    .chat-ptab.rojo.active{background:#dc2626;color:white}
+    .chat-ptab.amarillo{background:#fef3c7;color:#d97706}
+    .chat-ptab.amarillo.active{background:#d97706;color:white}
+    .chat-ptab.verde{background:#dcfce7;color:#16a34a}
+    .chat-ptab.verde.active{background:#16a34a;color:white}
+    .chat-ptab-count{font-size:10px;font-weight:800;background:rgba(0,0,0,.12);border-radius:10px;padding:1px 5px}
+
+    /* ══ CITAS: FILTROS CON CONTADORES ══════════════════════ */
+    .filtro-chip .chip-cnt{font-size:10px;font-weight:800;background:rgba(0,0,0,.1);border-radius:10px;padding:1px 5px;margin-left:2px}
+    .filtro-chip.active .chip-cnt{background:rgba(255,255,255,.25)}
   </style>
 </head>
 <body>
@@ -734,9 +785,21 @@
       <!-- ══ TAB: DASHBOARD ══════════════════════════════════ -->
       <section class="tab-section active" id="tab-dashboard">
 
+        <!-- ── MOBILE: Saludo + Estado negocio ──────────────── -->
+        <div class="dash-saludo">
+          <div class="dash-saludo-top">
+            <div class="dash-saludo-text" id="dashSaludo">Buenos d&#xED;as &#x1F44B;</div>
+            <div class="dash-estado-badge verde" id="dashEstadoBadge">
+              <div class="dash-estado-dot verde" id="dashEstadoDot"></div>
+              <span id="dashEstadoTxt">Operando bien</span>
+            </div>
+          </div>
+          <div class="dash-saludo-sub" id="dashSaludoSub">Cargando resumen...</div>
+        </div>
+
         <!-- ── MOBILE: Banner atención requerida ────────────── -->
-        <div class="alert-banner" id="alertBanner">
-          <div class="alert-banner-title"><i class="ti ti-alert-triangle" style="font-size:16px"></i> Atención requerida</div>
+        <div class="alert-banner" id="alertBanner" style="display:none">
+          <div class="alert-banner-title"><i class="ti ti-alert-triangle" style="font-size:16px"></i> Atenci&#xF3;n requerida</div>
           <div class="alert-banner-items">
             <div class="alert-item">
               <div class="alert-item-icon orange"><i class="ti ti-clock" style="font-size:16px;color:#ea580c"></i></div>
@@ -751,15 +814,35 @@
               <div><div class="alert-item-num" id="alertSinConfirmar">0</div><div class="alert-item-lbl">Sin confirmar</div></div>
             </div>
           </div>
-          <button class="alert-banner-btn" onclick="showTab('citas',null)"><i class="ti ti-arrow-right" style="font-size:14px"></i> Ver pendientes</button>
+          <button class="alert-banner-btn" onclick="showTabMobile('citas')"><i class="ti ti-arrow-right" style="font-size:14px"></i> Ver pendientes</button>
         </div>
 
-        <!-- ── MOBILE: Hero ingresos ─────────────────────────── -->
+        <!-- ── MOBILE: Hero ingresos rediseñado ─────────────── -->
         <div class="hero-ingresos">
-          <div class="hero-label">Ingresos del mes</div>
-          <div class="hero-value" id="heroIngresos">$0.00</div>
-          <div class="hero-badge"><i class="ti ti-arrow-up" style="font-size:11px"></i> <span id="heroPct">0%</span> vs mes anterior</div>
-          <div class="hero-wallet">💰</div>
+          <div class="hero-deco"></div>
+          <div class="hero-deco2"></div>
+          <div class="hero-ingresos-inner">
+            <div class="hero-top-row">
+              <div class="hero-label">Ingresos del mes</div>
+              <div class="hero-periodo">Este mes</div>
+            </div>
+            <div class="hero-value" id="heroIngresos">$0.00</div>
+            <div class="hero-badge"><i class="ti ti-arrow-up" style="font-size:11px"></i> <span id="heroPct">0%</span> vs mes anterior</div>
+          </div>
+          <div class="hero-sub-row">
+            <div class="hero-sub-item">
+              <div class="hero-sub-num" id="heroHoy">$0</div>
+              <div class="hero-sub-lbl">Hoy</div>
+            </div>
+            <div class="hero-sub-item">
+              <div class="hero-sub-num" id="heroSemana">$0</div>
+              <div class="hero-sub-lbl">Esta semana</div>
+            </div>
+            <div class="hero-sub-item">
+              <div class="hero-sub-num" id="heroPendientesNum">0</div>
+              <div class="hero-sub-lbl">Pendientes</div>
+            </div>
+          </div>
         </div>
 
         <!-- ── MOBILE: Mini KPIs fila ────────────────────────── -->
@@ -767,25 +850,25 @@
           <div class="mini-kpi">
             <div class="mini-kpi-icon" style="background:#f0fdf4"><i class="ti ti-calendar-check" style="font-size:17px;color:#16a34a"></i></div>
             <div>
-              <div class="mini-kpi-num" id="miniKpiCitas">—</div>
+              <div class="mini-kpi-num" id="miniKpiCitas">&#x2014;</div>
               <div class="mini-kpi-lbl">Reservas</div>
-              <div class="mini-kpi-trend"><i class="ti ti-arrow-up" style="font-size:9px"></i> 8%</div>
+              <div class="mini-kpi-trend" id="miniKpiCitasTrend" style="color:#aaa">acumuladas</div>
             </div>
           </div>
           <div class="mini-kpi">
             <div class="mini-kpi-icon" style="background:#faf5ff"><i class="ti ti-message-dots" style="font-size:17px;color:#7c3aed"></i></div>
             <div>
-              <div class="mini-kpi-num" id="miniKpiChats">—</div>
+              <div class="mini-kpi-num" id="miniKpiChats">&#x2014;</div>
               <div class="mini-kpi-lbl">Chats</div>
-              <div class="mini-kpi-trend"><i class="ti ti-arrow-up" style="font-size:9px"></i> 15%</div>
+              <div class="mini-kpi-trend" id="miniKpiChatsTrend" style="color:#aaa">este mes</div>
             </div>
           </div>
           <div class="mini-kpi">
             <div class="mini-kpi-icon" style="background:#eff6ff"><i class="ti ti-list-details" style="font-size:17px;color:#1a73e8"></i></div>
             <div>
-              <div class="mini-kpi-num" id="miniKpiServicios">—</div>
+              <div class="mini-kpi-num" id="miniKpiServicios">&#x2014;</div>
               <div class="mini-kpi-lbl">Servicios</div>
-              <div class="mini-kpi-trend" style="color:#aaa">En catálogo</div>
+              <div class="mini-kpi-trend" style="color:#aaa">cat&#xE1;logo</div>
             </div>
           </div>
         </div>
@@ -793,8 +876,8 @@
         <!-- ── MOBILE: Gráfica línea ─────────────────────────── -->
         <div class="chart-card-mobile">
           <div class="chart-mobile-header">
-            <div class="chart-mobile-title"><i class="ti ti-trending-up" style="color:var(--primary)"></i> Ingresos 7 días</div>
-            <div class="chart-mobile-max" id="chartMobileMax">Máx: $0</div>
+            <div class="chart-mobile-title"><i class="ti ti-trending-up" style="color:var(--primary)"></i> Ingresos 7 d&#xED;as</div>
+            <div class="chart-mobile-max" id="chartMobileMax">M&#xE1;x: $0</div>
           </div>
           <div class="chart-mobile-value" id="chartMobileValor">$0.00</div>
           <div class="chart-wrapper-mobile">
@@ -802,11 +885,20 @@
           </div>
         </div>
 
-        <!-- ── MOBILE: Reservas recientes cards ──────────────── -->
+        <!-- ── MOBILE: Próximas citas del día ────────────────── -->
+        <div class="proximas-citas-m" id="proximasCitasM">
+          <div class="proximas-header">
+            <div class="proximas-title">&#x1F4C5; Pr&#xF3;ximas citas</div>
+            <button class="proximas-ver" onclick="showTabMobile('citas')">Ver agenda &#x2192;</button>
+          </div>
+          <div id="proximasCitasList"></div>
+        </div>
+
+        <!-- ── MOBILE: Reservas recientes ────────────────────── -->
         <div class="dash-reservas-mobile">
           <div class="dash-reservas-mobile-header">
             <div class="dash-reservas-mobile-title">Reservas recientes</div>
-            <button class="dash-reservas-mobile-ver" onclick="showTab('citas',null)">Ver todas</button>
+            <button class="dash-reservas-mobile-ver" onclick="showTabMobile('citas')">Ver todas</button>
           </div>
           <div id="dashReservasMobile">
             <div class="empty-state" style="padding:28px"><i class="ti ti-loader" style="animation:spin 1s linear infinite"></i><p>Cargando...</p></div>
@@ -955,12 +1047,12 @@
               <div class="citas-stat"><div class="citas-stat-num green" id="cstatConf">0</div><div class="citas-stat-lbl">Confirmadas</div></div>
             </div>
             <div class="filtros-scroll" id="citasFiltros">
-              <button class="filtro-chip active" onclick="filtrarCitasM('todas',this)">Todas</button>
-              <button class="filtro-chip" onclick="filtrarCitasM('hoy',this)">&#x1F4C5; Hoy</button>
-              <button class="filtro-chip" onclick="filtrarCitasM('pendientes',this)">&#x23F3; Pendientes</button>
-              <button class="filtro-chip" onclick="filtrarCitasM('por_verificar',this)">&#x1F535; Verificar</button>
-              <button class="filtro-chip" onclick="filtrarCitasM('confirmadas',this)">&#x2705; Confirmadas</button>
-              <button class="filtro-chip" onclick="filtrarCitasM('canceladas',this)">&#x274C; Canceladas</button>
+              <button class="filtro-chip" onclick="filtrarCitasM('todas',this)">Todas <span class="chip-cnt" id="cntTodas">0</span></button>
+              <button class="filtro-chip" onclick="filtrarCitasM('pendientes',this)">&#x23F3; Pendientes <span class="chip-cnt" id="cntPend2">0</span></button>
+              <button class="filtro-chip" onclick="filtrarCitasM('por_verificar',this)">&#x1F535; Verificar <span class="chip-cnt" id="cntVerif">0</span></button>
+              <button class="filtro-chip" onclick="filtrarCitasM('hoy',this)">&#x1F4C5; Hoy <span class="chip-cnt" id="cntHoy2">0</span></button>
+              <button class="filtro-chip" onclick="filtrarCitasM('confirmadas',this)">&#x2705; Confirmadas <span class="chip-cnt" id="cntConf2">0</span></button>
+              <button class="filtro-chip" onclick="filtrarCitasM('canceladas',this)">&#x274C; Canceladas <span class="chip-cnt" id="cntCanc2">0</span></button>
             </div>
           </div>
           <div id="citasMobileList">
@@ -990,7 +1082,19 @@
           <div id="chatsMobileVista">
             <div class="chats-m-header">
               <div class="chats-m-title">&#x1F4AC; Conversaciones</div>
-              <div class="chats-search">
+              <!-- Tabs de prioridad -->
+              <div class="chats-prioridad-tabs" id="chatsPrioTabs">
+                <button class="chat-ptab rojo active" onclick="filtrarChatsPrio('atencion',this)">
+                  &#x1F534; Atenci&#xF3;n <span class="chat-ptab-count" id="ptabCntRojo">0</span>
+                </button>
+                <button class="chat-ptab amarillo" onclick="filtrarChatsPrio('esperando',this)">
+                  &#x1F7E1; Esperando <span class="chat-ptab-count" id="ptabCntAmarillo">0</span>
+                </button>
+                <button class="chat-ptab verde" onclick="filtrarChatsPrio('ia',this)">
+                  &#x1F7E2; IA atendi&#xF3; <span class="chat-ptab-count" id="ptabCntVerde">0</span>
+                </button>
+              </div>
+              <div class="chats-search" style="margin-top:10px">
                 <i class="ti ti-search"></i>
                 <input type="text" placeholder="Buscar conversaci&#xF3;n..." id="chatsSearchInput" oninput="filtrarChatsM(this.value)" />
               </div>
@@ -1355,85 +1459,136 @@ async function cargarKPIs(){
     ]);
     const todas=citas.citas||[];
     const todosChats=chats.chats||[];
-
-    // KPIs básicos
     const numSvcs=svcs.servicios?.filter(s=>s.activo).length||0;
-    document.getElementById('kpiServicios').textContent=numSvcs;
-    document.getElementById('kpiCitas').textContent=todas.length;
-    document.getElementById('kpiChats').textContent=todosChats.length;
 
-    // Ingresos
+    // Helpers
     const estadosPagado=['pagado','confirmada'];
     const sumPag=arr=>arr.filter(c=>estadosPagado.includes(c.estado_pago)).reduce((a,c)=>a+parseFloat(c.total||0),0);
-    const totalIngresos=sumPag(todas);
-    document.getElementById('kpiIngresos').textContent=`$${totalIngresos.toFixed(2)}`;
-
-    // Estado por color
-    const cntPagadas=todas.filter(c=>estadosPagado.includes(c.estado_pago)).length;
-    const cntPendientes=todas.filter(c=>['pendiente','esperando_pago','pago_por_verificar'].includes(c.estado_pago)||!c.estado_pago).length;
-    const cntCanceladas=todas.filter(c=>['cancelada','cancelado','expirada'].includes(c.estado_pago)).length;
-    document.getElementById('cntPagadas').textContent=cntPagadas;
-    document.getElementById('cntPendientes').textContent=cntPendientes;
-    document.getElementById('cntCanceladas').textContent=cntCanceladas;
-
-    // Conversión
-    const nc=todosChats.length,nr=todas.length;
-    const pct=nc>0?Math.min(100,Math.round((nr/nc)*100)):0;
-    document.getElementById('convPct').textContent=`${pct}%`;
-    document.getElementById('convFill').style.width=`${pct}%`;
-    document.getElementById('convChats').textContent=`${nc} chats`;
-    document.getElementById('convCitas').textContent=`${nr} reservas`;
-
-    // Ingresos hoy / semana / mes
     const ahora=new Date();
     const mismaFecha=(d,r)=>new Date(d).toDateString()===r.toDateString();
     const enSemana=d=>{const dd=new Date(d);return(ahora-dd)/(864e5)<7;};
     const enMes=d=>{const dd=new Date(d);return dd.getMonth()===ahora.getMonth()&&dd.getFullYear()===ahora.getFullYear();};
+
+    // Calculos base
     const ingHoy=sumPag(todas.filter(c=>mismaFecha(c.created_at,ahora)));
     const ingSemana=sumPag(todas.filter(c=>enSemana(c.created_at)));
     const ingMes=sumPag(todas.filter(c=>enMes(c.created_at)));
+    const cntPagadas=todas.filter(c=>estadosPagado.includes(c.estado_pago)).length;
+    const cntPendientes=todas.filter(c=>['pendiente','esperando_pago','pago_por_verificar'].includes(c.estado_pago)||!c.estado_pago).length;
+    const cntCanceladas=todas.filter(c=>['cancelada','cancelado','expirada'].includes(c.estado_pago)).length;
+    const sinConfirmar=todas.filter(c=>c.estado_pago==='pago_por_verificar').length;
+    const citasHoy=todas.filter(c=>c.fecha_cita&&mismaFecha(c.fecha_cita,ahora)).length;
+    const nc=todosChats.length,nr=todas.length;
+    const pct=nc>0?Math.min(100,Math.round((nr/nc)*100)):0;
+
+    // Desktop KPIs
+    document.getElementById('kpiServicios').textContent=numSvcs;
+    document.getElementById('kpiCitas').textContent=todas.length;
+    document.getElementById('kpiChats').textContent=nc;
+    document.getElementById('kpiIngresos').textContent=`$${sumPag(todas).toFixed(2)}`;
+    document.getElementById('cntPagadas').textContent=cntPagadas;
+    document.getElementById('cntPendientes').textContent=cntPendientes;
+    document.getElementById('cntCanceladas').textContent=cntCanceladas;
+    document.getElementById('convPct').textContent=`${pct}%`;
+    document.getElementById('convFill').style.width=`${pct}%`;
+    document.getElementById('convChats').textContent=`${nc} chats`;
+    document.getElementById('convCitas').textContent=`${nr} reservas`;
     document.getElementById('finHoy').textContent=`$${ingHoy.toFixed(2)}`;
     document.getElementById('finSemana').textContent=`$${ingSemana.toFixed(2)}`;
     document.getElementById('finMes').textContent=`$${ingMes.toFixed(2)}`;
-
-    // Sistema status — pagos
     const pagosOn=todas.some(c=>parseFloat(c.total||0)>0);
     document.getElementById('sysPagosDot').className=`sys-dot ${pagosOn?'green':'yellow'}`;
     document.getElementById('sysPagosLabel').textContent=`\uD83D\uDCB3 Pagos ${pagosOn?'habilitados':'configurando'}`;
 
-    // ── MOBILE: Hero ingresos ─────────────────────────────────
-    const heroEl=document.getElementById('heroIngresos');
-    if(heroEl)heroEl.textContent=`$${ingMes.toFixed(2)}`;
-    // % vs mes anterior (estimado simple: comparar con 30 días atrás)
-    const mesAnterior=todas.filter(c=>{
-      const dd=new Date(c.created_at);
-      const diffDias=(ahora-dd)/(864e5);
-      return diffDias>=30&&diffDias<60;
-    });
+    // MOBILE: Saludo inteligente
+    const hora=ahora.getHours();
+    const saludoReal=hora<12?'Buenos d\u00edas \u2600\uFE0F':hora<18?'Buenas tardes \uD83D\uDC4B':'Buenas noches \uD83C\uDF19';
+    const nombreNegocio=STATE.negocio?.nombre||'';
+    const elSaludo=document.getElementById('dashSaludo');if(elSaludo)elSaludo.textContent=saludoReal;
+    const saludoSub=document.getElementById('dashSaludoSub');
+    let subTxt=[];
+    if(citasHoy>0)subTxt.push(`${citasHoy} cita${citasHoy>1?'s':''} hoy`);
+    if(ingMes>0)subTxt.push(`$${ingMes.toFixed(0)} cobrados este mes`);
+    if(cntPendientes>0)subTxt.push(`${cntPendientes} pago${cntPendientes>1?'s':''} pendiente${cntPendientes>1?'s':''}`);
+    if(saludoSub)saludoSub.textContent=subTxt.length?subTxt.join(' \u00b7 '):`${nombreNegocio} operando correctamente`;
+
+    // MOBILE: Estado del negocio badge
+    const badge=document.getElementById('dashEstadoBadge');
+    const dot=document.getElementById('dashEstadoDot');
+    const txt=document.getElementById('dashEstadoTxt');
+    const hayUrgente=sinConfirmar>0||cntPendientes>5;
+    const hayAlerta=cntPendientes>0||citasHoy>0;
+    if(badge&&dot&&txt){
+      if(hayUrgente){badge.className='dash-estado-badge rojo';dot.className='dash-estado-dot rojo';txt.textContent='Acci\u00f3n urgente';}
+      else if(hayAlerta){badge.className='dash-estado-badge amarillo';dot.className='dash-estado-dot amarillo';txt.textContent='Atenci\u00f3n requerida';}
+      else{badge.className='dash-estado-badge verde';dot.className='dash-estado-dot verde';txt.textContent='Operando bien';}
+    }
+
+    // MOBILE: Banner atencion (solo si hay pendientes)
+    const banner=document.getElementById('alertBanner');
+    if(banner){
+      banner.style.display=(cntPendientes>0||sinConfirmar>0||citasHoy>0)?'block':'none';
+      const ap=document.getElementById('alertPendientes');if(ap)ap.textContent=cntPendientes;
+      const ah=document.getElementById('alertHoy');if(ah)ah.textContent=citasHoy;
+      const as2=document.getElementById('alertSinConfirmar');if(as2)as2.textContent=sinConfirmar;
+    }
+    const bellDot=document.getElementById('bellDot');
+    if(bellDot)bellDot.style.display=(cntPendientes>0||sinConfirmar>0)?'block':'none';
+    const bnBadge=document.getElementById('bnBadgeCitas');
+    if(bnBadge){bnBadge.textContent=cntPendientes;bnBadge.style.display=cntPendientes>0?'block':'none';}
+
+    // MOBILE: Hero ingresos
+    const heroEl=document.getElementById('heroIngresos');if(heroEl)heroEl.textContent=`$${ingMes.toFixed(2)}`;
+    const mesAnterior=todas.filter(c=>{const dd=new Date(c.created_at);const diff=(ahora-dd)/(864e5);return diff>=30&&diff<60;});
     const ingMesAnt=sumPag(mesAnterior);
     const pctCambio=ingMesAnt>0?Math.round(((ingMes-ingMesAnt)/ingMesAnt)*100):null;
     const heroPctEl=document.getElementById('heroPct');
     if(heroPctEl)heroPctEl.textContent=pctCambio!==null?`${pctCambio>0?'+':''}${pctCambio}%`:'Nuevo mes';
+    const hh=document.getElementById('heroHoy');if(hh)hh.textContent=`$${ingHoy.toFixed(0)}`;
+    const hs=document.getElementById('heroSemana');if(hs)hs.textContent=`$${ingSemana.toFixed(0)}`;
+    const hp=document.getElementById('heroPendientesNum');if(hp)hp.textContent=cntPendientes;
 
-    // ── MOBILE: Mini KPIs ─────────────────────────────────────
+    // MOBILE: Mini KPIs
     const mk1=document.getElementById('miniKpiCitas');if(mk1)mk1.textContent=todas.length;
-    const mk2=document.getElementById('miniKpiChats');if(mk2)mk2.textContent=todosChats.length;
+    const mk2=document.getElementById('miniKpiChats');if(mk2)mk2.textContent=nc;
     const mk3=document.getElementById('miniKpiServicios');if(mk3)mk3.textContent=numSvcs;
+    const semAnteriorCnt=todas.filter(c=>{const dd=new Date(c.created_at);const d=(ahora-dd)/(864e5);return d>=7&&d<14;}).length;
+    const semActualCnt=todas.filter(c=>enSemana(c.created_at)).length;
+    const trendCitas=semAnteriorCnt>0?Math.round(((semActualCnt-semAnteriorCnt)/semAnteriorCnt)*100):null;
+    const mk1t=document.getElementById('miniKpiCitasTrend');
+    if(mk1t&&trendCitas!==null){mk1t.innerHTML=`<i class="ti ti-arrow-${trendCitas>=0?'up':'down'}" style="font-size:9px"></i> ${trendCitas>=0?'+':''}${trendCitas}% semana`;mk1t.style.color=trendCitas>=0?'#16a34a':'#dc2626';}
 
-    // ── MOBILE: Banner atención requerida ─────────────────────
-    const citasHoy=todas.filter(c=>c.fecha_cita&&mismaFecha(c.fecha_cita,ahora)||mismaFecha(c.created_at,ahora)).length;
-    const sinConfirmar=todas.filter(c=>c.estado_pago==='pago_por_verificar').length;
-    const ap=document.getElementById('alertPendientes');if(ap)ap.textContent=cntPendientes;
-    const ah=document.getElementById('alertHoy');if(ah)ah.textContent=citasHoy;
-    const as2=document.getElementById('alertSinConfirmar');if(as2)as2.textContent=sinConfirmar;
-    // Mostrar bell dot si hay pendientes
-    const bellDot=document.getElementById('bellDot');
-    if(bellDot)bellDot.style.display=(cntPendientes>0||sinConfirmar>0)?'block':'none';
-    // Badge bottom nav citas
-    const bnBadge=document.getElementById('bnBadgeCitas');
-    if(bnBadge){bnBadge.textContent=cntPendientes;bnBadge.style.display=cntPendientes>0?'block':'none';}
+    // MOBILE: Proximas citas del dia
+    const listPC=document.getElementById('proximasCitasList');
+    const proxSec=document.getElementById('proximasCitasM');
+    if(listPC&&proxSec){
+      const proximas=todas.filter(c=>c.fecha_cita&&mismaFecha(c.fecha_cita,ahora)&&!['cancelada','expirada'].includes(c.estado_pago)).slice(0,3);
+      if(proximas.length){
+        proxSec.style.display='block';
+        listPC.innerHTML=proximas.map(c=>{
+          const horaStr=c.fecha_cita?.split(' ')[1]||c.fecha_cita||'\u2014';
+          return`<div class="proxima-item">
+            <div class="proxima-hora">${horaStr.substring(0,5)}</div>
+            <div class="proxima-info">
+              <div class="proxima-nombre">${c.cliente_nombre||'Cliente'}</div>
+              <div class="proxima-servicio">${c.servicio_nombre||'\u2014'}</div>
+            </div>
+            <div class="proxima-monto">$${c.total||0}</div>
+          </div>`;
+        }).join('');
+      }else{proxSec.style.display='none';}
+    }
 
-    // ── Gráfica 7 días ─────────────────────────────────────────
+    // MOBILE: Filtros citas con contadores
+    const setCnt=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+    setCnt('cntTodas',todas.length);
+    setCnt('cntPend2',cntPendientes);
+    setCnt('cntVerif',sinConfirmar);
+    setCnt('cntHoy2',citasHoy);
+    setCnt('cntConf2',cntPagadas);
+    setCnt('cntCanc2',cntCanceladas);
+
+    // Grafica 7 dias
     const labels=[],valores=[];
     for(let i=6;i>=0;i--){
       const d=new Date();d.setDate(d.getDate()-i);
@@ -1442,79 +1597,69 @@ async function cargarKPIs(){
     }
     const maxVal=Math.max(...valores,0);
     const totalChart=valores.reduce((a,b)=>a+b,0);
-
-    // Desktop — bar chart
     const canvas=document.getElementById('chartIngresos');
     if(canvas){
       if(_chartIngresos){_chartIngresos.destroy();_chartIngresos=null;}
-      _chartIngresos=new Chart(canvas,{
-        type:'bar',
+      _chartIngresos=new Chart(canvas,{type:'bar',
         data:{labels,datasets:[{label:'Ingresos ($)',data:valores,backgroundColor:'rgba(26,115,232,.15)',borderColor:'#1a73e8',borderWidth:2,borderRadius:6,borderSkipped:false}]},
         options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`$${c.raw.toFixed(2)}`}}},
           scales:{y:{grid:{color:'#f0f2f7'},ticks:{callback:v=>`$${v}`,font:{size:10},color:'#aaa'},border:{dash:[3,3]}},x:{grid:{display:false},ticks:{font:{size:10},color:'#aaa',maxRotation:0}}}}
       });
     }
-
-    // Mobile — line chart con area rellena
     const canvasM=document.getElementById('chartIngresosM');
     if(canvasM){
       if(_chartIngresosM){_chartIngresosM.destroy();_chartIngresosM=null;}
       const labelsCortos=labels.map(l=>l.split(' ')[0]);
-      _chartIngresosM=new Chart(canvasM,{
-        type:'line',
+      _chartIngresosM=new Chart(canvasM,{type:'line',
         data:{labels:labelsCortos,datasets:[{label:'Ingresos ($)',data:valores,
           borderColor:'#1a73e8',borderWidth:2.5,pointBackgroundColor:'#1a73e8',pointRadius:4,pointHoverRadius:6,
-          fill:true,backgroundColor:(ctx)=>{const g=ctx.chart.ctx.createLinearGradient(0,0,0,140);g.addColorStop(0,'rgba(26,115,232,.25)');g.addColorStop(1,'rgba(26,115,232,.01)');return g;},
-          tension:.4}]},
+          fill:true,backgroundColor:(ctx)=>{const g=ctx.chart.ctx.createLinearGradient(0,0,0,140);g.addColorStop(0,'rgba(26,115,232,.25)');g.addColorStop(1,'rgba(26,115,232,.01)');return g;},tension:.4}]},
         options:{responsive:true,maintainAspectRatio:false,
           plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`$${c.raw.toFixed(2)}`}}},
           scales:{y:{grid:{color:'#f5f7fa'},ticks:{callback:v=>`$${v}`,font:{size:9},color:'#bbb'},border:{dash:[2,2]}},
             x:{grid:{display:false},ticks:{font:{size:9},color:'#bbb',maxRotation:0}}}}
       });
-      // Valor y max mobile
       const cmv=document.getElementById('chartMobileValor');if(cmv)cmv.textContent=`$${totalChart.toFixed(2)}`;
       const cmm=document.getElementById('chartMobileMax');if(cmm)cmm.textContent=`M\u00e1x: $${maxVal.toFixed(0)}`;
     }
 
-    // ── Últimas citas desktop tabla ────────────────────────────
+    // Desktop tabla
     const tbody=document.getElementById('dashCitasTbody');
     const ultimas=todas.slice(0,5);
-    if(!ultimas.length){tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;color:#aaa;padding:24px">Sin reservas a\u00fan</td></tr>`;return;}
-    tbody.innerHTML=ultimas.map(c=>`<tr>
+    if(!ultimas.length){tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;color:#aaa;padding:24px">Sin reservas a\u00fan</td></tr>`;}
+    else{tbody.innerHTML=ultimas.map(c=>`<tr>
       <td><strong>${c.servicio_nombre||'\u2014'}</strong></td>
       <td>${c.fecha_cita||'\u2014'}</td>
       <td><strong>$${c.total||0}</strong></td>
       <td>${badgePago(c.estado_pago)} ${badgeCanal(c.canal)}</td>
-    </tr>`).join('');
+    </tr>`).join('');}
 
-    // ── MOBILE: Reservas cards ─────────────────────────────────
+    // MOBILE: Reservas recientes dashboard
     const mobileList=document.getElementById('dashReservasMobile');
     if(mobileList){
-      if(!todas.length){mobileList.innerHTML=`<div class="empty-state" style="padding:28px"><i class="ti ti-calendar-off"></i><p>Sin reservas a\u00fan</p></div>`;return;}
-      const recientes=todas.slice(0,5);
-      mobileList.innerHTML=recientes.map(c=>{
-        const nombre=c.cliente_nombre||'Cliente';
-        const iniciales=nombre.split(' ').slice(0,2).map(p=>p[0]?.toUpperCase()||'').join('').substring(0,2)||'?';
-        const color=colorAvatar(c.estado_pago);
-        const canalIcon=c.canal==='whatsapp'?'&#x1F4F1;':'&#x1F310;';
-        const waLink=c.cliente_tel?`https://wa.me/${c.cliente_tel}`:'#';
-        return`<div class="reserva-card-m">
-          <div class="reserva-av" style="background:${color}">${iniciales}</div>
-          <div class="reserva-info">
-            <div class="reserva-nombre">${nombre} <span class="canal-icon">${canalIcon}</span></div>
-            <div class="reserva-detalle"><i class="ti ti-tooth"></i> ${c.servicio_nombre||'\u2014'}</div>
-            <div class="reserva-detalle"><i class="ti ti-calendar"></i> ${c.fecha_cita||formatFecha(c.created_at)}</div>
-            <div class="reserva-acciones">
-              ${c.cliente_tel&&c.canal==='whatsapp'?`<a href="${waLink}" target="_blank"><button class="btn-wa-m"><i class="ti ti-brand-whatsapp" style="font-size:14px"></i></button></a>`:''}
-              <button class="btn-det-m" onclick="showTab('citas',null)">Ver detalle</button>
+      if(!todas.length){mobileList.innerHTML=`<div class="empty-state" style="padding:28px"><i class="ti ti-calendar-off"></i><p>Sin reservas a\u00fan</p></div>`;}
+      else{
+        mobileList.innerHTML=todas.slice(0,4).map(c=>{
+          const nombre=c.cliente_nombre||'Cliente';
+          const iniciales=nombre.split(' ').slice(0,2).map(p=>p[0]?.toUpperCase()||'').join('').substring(0,2)||'?';
+          const color=colorAvatar(c.estado_pago);
+          const canalIcon=c.canal==='whatsapp'?'\uD83D\uDCF1':'\uD83C\uDF10';
+          const waLink=c.cliente_tel?`https://wa.me/${c.cliente_tel}`:'#';
+          return`<div class="reserva-card-m">
+            <div class="reserva-av" style="background:${color}">${iniciales}</div>
+            <div class="reserva-info">
+              <div class="reserva-nombre">${nombre} <span class="canal-icon">${canalIcon}</span></div>
+              <div class="reserva-detalle"><i class="ti ti-tooth"></i> ${c.servicio_nombre||'\u2014'} \u00b7 $${c.total||0}</div>
+              <div class="reserva-detalle"><i class="ti ti-calendar"></i> ${c.fecha_cita||formatFecha(c.created_at)}</div>
+              <div class="reserva-acciones">
+                ${c.cliente_tel&&c.canal==='whatsapp'?`<a href="${waLink}" target="_blank"><button class="btn-wa-m"><i class="ti ti-brand-whatsapp" style="font-size:14px"></i></button></a>`:''}
+                <button class="btn-det-m" onclick="showTabMobile('citas')">Ver detalle</button>
+              </div>
             </div>
-          </div>
-          <div class="reserva-right">
-            <div class="reserva-total">$${c.total||0}</div>
-            ${badgeCompact(c.estado_pago)}
-          </div>
-        </div>`;
-      }).join('');
+            <div class="reserva-right">${badgeCompact(c.estado_pago)}</div>
+          </div>`;
+        }).join('');
+      }
     }
 
   }catch(e){console.error('KPI error:',e);}
@@ -1730,15 +1875,18 @@ async function cargarCitas(){
       <td>${accionCita(c)}</td>
     </tr>`).join('');}
 
-    // Mobile: stats + lista
-    renderCitasMobile(_todasCitas);
+    // Mobile: stats + lista — abrir por defecto en Pendientes si hay
+    const pendientes=_todasCitas.filter(c=>['esperando_pago','pendiente','pago_por_verificar'].includes(c.estado_pago));
+    const defaultFiltro=pendientes.length>0?'pendientes':'todas';
+    const defaultBtn=document.querySelector(`.filtro-chip[onclick*="${defaultFiltro}"]`);
+    if(defaultBtn)defaultBtn.classList.add('active');
+    renderCitasMobile(defaultFiltro==='pendientes'?pendientes:_todasCitas);
   }catch(err){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:#e00;padding:32px">${err.message}</td></tr>`;}
 }
 
 function renderCitasMobile(citas){
   const ahora=new Date();
   const mismaFecha=(d,r)=>new Date(d).toDateString()===r.toDateString();
-  // Stats
   const statTotal=citas.length;
   const statHoy=citas.filter(c=>c.fecha_cita&&mismaFecha(c.fecha_cita,ahora)).length;
   const statPend=citas.filter(c=>['esperando_pago','pendiente','pago_por_verificar'].includes(c.estado_pago)).length;
@@ -1749,10 +1897,9 @@ function renderCitasMobile(citas){
   if(cs('cstatPend'))cs('cstatPend').textContent=statPend;
   if(cs('cstatConf'))cs('cstatConf').textContent=statConf;
 
-  // Lista cards
   const list=document.getElementById('citasMobileList');
   if(!list)return;
-  if(!citas.length){list.innerHTML=`<div class="empty-state" style="padding:40px"><i class="ti ti-calendar-off"></i><p>Sin reservas a\u00fan</p></div>`;return;}
+  if(!citas.length){list.innerHTML=`<div class="empty-state" style="padding:40px"><i class="ti ti-calendar-off"></i><p>Sin reservas en este filtro</p></div>`;return;}
   list.innerHTML=citas.map(c=>{
     const nombre=c.cliente_nombre||'Cliente';
     const iniciales=nombre.split(' ').slice(0,2).map(p=>p[0]?.toUpperCase()||'').join('').substring(0,2)||'?';
@@ -1761,34 +1908,19 @@ function renderCitasMobile(citas){
     const waLink=c.cliente_tel?`https://wa.me/${c.cliente_tel}`:'#';
     const estadoMap={confirmada:['success','Confirmada'],pagado:['success','Pagada'],pago_por_verificar:['blue','Verificar pago'],esperando_pago:['warning','Esperando pago'],pendiente:['warning','Pendiente'],cancelada:['danger','Cancelada'],expirada:['gray','Expirada']};
     const [ecls,elbl]=estadoMap[c.estado_pago]||['gray',c.estado_pago||'Pendiente'];
-
-    // Botones de acción inline según estado
     let accionesExpand='';
-    if(c.estado_pago==='pago_por_verificar'){
-      accionesExpand=`<button class="btn-confirmar-cita" onclick="actualizarCitaM(${c.id},'confirmada')">&#x2705; Confirmar pago</button>
-        <button class="btn-cancelar-cita" onclick="actualizarCitaM(${c.id},'cancelada')">&#x274C;</button>`;
-    }else if(c.estado_pago==='esperando_pago'){
-      accionesExpand=`<button class="btn-confirmar-cita" onclick="actualizarCitaM(${c.id},'pago_por_verificar')" style="background:#1d4ed8">Marcar pagado</button>`;
-    }else if(['confirmada','pagado'].includes(c.estado_pago)){
-      accionesExpand=`<button class="btn-cancelar-cita" onclick="actualizarCitaM(${c.id},'cancelada')">Cancelar cita</button>`;
-    }
-
+    if(c.estado_pago==='pago_por_verificar'){accionesExpand=`<button class="btn-confirmar-cita" onclick="actualizarCitaM(${c.id},'confirmada')">\u2705 Confirmar pago</button><button class="btn-cancelar-cita" onclick="actualizarCitaM(${c.id},'cancelada')">\u274C</button>`;}
+    else if(c.estado_pago==='esperando_pago'){accionesExpand=`<button class="btn-confirmar-cita" onclick="actualizarCitaM(${c.id},'pago_por_verificar')" style="background:#1d4ed8">Marcar pagado</button>`;}
+    else if(['confirmada','pagado'].includes(c.estado_pago)){accionesExpand=`<button class="btn-cancelar-cita" onclick="actualizarCitaM(${c.id},'cancelada')">Cancelar cita</button>`;}
     return`<div class="cita-card-m" id="citaM-${c.id}">
       <div class="cita-card-top" onclick="toggleCitaM(${c.id})">
         <div class="cita-av-m" style="background:${color}">${iniciales}</div>
         <div class="cita-main">
-          <div class="cita-cliente-row">
-            <span class="cita-nombre-m">${nombre}</span>
-            <span class="cita-canal-m">${canalIcon}</span>
-          </div>
-          <div class="cita-servicio-m"><i class="ti ti-tooth" style="font-size:11px;color:#aaa"></i> ${c.servicio_nombre||'\u2014'}</div>
+          <div class="cita-cliente-row"><span class="cita-nombre-m">${nombre}</span><span class="cita-canal-m">${canalIcon}</span></div>
+          <div class="cita-servicio-m"><i class="ti ti-tooth" style="font-size:11px;color:#aaa"></i> ${c.servicio_nombre||'\u2014'} &middot; $${c.total||0}</div>
           <div class="cita-fecha-m"><i class="ti ti-calendar" style="font-size:11px"></i> ${c.fecha_cita||formatFecha(c.created_at)}</div>
         </div>
-        <div class="cita-right-m">
-          <div class="cita-total-m">$${c.total||0}</div>
-          <span class="badge-compact ${ecls}">${elbl}</span>
-          <i class="ti ti-chevron-right cita-chevron-m"></i>
-        </div>
+        <div class="cita-right-m"><span class="badge-compact ${ecls}">${elbl}</span><i class="ti ti-chevron-right cita-chevron-m"></i></div>
       </div>
       <div class="cita-expand">
         <div class="cita-expand-grid">
@@ -1806,14 +1938,12 @@ function renderCitasMobile(citas){
   }).join('');
 }
 
-function toggleCitaM(id){
-  const card=document.getElementById(`citaM-${id}`);
-  if(card)card.classList.toggle('expanded');
-}
+let _filtroCitasActivo='pendientes';
 
 function filtrarCitasM(tipo,btn){
   document.querySelectorAll('.filtro-chip').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
+  _filtroCitasActivo=tipo;
   const ahora=new Date();
   const mismaFecha=(d,r)=>new Date(d).toDateString()===r.toDateString();
   let filtradas=_todasCitas;
@@ -1823,6 +1953,22 @@ function filtrarCitasM(tipo,btn){
   else if(tipo==='confirmadas') filtradas=_todasCitas.filter(c=>['confirmada','pagado'].includes(c.estado_pago));
   else if(tipo==='canceladas') filtradas=_todasCitas.filter(c=>['cancelada','expirada'].includes(c.estado_pago));
   renderCitasMobile(filtradas);
+}
+
+// Chats por prioridad
+let _filtroChatPrio='atencion';
+
+function filtrarChatsPrio(tipo,btn){
+  document.querySelectorAll('.chat-ptab').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  _filtroChatPrio=tipo;
+  // Limpiar busqueda
+  const inp=document.getElementById('chatsSearchInput');if(inp)inp.value='';
+  let filtrados=_todosChatsData;
+  if(tipo==='atencion') filtrados=_todosChatsData.filter(c=>!c.completado&&c.historial?.slice(-1)[0]?.role==='user');
+  else if(tipo==='esperando') filtrados=_todosChatsData.filter(c=>!c.completado&&c.historial?.slice(-1)[0]?.role==='assistant');
+  else if(tipo==='ia') filtrados=_todosChatsData.filter(c=>c.completado);
+  renderChatsMobile(filtrados);
 }
 
 async function actualizarCitaM(citaId,nuevoEstado){
@@ -1928,24 +2074,32 @@ async function cargarChats(){
       }).join('');
     }
 
-    // Mobile — lista estilo WhatsApp
-    renderChatsMobile(_todosChatsData);
-
-    // Badge bottom nav chats
-    const noLeidos=_todosChatsData.filter(c=>!c.completado&&c.historial?.slice(-1)[0]?.role==='user').length;
-    const bnChats=document.getElementById('bnBadgeChats');
-    if(bnChats){bnChats.textContent=noLeidos;bnChats.style.display=noLeidos>0?'block':'none';}
+    // Mobile — lista estilo WhatsApp, abrir en "Atención" por defecto
+    const atencion=_todosChatsData.filter(c=>!c.completado&&c.historial?.slice(-1)[0]?.role==='user');
+    renderChatsMobile(atencion.length>0?atencion:_todosChatsData,true);
 
   }catch(err){
     list.innerHTML=`<div class="empty-state"><i class="ti ti-alert-circle"></i><p>${err.message}</p></div>`;
   }
 }
 
-function renderChatsMobile(chats){
+function renderChatsMobile(chats,actualizarContadores=false){
+  // Actualizar contadores tabs prioridad (solo cuando carga completa)
+  if(actualizarContadores){
+    const cntR=_todosChatsData.filter(c=>!c.completado&&c.historial?.slice(-1)[0]?.role==='user').length;
+    const cntA=_todosChatsData.filter(c=>!c.completado&&c.historial?.slice(-1)[0]?.role==='assistant').length;
+    const cntV=_todosChatsData.filter(c=>c.completado).length;
+    const pr=document.getElementById('ptabCntRojo');if(pr)pr.textContent=cntR;
+    const pa=document.getElementById('ptabCntAmarillo');if(pa)pa.textContent=cntA;
+    const pv=document.getElementById('ptabCntVerde');if(pv)pv.textContent=cntV;
+    // Badge bottom nav
+    const bnChats=document.getElementById('bnBadgeChats');
+    if(bnChats){bnChats.textContent=cntR;bnChats.style.display=cntR>0?'block':'none';}
+  }
   const mobileList=document.getElementById('chatsMobileList');
   if(!mobileList)return;
   if(!chats.length){
-    mobileList.innerHTML=`<div class="empty-state" style="padding:40px"><i class="ti ti-message-dots"></i><p>Sin conversaciones a\u00fan</p></div>`;
+    mobileList.innerHTML=`<div class="empty-state" style="padding:40px"><i class="ti ti-message-dots"></i><p>Sin conversaciones en esta categor\u00eda</p></div>`;
     return;
   }
   mobileList.innerHTML=chats.map((c,idx)=>{
