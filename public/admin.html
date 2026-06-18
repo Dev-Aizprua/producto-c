@@ -806,6 +806,9 @@
       .usr-btn{flex:1;min-width:0;font-size:11px;padding:7px 4px}
       .sesion-timer{font-size:12px;padding:10px 12px}
       #tab-usuarios .two-col-usr{display:flex!important;flex-direction:column!important;gap:14px!important}
+      #tab-usuarios .card{padding:14px}
+      .usr-card{padding:12px}
+      .mi-sesion-info{padding:10px 12px;margin-bottom:12px}
     }
   </style>
 </head>
@@ -1689,6 +1692,7 @@ async function doLogin(){
     if(!data.success)throw new Error(data.error||'Error de acceso');
     STATE.token=data.token;STATE.negocio=data.negocio;
     localStorage.setItem(`pc_panel_token_${STATE.slug}`,data.token);
+    localStorage.setItem(`pc_panel_usuario_${STATE.slug}`,usuario);
     mostrarPanel();
   }catch(err){
     errorEl.textContent=err.message;errorEl.classList.add('show');
@@ -1714,11 +1718,14 @@ function mostrarPanel(){
   document.getElementById('verChatLink').href=`/${STATE.slug}`;
   cargarNegocio();cargarServicios();cargarCitas();cargarChats();cargarKPIs();cargarUsuarios();
   iniciarTimerSesion();
-  // Actualizar mi perfil en la sección seguridad
+  // Mi perfil — usar usuario del login, no nombre del negocio
+  const usuarioLogin=STATE.negocio?.panel_usuario||localStorage.getItem(`pc_panel_usuario_${STATE.slug}`)||'Admin';
   const miAv=document.getElementById('miSesionAv');
   const miNom=document.getElementById('miSesionNombre');
-  if(miAv)miAv.textContent=(nombre[0]||'A').toUpperCase();
-  if(miNom)miNom.textContent=nombre;
+  const miRol=document.getElementById('miSesionRol');
+  if(miAv)miAv.textContent=(usuarioLogin[0]||'A').toUpperCase();
+  if(miNom)miNom.textContent=usuarioLogin;
+  if(miRol)miRol.textContent='Rol: Administrador';
 }
 
 function doLogout(){
