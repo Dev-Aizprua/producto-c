@@ -1587,10 +1587,10 @@
     <div class="form-row">
       <div>
         <label class="field-label">Nombre completo</label>
-        <input class="field-input" id="usrNombre" type="text" placeholder="Ana Rodr\u00edguez" />
+        <input class="field-input" id="usrNombre" type="text" placeholder="Ana Rodríguez" />
       </div>
       <div>
-        <label class="field-label">Usuario (para iniciar sesi\u00f3n)</label>
+        <label class="field-label">Usuario (para iniciar sesión)</label>
         <input class="field-input" id="usrUsuario" type="text" placeholder="ana.rodriguez" autocomplete="off" />
       </div>
     </div>
@@ -1604,8 +1604,8 @@
         </select>
       </div>
       <div id="usrPassField">
-        <label class="field-label">Contrase\u00f1a inicial</label>
-        <input class="field-input" id="usrPassword" type="password" placeholder="M\u00ednimo 8 caracteres" oninput="evaluarPass(this.value,'usrPassBar','usrPassLbl')" autocomplete="new-password" />
+        <label class="field-label">Contraseña inicial</label>
+        <input class="field-input" id="usrPassword" type="password" placeholder="Mínimo 8 caracteres" oninput="evaluarPass(this.value,'usrPassBar','usrPassLbl')" autocomplete="new-password" />
         <div class="pass-strength" id="usrPassBar"></div>
         <div class="pass-strength-lbl" id="usrPassLbl" style="color:#aaa"></div>
       </div>
@@ -1623,13 +1623,13 @@
 <div class="modal-overlay" id="modalResetPass">
   <div class="modal" style="max-width:420px">
     <div class="modal-header">
-      <div class="modal-title">Restablecer Contrase\u00f1a</div>
+      <div class="modal-title">Restablecer Contraseña</div>
       <button class="modal-close" onclick="cerrarModalResetPass()"><i class="ti ti-x"></i></button>
     </div>
     <input type="hidden" id="resetUsrId" />
-    <p style="font-size:13.5px;color:#666;margin-bottom:16px;line-height:1.6">Se generar\u00e1 una contrase\u00f1a temporal para <strong id="resetUsrNombre"></strong>. El usuario deber\u00e1 cambiarla al iniciar sesi\u00f3n.</p>
+    <p style="font-size:13.5px;color:#666;margin-bottom:16px;line-height:1.6">Se generará una contraseña temporal para <strong id="resetUsrNombre"></strong>. El usuario deberá cambiarla al iniciar sesión.</p>
     <div>
-      <label class="field-label">Nueva contrase\u00f1a temporal</label>
+      <label class="field-label">Nueva contraseña temporal</label>
       <div style="display:flex;gap:8px">
         <input class="field-input" id="resetPassValor" type="text" placeholder="Temp#0000" style="flex:1;font-family:monospace;font-size:15px;letter-spacing:.05em" />
         <button class="btn btn-outline" onclick="generarPassTemporal()" style="flex-shrink:0"><i class="ti ti-refresh"></i></button>
