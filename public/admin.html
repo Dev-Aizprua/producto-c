@@ -83,7 +83,7 @@
     .tab-section.active{display:block}
 
     /* ══ CARDS ═══════════════════════════════════════════════ */
-    .card{background:white;border-radius:var(--card-radius);border:var(--card-border);padding:24px;margin-bottom:20px;box-shadow:var(--card-shadow)}
+    .card{background:white;border-radius:var(--card-radius);border:var(--card-border);padding:24px;margin-bottom:20px;box-shadow:var(--card-shadow);width:100%;box-sizing:border-box}
     .card-title{font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:20px;display:flex;align-items:center;gap:8px}
     .card-title i{font-size:18px;color:var(--primary)}
 
@@ -805,9 +805,11 @@
       .usr-acciones{display:flex!important;flex-direction:row!important;gap:6px!important;flex-wrap:nowrap!important}
       .usr-btn{flex:1;min-width:0;font-size:11px;padding:7px 4px}
       .sesion-timer{font-size:12px;padding:10px 12px}
-      #tab-usuarios .two-col-usr{display:flex!important;flex-direction:column!important;gap:14px!important}
+      #tab-usuarios .two-col-usr{display:flex!important;flex-direction:column!important;gap:14px!important;width:100%!important}
       #tab-usuarios .card{padding:14px;width:100%;box-sizing:border-box}
       .usr-card{padding:12px;width:100%;box-sizing:border-box}
+      .usr-grid{grid-template-columns:1fr!important;width:100%}
+      #tab-usuarios .two-col-usr > div{width:100%;min-width:0}
       .mi-sesion-info{padding:10px 12px;margin-bottom:12px}
     }
   </style>
