@@ -527,6 +527,167 @@ export async function onRequestPost(context) {
       return new Response("EVENT_RECEIVED", { status: 200 });
     }
 
+    // ─── REAGENDAMIENTO ──────────────────────────────────────
+    // Detectar intención de cambiar/mover una cita existente
+    const palabrasReagendamiento = [
+      "reagendar", "reagendarme", "cambiar cita", "cambiar mi cita",
+      "mover cita", "mover mi cita", "cambiar la cita", "otra fecha",
+      "otro día", "otro horario", "cambiar fecha", "cambiar el día",
+      "reprogramar", "reprogramarme", "posponer", "adelantar la cita"
+    ];
+
+    const quiereReagendar = palabrasReagendamiento.some(p => textoLower.includes(p));
+
+    if (quiereReagendar) {
+      // Buscar cita más reciente activa de este número
+      let citaActiva = null;
+      try {
+        citaActiva = await env.producto_c_db.prepare(
+          `SELECT ci.id, ci.estado_pago, ci.fecha_cita, ci.total,
+                  s.nombre as servicio_nombre
+           FROM citas ci
+           LEFT JOIN servicios s ON s.id = ci.servicio_id
+           WHERE ci.negocio_id = ? AND ci.cliente_tel = ?
+             AND ci.estado_pago IN ('esperando_pago','pago_por_verificar','pendiente_confirmacion','confirmada')
+           ORDER BY ci.id DESC LIMIT 1`
+        ).bind(negocioId, from).first();
+      } catch(e) {}
+
+      if (!citaActiva) {
+        // No tiene ninguna cita activa
+        const respNoTieneCita = `No encontré ninguna cita activa a tu nombre en este momento. Si deseas agendar una nueva cita, con gusto te ayudo. 😊`;
+        await marcarLeido(waToken, phoneNumberId, message.id);
+        await new Promise(r => setTimeout(r, 1500));
+        await enviarMensaje(waToken, phoneNumberId, from, respNoTieneCita);
+        return new Response("EVENT_RECEIVED", { status: 200 });
+      }
+
+      const estadosValeriaPuedeGestionar = ["esperando_pago", "pago_por_verificar", "pendiente_confirmacion"];
+
+      if (estadosValeriaPuedeGestionar.includes(citaActiva.estado_pago)) {
+        // Valeria puede gestionar el cambio — pide nueva fecha
+        const respValeriaPuede =
+          `Claro${primerNombrePaciente ? ` ${primerNombrePaciente}` : ""}, puedo ayudarte con eso 😊\n\n` +
+          `Tu solicitud actual es para ${citaActiva.servicio_nombre || "tu servicio"} — ${citaActiva.fecha_cita || "fecha pendiente"}.\n\n` +
+          `¿Para qué fecha y hora prefieres reagendarla?`;
+
+        // Guardar en historial que está reagendando — para que Groq lo sepa en el siguiente turno
+        try {
+          const nuevoH = [...historial,
+            { role: "user", content: textoConsolidado },
+            { role: "assistant", content: respValeriaPuede },
+            { role: "system", content: `[REAGENDAMIENTO_ACTIVO:citaId=${citaActiva.id}|servicio=${citaActiva.servicio_nombre || ""}|fechaActual=${citaActiva.fecha_cita || ""}]` }
+          ];
+          const chatEx = await env.producto_c_db.prepare(
+            `SELECT id FROM chats WHERE negocio_id = ? AND cliente_tel = ? AND completado = 0 LIMIT 1`
+          ).bind(negocioId, from).first();
+          if (chatEx) {
+            await env.producto_c_db.prepare(
+              `UPDATE chats SET historial_json = ?, fecha = ? WHERE id = ?`
+            ).bind(JSON.stringify(nuevoH), new Date().toISOString(), chatEx.id).run();
+          } else {
+            await env.producto_c_db.prepare(
+              `INSERT INTO chats (negocio_id, session_token, cliente_nombre, cliente_tel, historial_json, fecha, completado, canal) VALUES (?, ?, ?, ?, ?, ?, 0, 'whatsapp')`
+            ).bind(negocioId, sessionToken, nombrePaciente || "Paciente WA", from, JSON.stringify(nuevoH), new Date().toISOString()).run();
+          }
+        } catch(e) {}
+
+        await marcarLeido(waToken, phoneNumberId, message.id);
+        await new Promise(r => setTimeout(r, 1500));
+        await enviarMensaje(waToken, phoneNumberId, from, respValeriaPuede);
+        return new Response("EVENT_RECEIVED", { status: 200 });
+
+      } else {
+        // Estado: confirmada — deriva al dueño
+        const respDeriva =
+          `Con gusto${primerNombrePaciente ? ` ${primerNombrePaciente}` : ""}. Como tu cita ya está confirmada, nuestro equipo revisará la disponibilidad y te ayudará con el cambio. En breve te contactarán. 😊`;
+
+        // Notificar a Telegram
+        if (negocio.telegram_chat_id && env.TELEGRAM_TOKEN) {
+          try {
+            await notificarTelegram(env.TELEGRAM_TOKEN, negocio.telegram_chat_id,
+              `🔄 <b>SOLICITUD DE REAGENDAMIENTO</b>\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n👤 Paciente: ${nombrePaciente || "Desconocido"}\n📞 +${from}\n🦷 Servicio: ${citaActiva.servicio_nombre || "N/A"}\n📅 Fecha actual: ${citaActiva.fecha_cita || "N/A"}\n💬 Solicitud: "${textoConsolidado}"\n\n⚠️ <i>Cita confirmada — requiere gestión manual.</i>`
+            );
+          } catch(e) {}
+        }
+
+        try {
+          const nuevoH = [...historial,
+            { role: "user", content: textoConsolidado },
+            { role: "assistant", content: respDeriva }
+          ];
+          const chatEx = await env.producto_c_db.prepare(
+            `SELECT id FROM chats WHERE negocio_id = ? AND cliente_tel = ? AND completado = 0 LIMIT 1`
+          ).bind(negocioId, from).first();
+          if (chatEx) {
+            await env.producto_c_db.prepare(
+              `UPDATE chats SET historial_json = ?, fecha = ? WHERE id = ?`
+            ).bind(JSON.stringify(nuevoH), new Date().toISOString(), chatEx.id).run();
+          }
+        } catch(e) {}
+
+        await marcarLeido(waToken, phoneNumberId, message.id);
+        await new Promise(r => setTimeout(r, 1500));
+        await enviarMensaje(waToken, phoneNumberId, from, respDeriva);
+        return new Response("EVENT_RECEIVED", { status: 200 });
+      }
+    }
+
+    // ─── DETECTAR NUEVA FECHA SI HAY REAGENDAMIENTO ACTIVO ───
+    // Si el historial tiene [REAGENDAMIENTO_ACTIVO], el próximo mensaje
+    // con fecha es la nueva fecha — actualizamos la cita en D1
+    const reagendamientoActivo = historial.find(h =>
+      h.role === "system" && h.content?.startsWith("[REAGENDAMIENTO_ACTIVO:")
+    );
+
+    if (reagendamientoActivo) {
+      const matchCitaId = reagendamientoActivo.content.match(/citaId=(\d+)/);
+      const citaId = matchCitaId ? matchCitaId[1] : null;
+
+      const tieneFechaNueva = /mañana|lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo|\d{1,2}[\/:]\d{1,2}|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|am|pm|tarde|mañana|mediodía/.test(textoLower);
+
+      if (tieneFechaNueva && citaId) {
+        try {
+          await env.producto_c_db.prepare(
+            `UPDATE citas SET fecha_cita = ? WHERE id = ?`
+          ).bind(textoConsolidado, citaId).run();
+        } catch(e) {}
+
+        const respConfirmacion =
+          `Perfecto${primerNombrePaciente ? ` ${primerNombrePaciente}` : ""} 😊 He actualizado tu solicitud para ${textoConsolidado}. Un miembro del equipo te confirmará la disponibilidad en breve.`;
+
+        if (negocio.telegram_chat_id && env.TELEGRAM_TOKEN) {
+          try {
+            await notificarTelegram(env.TELEGRAM_TOKEN, negocio.telegram_chat_id,
+              `🔄 <b>FECHA REAGENDADA</b>\n📞 +${from}${nombrePaciente ? ` (${nombrePaciente})` : ""}\n🆔 Cita #${citaId}\n📅 Nueva solicitud: ${textoConsolidado}\n\n<i>Valeria actualizó la fecha — confirmar disponibilidad.</i>`
+            );
+          } catch(e) {}
+        }
+
+        // Limpiar marcador de reagendamiento activo del historial
+        const nuevoH = [
+          ...historial.filter(h => !h.content?.startsWith("[REAGENDAMIENTO_ACTIVO:")),
+          { role: "user", content: textoConsolidado },
+          { role: "assistant", content: respConfirmacion }
+        ];
+        try {
+          const chatEx = await env.producto_c_db.prepare(
+            `SELECT id FROM chats WHERE negocio_id = ? AND cliente_tel = ? AND completado = 0 LIMIT 1`
+          ).bind(negocioId, from).first();
+          if (chatEx) {
+            await env.producto_c_db.prepare(
+              `UPDATE chats SET historial_json = ?, fecha = ? WHERE id = ?`
+            ).bind(JSON.stringify(nuevoH), new Date().toISOString(), chatEx.id).run();
+          }
+        } catch(e) {}
+
+        await marcarLeido(waToken, phoneNumberId, message.id);
+        await new Promise(r => setTimeout(r, 1500));
+        await enviarMensaje(waToken, phoneNumberId, from, respConfirmacion);
+        return new Response("EVENT_RECEIVED", { status: 200 });
+      }
+    }
+
     // ─── INTERCEPTACIÓN DE TEMAS CRÍTICOS ────────────────────
     // Estos temas Valeria NO puede responder — no tiene la información.
     // Se responde directo sin pasar por Groq para evitar alucinaciones.
@@ -693,6 +854,7 @@ Ejemplo: "Claro que sí 😊 ¿Es para ti o para algún familiar? Así te orient
 MIEDO O NERVIOS AL TRATAMIENTO:
 Valida primero, luego tranquiliza, luego invita.
 Ejemplo: "Es completamente normal sentirse así — muchos de nuestros pacientes llegan con esa misma inquietud. Nuestro equipo está muy acostumbrado a trabajar con personas que vienen nerviosas. Si gustas, puedo ayudarte a coordinar una evaluación para que el especialista te explique todo con calma antes de comenzar. ¿Te funcionaría esta semana?"
+⚠️ NUNCA uses "más cómodo" — usa siempre "más tranquilo/a", "con más confianza", o "más a gusto" para evitar asumir género del paciente.
 
 OBJECIÓN DE PRECIO ("está muy caro" / "déjame pensarlo"):
 Nunca presiones. Nunca inventes urgencia.
