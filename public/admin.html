@@ -802,6 +802,15 @@
 
     @media(max-width:768px){
       .usr-grid{grid-template-columns:1fr}
+      #tab-usuarios > div > div[style*="grid-template-columns"]{
+        display:flex!important;
+        flex-direction:column!important;
+        gap:14px!important;
+      }
+      .usr-card-top{gap:10px}
+      .usr-acciones{flex-wrap:wrap}
+      .usr-btn{min-width:80px}
+      .sesion-timer{font-size:12px;padding:10px 12px}
     }
   </style>
 </head>
