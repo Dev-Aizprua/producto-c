@@ -1,11 +1,13 @@
 // ============================================================
-// functions/api/panel/usuarios/[id].js
-// PUT /api/panel/usuarios/:id  — editar nombre, rol, activo, password
+// functions/api/panel/usuarios.js
+// GET  /api/panel/usuarios  — lista usuarios del negocio
+// POST /api/panel/usuarios  — crear nuevo usuario
+// El middleware ya validó el token y pasó negocio_id en context.data
 // ============================================================
 
 const cors = {
   'Access-Control-Allow-Origin':  '*',
-  'Access-Control-Allow-Methods': 'PUT, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Content-Type': 'application/json',
 };
@@ -15,72 +17,45 @@ async function sha256(text) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
-async function getSession(env, request) {
-  const auth = request.headers.get('Authorization') || '';
-  const token = auth.replace('Bearer ', '').trim();
-  if (!token) return null;
-  const now = new Date().toISOString();
-  return await env.producto_c_db
-    .prepare('SELECT negocio_id FROM panel_sessions WHERE token = ? AND expira_at > ? LIMIT 1')
-    .bind(token, now).first();
+export async function onRequestGet({ env, data }) {
+  const negocio_id = data.negocio_id;
+  try {
+    const { results } = await env.producto_c_db
+      .prepare(`SELECT id, nombre, usuario, rol, activo, ultimo_acceso, debe_cambiar_pass, created_at
+                FROM usuarios WHERE negocio_id = ? ORDER BY rol ASC, nombre ASC`)
+      .bind(negocio_id).all();
+    return Response.json({ success: true, usuarios: results }, { headers: cors });
+  } catch (err) {
+    return Response.json({ success: false, error: err.message }, { status: 500, headers: cors });
+  }
 }
 
-export async function onRequestPut(context) {
-  const { request, env, params } = context;
-  const id = params.id;
-
-  const session = await getSession(env, request);
-  if (!session) {
-    return Response.json({ success: false, error: 'No autorizado' }, { status: 401, headers: cors });
-  }
-
-  // Verificar que el usuario pertenece a este negocio
-  const usuarioExiste = await env.producto_c_db
-    .prepare('SELECT id, rol FROM usuarios WHERE id = ? AND negocio_id = ? LIMIT 1')
-    .bind(id, session.negocio_id).first();
-
-  if (!usuarioExiste) {
-    return Response.json({ success: false, error: 'Usuario no encontrado' }, { status: 404, headers: cors });
-  }
-
+export async function onRequestPost({ request, env, data }) {
+  const negocio_id = data.negocio_id;
   let body;
   try { body = await request.json(); }
   catch { return Response.json({ success: false, error: 'JSON inválido' }, { status: 400, headers: cors }); }
 
-  const { nombre, usuario, rol, activo, password, debe_cambiar_pass } = body;
+  const { nombre, usuario, password, rol } = body;
+  if (!nombre || !usuario || !password)
+    return Response.json({ success: false, error: 'Nombre, usuario y contraseña son obligatorios' }, { status: 400, headers: cors });
+  if (!['admin','recepcionista','especialista'].includes(rol))
+    return Response.json({ success: false, error: 'Rol inválido' }, { status: 400, headers: cors });
+  if (password.length < 8)
+    return Response.json({ success: false, error: 'Mínimo 8 caracteres' }, { status: 400, headers: cors });
 
   try {
-    const updates = [];
-    const bindings = [];
+    const existe = await env.producto_c_db
+      .prepare('SELECT id FROM usuarios WHERE negocio_id = ? AND usuario = ? LIMIT 1')
+      .bind(negocio_id, usuario.toLowerCase()).first();
+    if (existe)
+      return Response.json({ success: false, error: 'El usuario ya existe' }, { status: 409, headers: cors });
 
-    if (nombre !== undefined)      { updates.push('nombre = ?');            bindings.push(nombre.trim()); }
-    if (usuario !== undefined)     { updates.push('usuario = ?');           bindings.push(usuario.toLowerCase().trim()); }
-    if (rol !== undefined && ['admin','recepcionista','especialista'].includes(rol)) {
-                                     updates.push('rol = ?');               bindings.push(rol); }
-    if (activo !== undefined)      { updates.push('activo = ?');            bindings.push(activo ? 1 : 0); }
-    if (debe_cambiar_pass !== undefined) { updates.push('debe_cambiar_pass = ?'); bindings.push(debe_cambiar_pass ? 1 : 0); }
-
-    if (password !== undefined) {
-      if (password.length < 8) {
-        return Response.json({ success: false, error: 'Mínimo 8 caracteres' }, { status: 400, headers: cors });
-      }
-      const hash = await sha256(password);
-      updates.push('password_hash = ?');
-      bindings.push(hash);
-    }
-
-    if (!updates.length) {
-      return Response.json({ success: false, error: 'Nada que actualizar' }, { status: 400, headers: cors });
-    }
-
-    bindings.push(id);
-    bindings.push(session.negocio_id);
-
+    const hash = await sha256(password);
     await env.producto_c_db
-      .prepare(`UPDATE usuarios SET ${updates.join(', ')} WHERE id = ? AND negocio_id = ?`)
-      .bind(...bindings).run();
-
-    return Response.json({ success: true, mensaje: 'Usuario actualizado' }, { headers: cors });
+      .prepare('INSERT INTO usuarios (negocio_id, nombre, usuario, password_hash, rol, activo) VALUES (?,?,?,?,?,1)')
+      .bind(negocio_id, nombre.trim(), usuario.toLowerCase().trim(), hash, rol).run();
+    return Response.json({ success: true, mensaje: 'Usuario creado' }, { headers: cors });
   } catch (err) {
     return Response.json({ success: false, error: err.message }, { status: 500, headers: cors });
   }
