@@ -802,15 +802,10 @@
 
     @media(max-width:768px){
       .usr-grid{grid-template-columns:1fr}
-      #tab-usuarios > div > div[style*="grid-template-columns"]{
-        display:flex!important;
-        flex-direction:column!important;
-        gap:14px!important;
-      }
-      .usr-card-top{gap:10px}
-      .usr-acciones{flex-wrap:wrap}
-      .usr-btn{min-width:80px}
+      .usr-acciones{display:flex!important;flex-direction:row!important;gap:6px!important;flex-wrap:nowrap!important}
+      .usr-btn{flex:1;min-width:0;font-size:11px;padding:7px 4px}
       .sesion-timer{font-size:12px;padding:10px 12px}
+      #tab-usuarios .two-col-usr{display:flex!important;flex-direction:column!important;gap:14px!important}
     }
   </style>
 </head>
@@ -1314,7 +1309,7 @@
           <button onclick="renovarSesion()" style="margin-left:auto;background:#f59e0b;color:white;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">Renovar</button>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+        <div class="two-col-usr" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
 
           <div>
             <div class="card">
