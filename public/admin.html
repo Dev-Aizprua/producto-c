@@ -742,6 +742,67 @@
     /* ══ CITAS: FILTROS CON CONTADORES ══════════════════════ */
     .filtro-chip .chip-cnt{font-size:10px;font-weight:800;background:rgba(0,0,0,.1);border-radius:10px;padding:1px 5px;margin-left:2px}
     .filtro-chip.active .chip-cnt{background:rgba(255,255,255,.25)}
+    /* ══ MÓDULO USUARIOS ════════════════════════════════════ */
+    .usr-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+    .usr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:24px}
+    .usr-card{background:white;border-radius:16px;border:1px solid #edf2f7;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.05);transition:box-shadow .15s}
+    .usr-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.1)}
+    .usr-card.inactivo{opacity:.6;border-style:dashed}
+    .usr-card-top{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+    .usr-av{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:white;flex-shrink:0}
+    .usr-av.admin{background:linear-gradient(135deg,#1a73e8,#1557b0)}
+    .usr-av.recepcionista{background:linear-gradient(135deg,#7c3aed,#5b21b6)}
+    .usr-av.especialista{background:linear-gradient(135deg,#16a34a,#15803d)}
+    .usr-av.inactivo{background:#aaa}
+    .usr-info{flex:1;min-width:0}
+    .usr-nombre{font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:2px}
+    .usr-usuario{font-size:12px;color:#aaa;margin-bottom:4px}
+    .usr-rol-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:10.5px;font-weight:700}
+    .usr-rol-badge.admin{background:#eff6ff;color:#1a73e8}
+    .usr-rol-badge.recepcionista{background:#faf5ff;color:#7c3aed}
+    .usr-rol-badge.especialista{background:#f0fdf4;color:#16a34a}
+    .usr-rol-badge.inactivo{background:#f1f5f9;color:#94a3b8}
+    .usr-meta{font-size:11.5px;color:#aaa;display:flex;align-items:center;gap:5px;margin-bottom:14px}
+    .usr-acciones{display:flex;gap:8px}
+    .usr-btn{flex:1;padding:8px;border-radius:10px;font-size:12px;font-weight:600;border:1.5px solid;cursor:pointer;transition:all .15s;text-align:center}
+    .usr-btn.editar{background:white;color:#1a73e8;border-color:#1a73e8}
+    .usr-btn.editar:hover{background:#eff6ff}
+    .usr-btn.pass{background:white;color:#7c3aed;border-color:#7c3aed}
+    .usr-btn.pass:hover{background:#faf5ff}
+    .usr-btn.desactivar{background:white;color:#dc2626;border-color:#fecaca}
+    .usr-btn.desactivar:hover{background:#fef2f2}
+    .usr-btn.activar{background:white;color:#16a34a;border-color:#bbf7d0}
+    .usr-btn.activar:hover{background:#f0fdf4}
+
+    /* Historial accesos */
+    .acceso-item-log{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f5f7fa}
+    .acceso-item-log:last-child{border-bottom:none}
+    .acceso-av-log{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0}
+    .acceso-info{flex:1}
+    .acceso-nombre-log{font-size:13px;font-weight:600;color:#1a1a2e}
+    .acceso-detalle-log{font-size:11.5px;color:#aaa;margin-top:1px}
+    .acceso-tiempo-log{font-size:11px;color:#aaa;flex-shrink:0}
+
+    /* Cambio de contraseña */
+    .pass-strength{height:4px;border-radius:2px;margin-top:6px;transition:all .3s;background:#e8ecf0}
+    .pass-strength.debil{background:#ef4444;width:33%}
+    .pass-strength.media{background:#f59e0b;width:66%}
+    .pass-strength.fuerte{background:#16a34a;width:100%}
+    .pass-strength-lbl{font-size:10.5px;margin-top:4px;font-weight:600}
+
+    /* Mi perfil — cambio contraseña propio */
+    .mi-sesion-info{display:flex;align-items:center;gap:12px;background:#f8f9fc;border-radius:12px;padding:14px 16px;margin-bottom:20px;border:1px solid #edf2f7}
+    .mi-sesion-av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1a73e8,#1557b0);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:white;flex-shrink:0}
+    .mi-sesion-nombre{font-size:14px;font-weight:700;color:#1a1a2e}
+    .mi-sesion-rol{font-size:12px;color:#aaa;margin-top:2px}
+
+    /* Sesión automática */
+    .sesion-timer{display:flex;align-items:center;gap:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px 14px;font-size:13px;color:#92400e;font-weight:600}
+    .sesion-timer i{font-size:16px}
+
+    @media(max-width:768px){
+      .usr-grid{grid-template-columns:1fr}
+    }
   </style>
 </head>
 <body>
@@ -788,7 +849,8 @@
       <a class="nav-link" onclick="showTab('servicios',this)"><i class="ti ti-list-details"></i> Servicios</a>
       <a class="nav-link" onclick="showTab('citas',this)"><i class="ti ti-calendar-check"></i> Reservas</a>
       <a class="nav-link" onclick="showTab('chats',this)"><i class="ti ti-message-dots"></i> Conversaciones</a>
-      <div class="sb-section">Configuración</div>
+      <div class="sb-section">Administración</div>
+      <a class="nav-link" onclick="showTab('usuarios',this)"><i class="ti ti-users"></i> Usuarios</a>
       <a class="nav-link" onclick="showTab('negocio',this)"><i class="ti ti-settings"></i> Configuración</a>
     </nav>
     <div class="sb-footer">
@@ -1233,6 +1295,86 @@
         </div>
       </section>
 
+      <!-- ══ TAB: USUARIOS ══════════════════════════════════ -->
+      <section class="tab-section" id="tab-usuarios">
+        <div class="section-hdr"><h2>Usuarios &amp; Seguridad</h2></div>
+
+        <div class="sesion-timer" id="sesionTimer" style="margin-bottom:20px">
+          <i class="ti ti-clock"></i>
+          <span>Sesi&#xF3;n activa — expira en <strong id="sesionCountdown">30:00</strong></span>
+          <button onclick="renovarSesion()" style="margin-left:auto;background:#f59e0b;color:white;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">Renovar</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+
+          <div>
+            <div class="card">
+              <div class="usr-header">
+                <div class="card-title" style="margin:0"><i class="ti ti-users"></i> Equipo</div>
+                <button class="btn btn-primary btn-sm" onclick="abrirModalUsuario()"><i class="ti ti-plus"></i> Nuevo usuario</button>
+              </div>
+              <div class="usr-grid" id="usuariosGrid">
+                <div class="empty-state" style="grid-column:1/-1;padding:32px"><i class="ti ti-loader" style="animation:spin 1s linear infinite"></i><p>Cargando...</p></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title"><i class="ti ti-lock"></i> Mi contrase&#xF1;a</div>
+              <div class="mi-sesion-info">
+                <div class="mi-sesion-av" id="miSesionAv">A</div>
+                <div>
+                  <div class="mi-sesion-nombre" id="miSesionNombre">Administrador</div>
+                  <div class="mi-sesion-rol" id="miSesionRol">Rol: Administrador</div>
+                </div>
+              </div>
+              <div class="form-row" style="grid-template-columns:1fr;gap:12px">
+                <div>
+                  <label class="field-label">Contrase&#xF1;a actual</label>
+                  <input class="field-input" id="passActual" type="password" placeholder="••••••••" />
+                </div>
+                <div>
+                  <label class="field-label">Nueva contrase&#xF1;a</label>
+                  <input class="field-input" id="passNueva" type="password" placeholder="Mínimo 8 caracteres" oninput="evaluarPass(this.value)" />
+                  <div class="pass-strength" id="passStrengthBar"></div>
+                  <div class="pass-strength-lbl" id="passStrengthLbl" style="color:#aaa"></div>
+                </div>
+                <div>
+                  <label class="field-label">Confirmar nueva contrase&#xF1;a</label>
+                  <input class="field-input" id="passConfirm" type="password" placeholder="Repite la nueva contrase&#xF1;a" />
+                </div>
+              </div>
+              <button class="btn btn-primary" style="margin-top:16px" onclick="cambiarMiPassword()"><i class="ti ti-lock-check"></i> Cambiar contrase&#xF1;a</button>
+            </div>
+          </div>
+
+          <div>
+            <div class="card">
+              <div class="card-title"><i class="ti ti-history"></i> Últimos accesos</div>
+              <div id="historialAccesos">
+                <div class="empty-state" style="padding:24px"><i class="ti ti-loader" style="animation:spin 1s linear infinite"></i><p>Cargando...</p></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title"><i class="ti ti-device-mobile"></i> Dispositivos conectados</div>
+              <div id="dispositivosConectados">
+                <div style="padding:12px 0;color:#aaa;font-size:13px" id="dispositivosList">Cargando...</div>
+              </div>
+              <button class="btn btn-outline" style="margin-top:16px;width:100%;color:#dc2626;border-color:#fecaca" onclick="cerrarTodasSesiones()">
+                <i class="ti ti-logout"></i> Cerrar todas las sesiones
+              </button>
+            </div>
+
+            <div class="card">
+              <div class="card-title"><i class="ti ti-activity"></i> Historial de acciones</div>
+              <div id="historialAcciones">
+                <div class="empty-state" style="padding:24px"><i class="ti ti-loader" style="animation:spin 1s linear infinite"></i><p>Cargando...</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- ══ TAB: NEGOCIO (CONFIGURACIÓN) ════════════════════ -->
       <section class="tab-section" id="tab-negocio">
         <div class="two-col">
@@ -1434,6 +1576,72 @@
   </button>
 </nav>
 
+<!-- ══ MODAL USUARIO ═════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalUsuario">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalUsuarioTitle">Nuevo Usuario</div>
+      <button class="modal-close" onclick="cerrarModalUsuario()"><i class="ti ti-x"></i></button>
+    </div>
+    <input type="hidden" id="usrId" />
+    <div class="form-row">
+      <div>
+        <label class="field-label">Nombre completo</label>
+        <input class="field-input" id="usrNombre" type="text" placeholder="Ana Rodr\u00edguez" />
+      </div>
+      <div>
+        <label class="field-label">Usuario (para iniciar sesi\u00f3n)</label>
+        <input class="field-input" id="usrUsuario" type="text" placeholder="ana.rodriguez" autocomplete="off" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label class="field-label">Rol</label>
+        <select class="field-input" id="usrRol">
+          <option value="admin">&#x1F451; Administrador</option>
+          <option value="recepcionista" selected>&#x1F4CB; Recepcionista</option>
+          <option value="especialista">&#x1F9B7; Especialista / Doctor</option>
+        </select>
+      </div>
+      <div id="usrPassField">
+        <label class="field-label">Contrase\u00f1a inicial</label>
+        <input class="field-input" id="usrPassword" type="password" placeholder="M\u00ednimo 8 caracteres" oninput="evaluarPass(this.value,'usrPassBar','usrPassLbl')" autocomplete="new-password" />
+        <div class="pass-strength" id="usrPassBar"></div>
+        <div class="pass-strength-lbl" id="usrPassLbl" style="color:#aaa"></div>
+      </div>
+    </div>
+    <!-- Permisos por rol (informativo) -->
+    <div id="usrPermisosInfo" style="background:#f8f9fc;border-radius:12px;padding:14px;margin-top:4px;font-size:12px;color:#555;line-height:1.7"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="cerrarModalUsuario()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarUsuario()"><i class="ti ti-device-floppy"></i> Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL RESET PASSWORD ══════════════════════════════════ -->
+<div class="modal-overlay" id="modalResetPass">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">Restablecer Contrase\u00f1a</div>
+      <button class="modal-close" onclick="cerrarModalResetPass()"><i class="ti ti-x"></i></button>
+    </div>
+    <input type="hidden" id="resetUsrId" />
+    <p style="font-size:13.5px;color:#666;margin-bottom:16px;line-height:1.6">Se generar\u00e1 una contrase\u00f1a temporal para <strong id="resetUsrNombre"></strong>. El usuario deber\u00e1 cambiarla al iniciar sesi\u00f3n.</p>
+    <div>
+      <label class="field-label">Nueva contrase\u00f1a temporal</label>
+      <div style="display:flex;gap:8px">
+        <input class="field-input" id="resetPassValor" type="text" placeholder="Temp#0000" style="flex:1;font-family:monospace;font-size:15px;letter-spacing:.05em" />
+        <button class="btn btn-outline" onclick="generarPassTemporal()" style="flex-shrink:0"><i class="ti ti-refresh"></i></button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="cerrarModalResetPass()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarResetPass()"><i class="ti ti-lock-check"></i> Restablecer</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"><i class="ti ti-check"></i><span id="toastMsg"></span></div>
 
 <script>
@@ -1500,7 +1708,13 @@ function mostrarPanel(){
   document.getElementById('sbUserAv').textContent=(nombre[0]||'A').toUpperCase();
   document.getElementById('mhGreeting').textContent=`\u00a1Hola, ${nombre}! \uD83D\uDC4B`;
   document.getElementById('verChatLink').href=`/${STATE.slug}`;
-  cargarNegocio();cargarServicios();cargarCitas();cargarChats();cargarKPIs();
+  cargarNegocio();cargarServicios();cargarCitas();cargarChats();cargarKPIs();cargarUsuarios();
+  iniciarTimerSesion();
+  // Actualizar mi perfil en la sección seguridad
+  const miAv=document.getElementById('miSesionAv');
+  const miNom=document.getElementById('miSesionNombre');
+  if(miAv)miAv.textContent=(nombre[0]||'A').toUpperCase();
+  if(miNom)miNom.textContent=nombre;
 }
 
 function doLogout(){
@@ -2420,12 +2634,293 @@ async function guardarConfigWA(){
 }
 
 // ══ INIT ═════════════════════════════════════════════════════
+// ══ MÓDULO USUARIOS & SEGURIDAD ═════════════════════════════
+
+// --- Timer de sesión ---
+let _sesionTimer=null;
+let _sesionSegundos=30*60; // 30 minutos
+
+function iniciarTimerSesion(){
+  if(_sesionTimer)clearInterval(_sesionTimer);
+  _sesionSegundos=30*60;
+  _sesionTimer=setInterval(()=>{
+    _sesionSegundos--;
+    const m=Math.floor(_sesionSegundos/60).toString().padStart(2,'0');
+    const s=(_sesionSegundos%60).toString().padStart(2,'0');
+    const el=document.getElementById('sesionCountdown');
+    if(el)el.textContent=`${m}:${s}`;
+    if(_sesionSegundos<=0){clearInterval(_sesionTimer);showToast('Sesi\u00f3n expirada','error');setTimeout(doLogout,1500);}
+    if(_sesionSegundos===5*60){showToast('Tu sesi\u00f3n expira en 5 minutos','error');}
+  },1000);
+  // Renovar al detectar actividad
+  ['click','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,renovarSesion,{passive:true,once:true}));
+}
+
+function renovarSesion(){
+  _sesionSegundos=30*60;
+  ['click','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,renovarSesion,{passive:true,once:true}));
+}
+
+// --- Evaluador de fortaleza de contraseña ---
+function evaluarPass(val,barId='passStrengthBar',lblId='passStrengthLbl'){
+  const bar=document.getElementById(barId);
+  const lbl=document.getElementById(lblId);
+  if(!bar||!lbl)return;
+  if(!val){bar.className='pass-strength';lbl.textContent='';return;}
+  const fuerte=val.length>=8&&/[A-Z]/.test(val)&&/[0-9]/.test(val)&&/[^A-Za-z0-9]/.test(val);
+  const media=val.length>=8&&(/[A-Z]/.test(val)||/[0-9]/.test(val));
+  if(fuerte){bar.className='pass-strength fuerte';lbl.textContent='Contrase\u00f1a fuerte ✓';lbl.style.color='#16a34a';}
+  else if(media){bar.className='pass-strength media';lbl.textContent='Contrase\u00f1a aceptable';lbl.style.color='#d97706';}
+  else{bar.className='pass-strength debil';lbl.textContent='Contrase\u00f1a d\u00e9bil';lbl.style.color='#dc2626';}
+}
+
+// --- Cargar usuarios ---
+const PERMISOS_ROL={
+  admin:'✅ Configurar negocio &nbsp;✅ Gestionar usuarios &nbsp;✅ Ver ingresos &nbsp;✅ Todo',
+  recepcionista:'✅ Ver y crear reservas &nbsp;✅ Ver conversaciones &nbsp;❌ Sin configuración &nbsp;❌ Sin usuarios',
+  especialista:'✅ Ver agenda propia &nbsp;✅ Ver pacientes asignados &nbsp;❌ Sin ingresos &nbsp;❌ Sin configuración'
+};
+
+const COLOR_ROL={admin:'admin',recepcionista:'recepcionista',especialista:'especialista'};
+
+async function cargarUsuarios(){
+  const grid=document.getElementById('usuariosGrid');
+  try{
+    const data=await api('GET','/api/panel/usuarios');
+    const usuarios=data.usuarios||[];
+    if(!usuarios.length){
+      grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1;padding:32px"><i class="ti ti-users"></i><p>Sin usuarios creados a\u00fan.<br>Crea el primer usuario de tu equipo.</p></div>`;
+      return;
+    }
+    grid.innerHTML=usuarios.map(u=>{
+      const rol=u.rol||'recepcionista';
+      const iniciales=(u.nombre||'U').split(' ').slice(0,2).map(p=>p[0]?.toUpperCase()||'').join('');
+      const inactivo=!u.activo;
+      const ultimoAcceso=u.ultimo_acceso?tiempoRelativo(u.ultimo_acceso):'Nunca';
+      return`<div class="usr-card${inactivo?' inactivo':''}">
+        <div class="usr-card-top">
+          <div class="usr-av ${inactivo?'inactivo':COLOR_ROL[rol]||'recepcionista'}">${iniciales}</div>
+          <div class="usr-info">
+            <div class="usr-nombre">${u.nombre||'Usuario'}</div>
+            <div class="usr-usuario">@${u.usuario}</div>
+            <span class="usr-rol-badge ${inactivo?'inactivo':rol}">${inactivo?'Inactivo':rol==='admin'?'Administrador':rol==='recepcionista'?'Recepcionista':'Especialista'}</span>
+          </div>
+        </div>
+        <div class="usr-meta"><i class="ti ti-clock" style="font-size:12px"></i> \u00DAltimo acceso: ${ultimoAcceso}</div>
+        <div class="usr-acciones">
+          <button class="usr-btn editar" onclick="abrirModalUsuario(${JSON.stringify(u).replace(/"/g,'&quot;')})">Editar</button>
+          <button class="usr-btn pass" onclick="abrirModalResetPass(${u.id},'${(u.nombre||'').replace(/'/g,"\\'")}')">Pass</button>
+          <button class="usr-btn ${inactivo?'activar':'desactivar'}" onclick="toggleUsuario(${u.id},${!inactivo})">${inactivo?'Activar':'Desactivar'}</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Historial accesos
+    cargarHistorialAccesos(usuarios);
+    // Dispositivos
+    cargarDispositivos();
+    // Historial acciones
+    cargarHistorialAcciones();
+  }catch(e){
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1;padding:24px;color:#dc2626"><i class="ti ti-alert-circle"></i><p>Backend de usuarios pendiente de implementar</p></div>`;
+    cargarHistorialAccesosMock();
+  }
+}
+
+function cargarHistorialAccesosMock(){
+  const el=document.getElementById('historialAccesos');
+  const now=new Date();
+  const mock=[
+    {nombre:'Administrador',rol:'admin',hora:new Date(now-1000*60*5)},
+    {nombre:'Administrador',rol:'admin',hora:new Date(now-1000*60*60*3)},
+    {nombre:'Administrador',rol:'admin',hora:new Date(now-1000*60*60*26)},
+  ];
+  if(!el)return;
+  el.innerHTML=mock.map(a=>{
+    const ini=a.nombre.split(' ').slice(0,2).map(p=>p[0]?.toUpperCase()||'').join('');
+    return`<div class="acceso-item-log">
+      <div class="acceso-av-log ${COLOR_ROL[a.rol]||'recepcionista'}" style="background:linear-gradient(135deg,#1a73e8,#1557b0)">${ini}</div>
+      <div class="acceso-info">
+        <div class="acceso-nombre-log">${a.nombre}</div>
+        <div class="acceso-detalle-log">${a.rol==='admin'?'Administrador':'Recepcionista'} \u00b7 Inicio de sesi\u00f3n</div>
+      </div>
+      <div class="acceso-tiempo-log">${tiempoRelativo(a.hora.toISOString())}</div>
+    </div>`;
+  }).join('');
+}
+
+function cargarHistorialAccesos(usuarios){
+  const el=document.getElementById('historialAccesos');
+  if(!el)return;
+  const accesos=usuarios.filter(u=>u.ultimo_acceso).sort((a,b)=>new Date(b.ultimo_acceso)-new Date(a.ultimo_acceso)).slice(0,5);
+  if(!accesos.length){el.innerHTML=`<div class="empty-state" style="padding:16px"><p>Sin registros de acceso</p></div>`;return;}
+  el.innerHTML=accesos.map(u=>{
+    const ini=(u.nombre||'U').split(' ').slice(0,2).map(p=>p[0]?.toUpperCase()||'').join('');
+    const rol=u.rol||'recepcionista';
+    return`<div class="acceso-item-log">
+      <div class="acceso-av-log" style="background:linear-gradient(135deg,#1a73e8,#1557b0)">${ini}</div>
+      <div class="acceso-info">
+        <div class="acceso-nombre-log">${u.nombre}</div>
+        <div class="acceso-detalle-log">${rol==='admin'?'Administrador':rol==='recepcionista'?'Recepcionista':'Especialista'} \u00b7 Inicio de sesi\u00f3n</div>
+      </div>
+      <div class="acceso-tiempo-log">${tiempoRelativo(u.ultimo_acceso)}</div>
+    </div>`;
+  }).join('');
+}
+
+function cargarDispositivos(){
+  const el=document.getElementById('dispositivosList');
+  if(!el)return;
+  // Detectar dispositivo actual
+  const ua=navigator.userAgent;
+  const esMovil=/Android|iPhone|iPad/i.test(ua);
+  const navegador=/Chrome/i.test(ua)?'Chrome':/Firefox/i.test(ua)?'Firefox':/Safari/i.test(ua)?'Safari':'Navegador';
+  const dispositivo=esMovil?`&#x1F4F1; ${/Android/i.test(ua)?'Android':'iPhone'}`:(`&#x1F4BB; ${navegador} \u2014 ${/Windows/i.test(ua)?'Windows':/Mac/i.test(ua)?'Mac':'PC'}`);
+  el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;padding:8px 0">
+    <div style="width:8px;height:8px;border-radius:50%;background:#16a34a;flex-shrink:0"></div>
+    <span style="font-size:13px;color:#1a1a2e;font-weight:600">${dispositivo}</span>
+    <span style="font-size:11px;color:#aaa;margin-left:auto">Ahora \u2022 Sesi\u00f3n actual</span>
+  </div>`;
+}
+
+function cargarHistorialAcciones(){
+  const el=document.getElementById('historialAcciones');
+  if(!el)return;
+  // Placeholder — se llenará cuando el backend tenga tabla audit_log
+  el.innerHTML=`<div style="padding:8px 0;color:#aaa;font-size:13px;text-align:center">
+    <i class="ti ti-info-circle" style="font-size:20px;display:block;margin-bottom:6px"></i>
+    El historial detallado de acciones estar\u00e1 disponible con la implementaci\u00f3n del backend.
+  </div>`;
+}
+
+// --- Modal nuevo/editar usuario ---
+function abrirModalUsuario(usr=null){
+  document.getElementById('usrId').value=usr?.id||'';
+  document.getElementById('usrNombre').value=usr?.nombre||'';
+  document.getElementById('usrUsuario').value=usr?.usuario||'';
+  document.getElementById('usrRol').value=usr?.rol||'recepcionista';
+  document.getElementById('usrPassword').value='';
+  document.getElementById('usrPassField').style.display=usr?'none':'block';
+  document.getElementById('modalUsuarioTitle').textContent=usr?'Editar Usuario':'Nuevo Usuario';
+  actualizarInfoRol();
+  document.getElementById('modalUsuario').classList.add('open');
+}
+function cerrarModalUsuario(){document.getElementById('modalUsuario').classList.remove('open');}
+
+document.getElementById('usrRol')?.addEventListener('change',actualizarInfoRol);
+function actualizarInfoRol(){
+  const rol=document.getElementById('usrRol')?.value||'recepcionista';
+  const el=document.getElementById('usrPermisosInfo');
+  if(el)el.innerHTML=`<strong style="font-size:11px;text-transform:uppercase;color:#aaa;letter-spacing:.04em">Permisos de este rol</strong><br>${PERMISOS_ROL[rol]||''}`;
+}
+
+async function guardarUsuario(){
+  const id=document.getElementById('usrId').value;
+  const nombre=document.getElementById('usrNombre').value.trim();
+  const usuario=document.getElementById('usrUsuario').value.trim();
+  const rol=document.getElementById('usrRol').value;
+  const password=document.getElementById('usrPassword').value;
+  if(!nombre||!usuario){showToast('Nombre y usuario son obligatorios','error');return;}
+  if(!id&&!password){showToast('La contrase\u00f1a inicial es obligatoria','error');return;}
+  try{
+    const payload={nombre,usuario,rol,...(!id&&{password})};
+    const endpoint=id?`/api/panel/usuarios/${id}`:'/api/panel/usuarios';
+    const method=id?'PUT':'POST';
+    const data=await api(method,endpoint,payload);
+    if(!data.success)throw new Error(data.error||'Error al guardar');
+    showToast(id?'Usuario actualizado':'Usuario creado');
+    cerrarModalUsuario();cargarUsuarios();
+  }catch(e){showToast(e.message,'error');}
+}
+
+async function toggleUsuario(id,activar){
+  if(!confirm(`\u00BF${activar?'Activar':'Desactivar'} este usuario?`))return;
+  try{
+    const data=await api('PUT',`/api/panel/usuarios/${id}`,{activo:activar});
+    if(!data.success)throw new Error(data.error);
+    showToast(activar?'Usuario activado':'Usuario desactivado');
+    cargarUsuarios();
+  }catch(e){showToast(e.message,'error');}
+}
+
+// --- Modal reset password ---
+function abrirModalResetPass(id,nombre){
+  document.getElementById('resetUsrId').value=id;
+  document.getElementById('resetUsrNombre').textContent=nombre;
+  generarPassTemporal();
+  document.getElementById('modalResetPass').classList.add('open');
+}
+function cerrarModalResetPass(){document.getElementById('modalResetPass').classList.remove('open');}
+
+function generarPassTemporal(){
+  const chars='ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#';
+  let pass='Temp#';
+  for(let i=0;i<6;i++)pass+=chars[Math.floor(Math.random()*chars.length)];
+  document.getElementById('resetPassValor').value=pass;
+}
+
+async function confirmarResetPass(){
+  const id=document.getElementById('resetUsrId').value;
+  const pass=document.getElementById('resetPassValor').value;
+  if(!pass){showToast('Ingresa una contrase\u00f1a','error');return;}
+  try{
+    const data=await api('PUT',`/api/panel/usuarios/${id}`,{password:pass,debe_cambiar_pass:true});
+    if(!data.success)throw new Error(data.error);
+    showToast('Contrase\u00f1a restablecida');
+    cerrarModalResetPass();
+  }catch(e){showToast(e.message,'error');}
+}
+
+// --- Cambio de contraseña propia ---
+async function cambiarMiPassword(){
+  const actual=document.getElementById('passActual').value;
+  const nueva=document.getElementById('passNueva').value;
+  const confirmar=document.getElementById('passConfirm').value;
+  if(!actual||!nueva||!confirmar){showToast('Completa todos los campos','error');return;}
+  if(nueva!==confirmar){showToast('Las contrase\u00f1as no coinciden','error');return;}
+  if(nueva.length<8){showToast('M\u00ednimo 8 caracteres','error');return;}
+  try{
+    const data=await api('POST','/api/panel/usuarios/cambiar-password',{password_actual:actual,password_nueva:nueva});
+    if(!data.success)throw new Error(data.error||'Contrase\u00f1a actual incorrecta');
+    showToast('Contrase\u00f1a cambiada exitosamente');
+    document.getElementById('passActual').value='';
+    document.getElementById('passNueva').value='';
+    document.getElementById('passConfirm').value='';
+    document.getElementById('passStrengthBar').className='pass-strength';
+    document.getElementById('passStrengthLbl').textContent='';
+  }catch(e){showToast(e.message,'error');}
+}
+
+async function cerrarTodasSesiones(){
+  if(!confirm('\u00BFCerrar todas las sesiones activas? Tendr\u00e1s que iniciar sesi\u00f3n nuevamente.'))return;
+  try{
+    await api('POST','/api/panel/usuarios/cerrar-sesiones',{});
+    showToast('Sesiones cerradas');
+    setTimeout(doLogout,1500);
+  }catch(e){doLogout();}
+}
+
 function init(){
   const slug=getSlug();STATE.slug=slug;
-  if(!slug||slug==='panel'){document.getElementById('loginSlugLabel').textContent='URL inválida';return;}
+  if(!slug||slug==='panel'){document.getElementById('loginSlugLabel').textContent='URL inv\u00e1lida';return;}
   document.getElementById('loginSlugLabel').textContent=slug;
   const saved=localStorage.getItem(`pc_panel_token_${slug}`);
-  if(saved){STATE.token=saved;STATE.negocio={slug};mostrarPanel();}
+  if(saved){
+    // Validar token con el servidor antes de mostrar el panel
+    STATE.token=saved;
+    api('GET','/api/panel/negocio').then(data=>{
+      if(data.success&&data.negocio){
+        STATE.negocio=data.negocio;
+        mostrarPanel();
+      }else{
+        localStorage.removeItem(`pc_panel_token_${slug}`);
+        STATE.token=null;
+      }
+    }).catch(()=>{
+      localStorage.removeItem(`pc_panel_token_${slug}`);
+      STATE.token=null;
+    });
+  }
 }
 init();
 </script>
