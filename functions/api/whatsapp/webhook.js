@@ -2,6 +2,8 @@
 // Recepcionista virtual multi-tenant para clínicas dentales
 // v2: flujo de reserva completo con estados y links de pago
 
+import { resolverFechaNatural, obtenerHoy, formatearFechaLegible } from "../fechas.js";
+
 const VERIFY_TOKEN = "PRODUCTOC_WA_2026";
 
 // ─── VERIFICACIÓN DEL WEBHOOK (GET) ──────────────────────────────
@@ -375,8 +377,12 @@ export async function onRequestPost(context) {
     ];
     const esConfirmacion = palabrasConfirmacion.some(p => textoLower.includes(p));
 
-    // Detectar si el historial menciona una fecha/hora
-    const tieneFecha = /mañana|lunes|martes|miércoles|jueves|viernes|sábado|domingo|\d{1,2}[\/:]\d{1,2}|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|am|pm|tarde|mañana|mediodía/.test(historialTexto);
+    // ─── RESOLVER FECHA DEL HISTORIAL CON MOTOR DE FECHAS ────
+    // La IA NUNCA calcula fechas — el backend lo hace.
+    const hoyMotor = obtenerHoy();
+    const textoHistorialUsuario = historial.filter(h => h.role === "user").map(h => h.content).join(" ");
+    const fechaResueltaHistorial = textoHistorialUsuario ? resolverFechaNatural(textoHistorialUsuario) : null;
+    const tieneFecha = fechaResueltaHistorial !== null;
 
     // Extraer nombre del paciente del historial si lo tenemos
     // Preferir nombre del historial sobre el perfil de WA (que puede tener errores)
@@ -446,9 +452,12 @@ export async function onRequestPost(context) {
 
       const montoFinal = modoReserva === "adelanto" ? montoReserva : servicioDetectado.precio;
 
-      // Extraer fecha aproximada del historial
-      const fechaMatch = historialTexto.match(/mañana.*?(\d{1,2})\s*(am|pm|de la tarde|de la mañana)|(\d{1,2}[\/:]?\d{0,2})\s*(am|pm)/i);
-      const fechaTexto = fechaMatch ? fechaMatch[0] : "Por confirmar";
+      // Resolver fecha con Motor de Fechas — no con regex
+      const fechaResuelta = fechaResueltaHistorial;
+      const fechaTexto = fechaResuelta
+        ? fechaResuelta.texto
+        : "Por confirmar";
+      const fechaISO = fechaResuelta ? fechaResuelta.fecha : null;
 
       let citaIdDirecta = null;
       try {
@@ -644,17 +653,21 @@ export async function onRequestPost(context) {
       const matchCitaId = reagendamientoActivo.content.match(/citaId=(\d+)/);
       const citaId = matchCitaId ? matchCitaId[1] : null;
 
-      const tieneFechaNueva = /mañana|lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo|\d{1,2}[\/:]\d{1,2}|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|am|pm|tarde|mañana|mediodía/.test(textoLower);
+      // Resolver nueva fecha con Motor de Fechas
+      const fechaNuevaResuelta = resolverFechaNatural(textoConsolidado);
+      const tieneFechaNueva = fechaNuevaResuelta !== null;
 
       if (tieneFechaNueva && citaId) {
+        const fechaNuevaTexto = fechaNuevaResuelta.texto;
+        const fechaNuevaISO = fechaNuevaResuelta.fecha;
         try {
           await env.producto_c_db.prepare(
             `UPDATE citas SET fecha_cita = ? WHERE id = ?`
-          ).bind(textoConsolidado, citaId).run();
+          ).bind(fechaNuevaISO || fechaNuevaTexto, citaId).run();
         } catch(e) {}
 
         const respConfirmacion =
-          `Perfecto${primerNombrePaciente ? ` ${primerNombrePaciente}` : ""} 😊 He actualizado tu solicitud para ${textoConsolidado}. Un miembro del equipo te confirmará la disponibilidad en breve.`;
+          `Perfecto${primerNombrePaciente ? ` ${primerNombrePaciente}` : ""} 😊 He actualizado tu solicitud para el ${fechaNuevaTexto}. Un miembro del equipo te confirmará la disponibilidad en breve.`;
 
         if (negocio.telegram_chat_id && env.TELEGRAM_TOKEN) {
           try {
@@ -781,6 +794,15 @@ Tu nombre es Valeria. Lo dices UNA SOLA VEZ al inicio si te presentas. Después 
 Eres cálida, profesional y cercana — como una secretaria experimentada de clínica privada.
 Nunca suenas como un chatbot. Nunca usas frases robóticas.
 Si preguntan si eres IA: "Soy Valeria, la asistente virtual de ${negocio.nombre}, disponible 24/7 para ayudarte 😊"
+
+━━━ FECHA Y HORA ACTUAL (PANAMÁ) ━━━
+HOY ES: ${hoyMotor.dia} ${hoyMotor.fecha} — hora actual: ${String(hoyMotor.hora).padStart(2,"0")}:${String(hoyMotor.minutos).padStart(2,"0")}
+${fechaResueltaHistorial ? `FECHA SOLICITADA POR EL PACIENTE (ya calculada): ${fechaResueltaHistorial.texto}` : ""}
+
+⚠️ REGLA CRÍTICA DE FECHAS: NUNCA calcules fechas por tu cuenta.
+NUNCA decidas qué día es "mañana", "el próximo lunes" o "la otra semana".
+El sistema ya calculó la fecha correcta. Úsala tal como aparece arriba.
+Si el paciente menciona una fecha nueva que no aparece arriba, respóndele con una confirmación natural y espera — el sistema la calculará en el siguiente turno.
 
 ━━━ TONO SEGÚN EL PACIENTE ━━━
 PACIENTE ACTUAL: ${nombrePaciente || "Nuevo"}
