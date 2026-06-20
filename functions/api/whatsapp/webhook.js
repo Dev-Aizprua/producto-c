@@ -470,7 +470,7 @@ export async function onRequestPost(context) {
           servicioDetectado.id,
           nombrePaciente,
           from,
-          fechaTexto,
+          fechaISO || fechaTexto,
           montoFinal,
           sessionToken
         ).run();
@@ -984,6 +984,11 @@ Usa estas de forma natural (no todas juntas):
         (datosCrear.servicio || "").toLowerCase().includes(s.nombre.toLowerCase())
       );
 
+      // Resolver fecha de la etiqueta con Motor de Fechas
+      const fechaCrearResuelta = datosCrear.fecha ? resolverFechaNatural(datosCrear.fecha) : null;
+      const fechaCrearISO = fechaCrearResuelta ? fechaCrearResuelta.fecha : null;
+      const fechaCrearTexto = fechaCrearResuelta ? fechaCrearResuelta.texto : (datosCrear.fecha || "Por confirmar");
+
       try {
         await env.producto_c_db.prepare(
           `INSERT INTO citas (negocio_id, servicio_id, cliente_nombre, cliente_tel,
@@ -994,7 +999,7 @@ Usa estas de forma natural (no todas juntas):
           svcEncontrado?.id || null,
           datosCrear.nombre || nombrePaciente || "Paciente WA",
           from,
-          datosCrear.fecha || "Por confirmar",
+          fechaCrearISO || fechaCrearTexto,
           svcEncontrado?.precio || 0,
           sessionToken
         ).run();
@@ -1016,7 +1021,11 @@ Usa estas de forma natural (no todas juntas):
       const montoFinal = parseFloat(datosGenerar.monto) || montoReserva || svcEncontrado?.precio || 0;
       let citaIdGenerar = null;
       const nombreCitaGenerar = datosGenerar.nombre || nombrePaciente || "Paciente WA";
-      const fechaCitaGenerar  = datosGenerar.fecha || "Por confirmar";
+
+      // Resolver fecha de la etiqueta con Motor de Fechas
+      const fechaGenerarResuelta = datosGenerar.fecha ? resolverFechaNatural(datosGenerar.fecha) : null;
+      const fechaCitaGenerarISO = fechaGenerarResuelta ? fechaGenerarResuelta.fecha : null;
+      const fechaCitaGenerar = fechaGenerarResuelta ? fechaGenerarResuelta.texto : (datosGenerar.fecha || "Por confirmar");
 
       // Crear cita en estado "esperando_pago"
       try {
@@ -1029,7 +1038,7 @@ Usa estas de forma natural (no todas juntas):
           svcEncontrado?.id || null,
           nombreCitaGenerar,
           from,
-          fechaCitaGenerar,
+          fechaCitaGenerarISO || fechaCitaGenerar,
           montoFinal,
           sessionToken
         ).run();
