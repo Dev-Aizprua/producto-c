@@ -1693,12 +1693,46 @@ async function doLogin(){
       body:JSON.stringify({slug:STATE.slug,usuario,password})}).then(r=>r.json());
     if(!data.success)throw new Error(data.error||'Error de acceso');
     STATE.token=data.token;STATE.negocio=data.negocio;
+    STATE.rol=data.usuario?.rol||'admin';
+    STATE.usuarioNombre=data.usuario?.nombre||usuario;
     localStorage.setItem(`pc_panel_token_${STATE.slug}`,data.token);
     localStorage.setItem(`pc_panel_usuario_${STATE.slug}`,usuario);
+    localStorage.setItem(`pc_panel_rol_${STATE.slug}`,STATE.rol);
     mostrarPanel();
   }catch(err){
     errorEl.textContent=err.message;errorEl.classList.add('show');
     btn.disabled=false;btn.textContent='Ingresar al Panel';
+  }
+}
+
+// ══ RESTRICCIONES VISUALES POR ROL ═════════════════════════
+function aplicarRestriccionesRol(){
+  const rol=STATE.rol||localStorage.getItem(`pc_panel_rol_${STATE.slug}`)||'admin';
+  STATE.rol=rol;
+
+  // Admin ve todo — no restringir nada
+  if(rol==='admin')return;
+
+  if(rol==='recepcionista'){
+    // Ocultar tab Usuarios y Configuración completa
+    document.querySelectorAll('.nav-link[onclick*="usuarios"]').forEach(el=>el.style.display='none');
+    document.querySelectorAll('.nav-link[onclick*="negocio"]').forEach(el=>el.style.display='none');
+    document.querySelectorAll('.bn-item[onclick*="negocio"]').forEach(el=>el.style.display='none');
+    document.querySelectorAll('.acceso-item[onclick*="negocio"]').forEach(el=>el.style.display='none');
+    document.querySelectorAll('.acceso-item[onclick*="servicios"]').forEach(el=>el.style.display='none');
+  }
+
+  if(rol==='especialista'){
+    // Solo ve Dashboard (limitado) y sus citas — ocultar casi todo
+    document.querySelectorAll('.nav-link[onclick*="usuarios"]').forEach(el=>el.style.display='none');
+    document.querySelectorAll('.nav-link[onclick*="negocio"]').forEach(el=>el.style.display='none');
+    document.querySelectorAll('.nav-link[onclick*="chats"]').forEach(el=>el.style.display='none');
+    document.querySelectorAll('.nav-link[onclick*="servicios"]').forEach(el=>el.style.display='none');
+    document.querySelectorAll('.bn-item[onclick*="negocio"]').forEach(el=>el.style.display='none');
+    document.querySelectorAll('.bn-item[onclick*="chats"]').forEach(el=>el.style.display='none');
+    // Ocultar ingresos del hero — un especialista no debe ver dinero
+    const heroIngresos=document.querySelector('.hero-ingresos');
+    if(heroIngresos)heroIngresos.style.display='none';
   }
 }
 
@@ -1718,10 +1752,11 @@ function mostrarPanel(){
   document.getElementById('sbUserAv').textContent=(nombre[0]||'A').toUpperCase();
   document.getElementById('mhGreeting').textContent=`\u00a1Hola, ${nombre}! \uD83D\uDC4B`;
   document.getElementById('verChatLink').href=`/${STATE.slug}`;
+  aplicarRestriccionesRol();
   cargarNegocio();cargarServicios();cargarCitas();cargarChats();cargarKPIs();cargarUsuarios();
   iniciarTimerSesion();
   // Mi perfil — usar usuario del login, no nombre del negocio
-  const usuarioLogin=STATE.negocio?.panel_usuario||localStorage.getItem(`pc_panel_usuario_${STATE.slug}`)||'Admin';
+  const usuarioLogin=STATE.usuarioNombre||localStorage.getItem(`pc_panel_usuario_${STATE.slug}`)||'Admin';
   const miAv=document.getElementById('miSesionAv');
   const miNom=document.getElementById('miSesionNombre');
   const miRol=document.getElementById('miSesionRol');
@@ -1732,7 +1767,9 @@ function mostrarPanel(){
 
 function doLogout(){
   localStorage.removeItem(`pc_panel_token_${STATE.slug}`);
-  STATE.token=null;
+  localStorage.removeItem(`pc_panel_rol_${STATE.slug}`);
+  localStorage.removeItem(`pc_panel_usuario_${STATE.slug}`);
+  STATE.token=null;STATE.rol=null;
   document.getElementById('panelLayout').classList.remove('visible');
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('loginPassword').value='';
@@ -2924,6 +2961,8 @@ function init(){
     api('GET','/api/panel/negocio').then(data=>{
       if(data.success&&data.negocio){
         STATE.negocio=data.negocio;
+        STATE.rol=localStorage.getItem(`pc_panel_rol_${slug}`)||'admin';
+        STATE.usuarioNombre=localStorage.getItem(`pc_panel_usuario_${slug}`)||'Admin';
         mostrarPanel();
       }else{
         localStorage.removeItem(`pc_panel_token_${slug}`);
