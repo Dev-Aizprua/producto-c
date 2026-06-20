@@ -3,6 +3,7 @@
 // v2: flujo de reserva completo con estados y links de pago
 
 import { resolverFechaNatural, obtenerHoy, formatearFechaLegible } from "../fechas.js";
+import { verificarDisponibilidad } from "../agenda.js";
 
 const VERIFY_TOKEN = "PRODUCTOC_WA_2026";
 
@@ -482,19 +483,35 @@ export async function onRequestPost(context) {
         ? fechaResuelta.texto
         : "Por confirmar";
       const fechaISO = fechaResuelta ? fechaResuelta.fecha : null;
+      const horaISO = fechaResuelta ? fechaResuelta.hora : null;
+
+      // ─── VERIFICAR DISPONIBILIDAD (Agenda Real) ────────────
+      if (fechaISO && horaISO) {
+        const disponibilidad = await verificarDisponibilidad(
+          env, negocioId, fechaISO, horaISO, servicioDetectado.duracion || 30
+        );
+        if (!disponibilidad.disponible) {
+          const respNoDisponible = `Ese horario no está disponible (${disponibilidad.motivo}). ¿Te gustaría proponer otra fecha u hora? 😊`;
+          await marcarLeido(waToken, phoneNumberId, message.id);
+          await new Promise(r => setTimeout(r, 1500));
+          await enviarMensaje(waToken, phoneNumberId, from, respNoDisponible);
+          return new Response("EVENT_RECEIVED", { status: 200 });
+        }
+      }
 
       let citaIdDirecta = null;
       try {
         const insertRes = await env.producto_c_db.prepare(
           `INSERT INTO citas (negocio_id, servicio_id, cliente_nombre, cliente_tel,
-           fecha_cita, total, estado_pago, metodo_pago, session_token, canal)
-           VALUES (?, ?, ?, ?, ?, ?, 'esperando_pago', 'paguelofacil', ?, 'whatsapp')`
+           fecha_cita, fecha_hora, total, estado_pago, metodo_pago, session_token, canal)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'esperando_pago', 'paguelofacil', ?, 'whatsapp')`
         ).bind(
           negocioId,
           servicioDetectado.id,
           nombrePaciente,
           from,
           fechaISO || fechaTexto,
+          horaISO,
           montoFinal,
           sessionToken
         ).run();
