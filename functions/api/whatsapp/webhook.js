@@ -355,6 +355,30 @@ export async function onRequestPost(context) {
         await new Promise(r => setTimeout(r, 800));
         // Marcador invisible en historial para no reenviar la imagen
         historial.push({ role: "assistant", content: `[img:${servicioMencionadoAhora.nombre.toLowerCase()}]` });
+
+        // Persistir el marcador EN D1 inmediatamente — evita reenvío si Meta
+        // reintenta el webhook mientras este request sigue en curso (timeout/retry)
+        try {
+          const chatExImg = await env.producto_c_db.prepare(
+            `SELECT id, historial_json FROM chats WHERE negocio_id = ? AND cliente_tel = ? AND completado = 0 LIMIT 1`
+          ).bind(negocioId, from).first();
+
+          if (chatExImg) {
+            let historialExistente = [];
+            try { historialExistente = JSON.parse(chatExImg.historial_json || "[]"); } catch(e) {}
+            historialExistente.push({ role: "assistant", content: `[img:${servicioMencionadoAhora.nombre.toLowerCase()}]` });
+            await env.producto_c_db.prepare(
+              `UPDATE chats SET historial_json = ? WHERE id = ?`
+            ).bind(JSON.stringify(historialExistente), chatExImg.id).run();
+          } else {
+            await env.producto_c_db.prepare(
+              `INSERT INTO chats (negocio_id, session_token, cliente_nombre, cliente_tel, historial_json, fecha, completado, canal) VALUES (?, ?, ?, ?, ?, ?, 0, 'whatsapp')`
+            ).bind(negocioId, sessionToken, nombrePaciente || "Paciente WA", from,
+              JSON.stringify([{ role: "assistant", content: `[img:${servicioMencionadoAhora.nombre.toLowerCase()}]` }]),
+              new Date().toISOString()
+            ).run();
+          }
+        } catch(e) { console.log("Error persistiendo marcador imagen:", e.message); }
       }
     }
 
