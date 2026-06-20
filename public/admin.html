@@ -861,13 +861,15 @@
       <div class="sb-section">Administración</div>
       <a class="nav-link" onclick="showTab('usuarios',this)"><i class="ti ti-users"></i> Usuarios</a>
       <a class="nav-link" onclick="showTab('negocio',this)"><i class="ti ti-settings"></i> Configuración</a>
+      <div class="sb-section">Cuenta</div>
+      <a class="nav-link" onclick="showTab('micuenta',this)"><i class="ti ti-user-circle"></i> Mi cuenta</a>
     </nav>
     <div class="sb-footer">
-      <div class="sb-user">
+      <div class="sb-user" onclick="showTab('micuenta',null)" style="cursor:pointer" title="Ver mi cuenta">
         <div class="sb-user-av" id="sbUserAv">A</div>
         <div>
-          <div class="sb-user-name">Admin</div>
-          <div class="sb-user-role">Administrador</div>
+          <div class="sb-user-name" id="sbUserName">Admin</div>
+          <div class="sb-user-role" id="sbUserRole">Administrador</div>
         </div>
       </div>
       <button class="logout-btn" onclick="doLogout()"><i class="ti ti-logout"></i> Cerrar sesión</button>
@@ -1326,34 +1328,6 @@
                 <div class="empty-state" style="grid-column:1/-1;padding:32px"><i class="ti ti-loader" style="animation:spin 1s linear infinite"></i><p>Cargando...</p></div>
               </div>
             </div>
-
-            <div class="card">
-              <div class="card-title"><i class="ti ti-lock"></i> Mi contrase&#xF1;a</div>
-              <div class="mi-sesion-info">
-                <div class="mi-sesion-av" id="miSesionAv">A</div>
-                <div>
-                  <div class="mi-sesion-nombre" id="miSesionNombre">Administrador</div>
-                  <div class="mi-sesion-rol" id="miSesionRol">Rol: Administrador</div>
-                </div>
-              </div>
-              <div class="form-row" style="grid-template-columns:1fr;gap:12px">
-                <div>
-                  <label class="field-label">Contrase&#xF1;a actual</label>
-                  <input class="field-input" id="passActual" type="password" placeholder="••••••••" />
-                </div>
-                <div>
-                  <label class="field-label">Nueva contrase&#xF1;a</label>
-                  <input class="field-input" id="passNueva" type="password" placeholder="Mínimo 8 caracteres" oninput="evaluarPass(this.value)" />
-                  <div class="pass-strength" id="passStrengthBar"></div>
-                  <div class="pass-strength-lbl" id="passStrengthLbl" style="color:#aaa"></div>
-                </div>
-                <div>
-                  <label class="field-label">Confirmar nueva contrase&#xF1;a</label>
-                  <input class="field-input" id="passConfirm" type="password" placeholder="Repite la nueva contrase&#xF1;a" />
-                </div>
-              </div>
-              <button class="btn btn-primary" style="margin-top:16px" onclick="cambiarMiPassword()"><i class="ti ti-lock-check"></i> Cambiar contrase&#xF1;a</button>
-            </div>
           </div>
 
           <div>
@@ -1381,6 +1355,39 @@
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- ══ TAB: MI CUENTA (visible para TODOS los roles) ═══ -->
+      <section class="tab-section" id="tab-micuenta">
+        <div class="section-hdr"><h2>Mi cuenta</h2></div>
+
+        <div class="card" style="max-width:520px">
+          <div class="card-title"><i class="ti ti-lock"></i> Cambiar mi contrase&#xF1;a</div>
+          <div class="mi-sesion-info">
+            <div class="mi-sesion-av" id="miSesionAv2">A</div>
+            <div>
+              <div class="mi-sesion-nombre" id="miSesionNombre2">Administrador</div>
+              <div class="mi-sesion-rol" id="miSesionRol2">Rol: Administrador</div>
+            </div>
+          </div>
+          <div class="form-row" style="grid-template-columns:1fr;gap:12px">
+            <div>
+              <label class="field-label">Contrase&#xF1;a actual</label>
+              <input class="field-input" id="passActual" type="password" placeholder="••••••••" />
+            </div>
+            <div>
+              <label class="field-label">Nueva contrase&#xF1;a</label>
+              <input class="field-input" id="passNueva" type="password" placeholder="Mínimo 8 caracteres" oninput="evaluarPass(this.value)" />
+              <div class="pass-strength" id="passStrengthBar"></div>
+              <div class="pass-strength-lbl" id="passStrengthLbl" style="color:#aaa"></div>
+            </div>
+            <div>
+              <label class="field-label">Confirmar nueva contrase&#xF1;a</label>
+              <input class="field-input" id="passConfirm" type="password" placeholder="Repite la nueva contrase&#xF1;a" />
+            </div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="cambiarMiPassword()"><i class="ti ti-lock-check"></i> Cambiar contrase&#xF1;a</button>
         </div>
       </section>
 
@@ -1755,14 +1762,22 @@ function mostrarPanel(){
   aplicarRestriccionesRol();
   cargarNegocio();cargarServicios();cargarCitas();cargarChats();cargarKPIs();cargarUsuarios();
   iniciarTimerSesion();
-  // Mi perfil — usar usuario del login, no nombre del negocio
+
+  // Identidad del usuario logueado (no del negocio) — sidebar + Mi cuenta
   const usuarioLogin=STATE.usuarioNombre||localStorage.getItem(`pc_panel_usuario_${STATE.slug}`)||'Admin';
-  const miAv=document.getElementById('miSesionAv');
-  const miNom=document.getElementById('miSesionNombre');
-  const miRol=document.getElementById('miSesionRol');
-  if(miAv)miAv.textContent=(usuarioLogin[0]||'A').toUpperCase();
-  if(miNom)miNom.textContent=usuarioLogin;
-  if(miRol)miRol.textContent='Rol: Administrador';
+  const rolActual=STATE.rol||localStorage.getItem(`pc_panel_rol_${STATE.slug}`)||'admin';
+  const rolLabel={admin:'Administrador',recepcionista:'Recepcionista',especialista:'Especialista'}[rolActual]||'Administrador';
+  const inicialesUsr=(usuarioLogin[0]||'A').toUpperCase();
+
+  // Footer del sidebar — quién tiene la sesión activa
+  const sbUN=document.getElementById('sbUserName');if(sbUN)sbUN.textContent=usuarioLogin;
+  const sbUR=document.getElementById('sbUserRole');if(sbUR)sbUR.textContent=rolLabel;
+  document.getElementById('sbUserAv').textContent=inicialesUsr;
+
+  // Tab Mi cuenta (visible para todos los roles)
+  const miAv2=document.getElementById('miSesionAv2');if(miAv2)miAv2.textContent=inicialesUsr;
+  const miNom2=document.getElementById('miSesionNombre2');if(miNom2)miNom2.textContent=usuarioLogin;
+  const miRol2=document.getElementById('miSesionRol2');if(miRol2)miRol2.textContent=`Rol: ${rolLabel}`;
 }
 
 function doLogout(){
