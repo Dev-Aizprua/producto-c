@@ -2523,11 +2523,21 @@ let _todosChatsData=[];
 
 function tiempoRelativo(iso){
   if(!iso)return'';
-  const diff=(Date.now()-new Date(iso))/1000;
-  if(diff<60)return'ahora';
+  // SQLite devuelve "YYYY-MM-DD HH:MM:SS" en UTC pero SIN indicarlo —
+  // JS lo interpreta como hora LOCAL si no se corrige, dando diffs erróneos.
+  // Si no trae 'T' ni zona horaria, la normalizamos a formato ISO UTC.
+  let fechaStr=iso;
+  if(typeof iso==='string'&&iso.includes(' ')&&!iso.includes('T')){
+    fechaStr=iso.replace(' ','T')+'Z';
+  }
+  const fecha=new Date(fechaStr);
+  if(isNaN(fecha.getTime()))return'';
+  const diff=(Date.now()-fecha.getTime())/1000;
+  if(diff<5)return'ahora';
+  if(diff<60)return`hace ${Math.floor(diff)}s`;
   if(diff<3600)return`hace ${Math.floor(diff/60)} min`;
   if(diff<86400)return`hace ${Math.floor(diff/3600)}h`;
-  return new Date(iso).toLocaleDateString('es-PA',{day:'numeric',month:'short'});
+  return fecha.toLocaleDateString('es-PA',{day:'numeric',month:'short'});
 }
 
 function tagChat(chat){
