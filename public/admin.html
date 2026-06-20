@@ -1695,20 +1695,33 @@ async function doLogin(){
   if(!usuario||!password){errorEl.textContent='Ingresa usuario y contraseña.';errorEl.classList.add('show');return;}
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Ingresando...';
   errorEl.classList.remove('show');
+
+  let data;
   try{
-    const data=await fetch('/api/panel/login',{method:'POST',headers:{'Content-Type':'application/json'},
+    data=await fetch('/api/panel/login',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({slug:STATE.slug,usuario,password})}).then(r=>r.json());
     if(!data.success)throw new Error(data.error||'Error de acceso');
-    STATE.token=data.token;STATE.negocio=data.negocio;
-    STATE.rol=data.usuario?.rol||'admin';
-    STATE.usuarioNombre=data.usuario?.nombre||usuario;
-    localStorage.setItem(`pc_panel_token_${STATE.slug}`,data.token);
-    localStorage.setItem(`pc_panel_usuario_${STATE.slug}`,usuario);
-    localStorage.setItem(`pc_panel_rol_${STATE.slug}`,STATE.rol);
-    mostrarPanel();
   }catch(err){
     errorEl.textContent=err.message;errorEl.classList.add('show');
     btn.disabled=false;btn.textContent='Ingresar al Panel';
+    return;
+  }
+
+  // Login exitoso — fuera del try/catch para que un error de render
+  // NO deje el botón colgado en "Ingresando..."
+  STATE.token=data.token;STATE.negocio=data.negocio;
+  STATE.rol=data.usuario?.rol||'admin';
+  STATE.usuarioNombre=data.usuario?.nombre||usuario;
+  localStorage.setItem(`pc_panel_token_${STATE.slug}`,data.token);
+  localStorage.setItem(`pc_panel_usuario_${STATE.slug}`,usuario);
+  localStorage.setItem(`pc_panel_rol_${STATE.slug}`,STATE.rol);
+  btn.disabled=false;btn.textContent='Ingresar al Panel'; // reset preventivo del botón
+  try{
+    mostrarPanel();
+  }catch(renderErr){
+    console.error('Error mostrando panel:',renderErr);
+    // El panel ya quedó visible (mostrarPanel oculta login en su primera línea),
+    // así que no revertimos nada — solo registramos el error para depurar.
   }
 }
 
@@ -2978,7 +2991,12 @@ function init(){
         STATE.negocio=data.negocio;
         STATE.rol=localStorage.getItem(`pc_panel_rol_${slug}`)||'admin';
         STATE.usuarioNombre=localStorage.getItem(`pc_panel_usuario_${slug}`)||'Admin';
-        mostrarPanel();
+        try{
+          mostrarPanel();
+        }catch(renderErr){
+          console.error('Error mostrando panel en init():',renderErr);
+          // El token SÍ era válido — no lo borramos, el panel ya quedó visible
+        }
       }else{
         localStorage.removeItem(`pc_panel_token_${slug}`);
         STATE.token=null;
