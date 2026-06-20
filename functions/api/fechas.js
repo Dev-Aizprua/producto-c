@@ -152,8 +152,8 @@ export function extraerHora(texto) {
   if (!texto) return null;
   const lower = texto.toLowerCase();
 
-  // Formato "X de la tarde / noche / mañana"
-  const matchTarde = lower.match(/(\d{1,2})(?::(\d{2}))?\s*(?:de la tarde|pm)/);
+  // Formato "X de la tarde / noche / mañana" — acepta pm, p.m, p. m.
+  const matchTarde = lower.match(/(\d{1,2})(?::(\d{2}))?\s*(?:de la tarde|p\.?\s*m\.?)/);
   if (matchTarde) {
     let h = parseInt(matchTarde[1]);
     const m = matchTarde[2] ? parseInt(matchTarde[2]) : 0;
@@ -161,7 +161,7 @@ export function extraerHora(texto) {
     return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
   }
 
-  const matchManana = lower.match(/(\d{1,2})(?::(\d{2}))?\s*(?:de la mañana|am)/);
+  const matchManana = lower.match(/(\d{1,2})(?::(\d{2}))?\s*(?:de la mañana|a\.?\s*m\.?)/);
   if (matchManana) {
     let h = parseInt(matchManana[1]);
     const m = matchManana[2] ? parseInt(matchManana[2]) : 0;
