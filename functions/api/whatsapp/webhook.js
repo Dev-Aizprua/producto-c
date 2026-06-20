@@ -114,6 +114,19 @@ export async function onRequestPost(context) {
       }
     } catch(e) {}
 
+    // ─── DETECCIÓN: respuesta a seguimiento de cita sin pagar ──────
+    // Fase 8 — visibilidad panel. Si el cliente tiene una cita con
+    // seguimiento_enviado=1 y aún no respondida, cualquier mensaje
+    // entrante de su número cuenta como respuesta. Se hace temprano
+    // y de forma genérica para no duplicar lógica en cada rama del flujo.
+    try {
+      await env.producto_c_db.prepare(
+        `UPDATE citas SET seguimiento_respondido = 1
+         WHERE negocio_id = ? AND cliente_tel = ?
+           AND seguimiento_enviado = 1 AND seguimiento_respondido = 0`
+      ).bind(negocioId, from).run();
+    } catch(e) { console.log("Error marcando seguimiento_respondido cita:", e.message); }
+
     // ─── MANEJO DE AUDIO CON GROQ WHISPER ────────────────────
     if (tipo === "audio" || tipo === "voice") {
       const audioId  = message.audio?.id || message.voice?.id;
@@ -285,7 +298,7 @@ export async function onRequestPost(context) {
 
     try {
       const chatResult = await env.producto_c_db.prepare(
-        `SELECT id, historial_json, cliente_nombre, session_token FROM chats
+        `SELECT id, historial_json, cliente_nombre, session_token, seguimiento_enviado, seguimiento_respondido FROM chats
          WHERE negocio_id = ? AND cliente_tel = ? AND completado = 0
          ORDER BY id DESC LIMIT 1`
       ).bind(negocioId, from).first();
@@ -297,6 +310,19 @@ export async function onRequestPost(context) {
         nombrePaciente = chatResult.cliente_nombre;
       }
       sessionToken = chatResult?.session_token || `wa_${from}_${Date.now()}`;
+
+      // ─── DETECCIÓN: el cliente respondió después de un seguimiento ──
+      // Fase 8 — visibilidad panel. Si ya se le había enviado un mensaje
+      // de reenganche (seguimiento_enviado=1) y aún no estaba marcado
+      // como respondido, este mensaje entrante es la respuesta.
+      // No afecta el flujo normal de la conversación — solo deja rastro.
+      if (chatResult?.seguimiento_enviado === 1 && chatResult?.seguimiento_respondido === 0) {
+        try {
+          await env.producto_c_db.prepare(
+            "UPDATE chats SET seguimiento_respondido = 1 WHERE id = ?"
+          ).bind(chatResult.id).run();
+        } catch(e) { console.log("Error marcando seguimiento_respondido:", e.message); }
+      }
     } catch(e) {
       sessionToken = `wa_${from}_${Date.now()}`;
     }

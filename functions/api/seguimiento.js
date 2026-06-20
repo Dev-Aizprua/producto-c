@@ -8,6 +8,11 @@
 // nunca repetir.
 //
 // Margen de seguridad: 16h disparo + 8h margen = 24h límite Meta
+//
+// CAMBIO (Fase 8 — visibilidad panel):
+// Ahora también guarda seguimiento_fecha (timestamp real del envío)
+// para que el panel pueda mostrar "seguimiento enviado hace X tiempo"
+// en lugar de solo un booleano sin fecha.
 // ============================================================
 
 const HORAS_SEGUIMIENTO = 16;
@@ -94,8 +99,9 @@ export async function onRequestGet(context) {
 
         await enviarMensajeWA(chat.wa_token, chat.wa_phone_id, chat.cliente_tel, mensajeSeguimiento);
 
+        // Guardamos también el momento exacto del envío — antes solo había un booleano
         await env.producto_c_db.prepare(
-          "UPDATE chats SET seguimiento_enviado = 1 WHERE id = ?"
+          "UPDATE chats SET seguimiento_enviado = 1, seguimiento_fecha = datetime('now') WHERE id = ?"
         ).bind(chat.id).run();
 
         if (chat.telegram_chat_id && env.TELEGRAM_TOKEN) {
@@ -119,8 +125,9 @@ export async function onRequestGet(context) {
 
         await enviarMensajeWA(cita.wa_token, cita.wa_phone_id, cita.cliente_tel, mensajeSeguimiento);
 
+        // Guardamos también el momento exacto del envío
         await env.producto_c_db.prepare(
-          "UPDATE citas SET seguimiento_enviado = 1 WHERE id = ?"
+          "UPDATE citas SET seguimiento_enviado = 1, seguimiento_fecha = datetime('now') WHERE id = ?"
         ).bind(cita.id).run();
 
         if (cita.telegram_chat_id && env.TELEGRAM_TOKEN) {

@@ -800,6 +800,30 @@
     .sesion-timer{display:flex;align-items:center;gap:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px 14px;font-size:13px;color:#92400e;font-weight:600}
     .sesion-timer i{font-size:16px}
 
+    /* ══ SEGUIMIENTOS VALERIA (Fase 8) ═══════════════════════ */
+    .seg-stats-row{display:flex;gap:10px}
+    .seg-stat{flex:1;background:#f8f9fc;border-radius:10px;padding:10px;text-align:center}
+    .seg-stat-num{font-size:18px;font-weight:800;color:#1a1a2e}
+    .seg-stat-num.green{color:#16a34a}
+    .seg-stat-num.orange{color:#d97706}
+    .seg-stat-lbl{font-size:10.5px;color:#aaa;font-weight:500;margin-top:2px}
+    .seg-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f5f7fa}
+    .seg-item:last-child{border-bottom:none}
+    .seg-item-ico{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+    .seg-item-ico.respondio{background:#dcfce7}
+    .seg-item-ico.pendiente{background:#fef3c7}
+    .seg-item-ico.convertido{background:#dbeafe}
+    .seg-item-info{flex:1;min-width:0}
+    .seg-item-nombre{font-size:13px;font-weight:700;color:#1a1a2e}
+    .seg-item-detalle{font-size:11.5px;color:#888;margin-top:1px}
+    .seg-item-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+    .seg-item-tiempo{font-size:11px;color:#aaa}
+    .seg-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+    .seg-badge.respondio{background:#dcfce7;color:#16a34a}
+    .seg-badge.pendiente{background:#fef3c7;color:#d97706}
+    .seg-badge.convertido{background:#dbeafe;color:#1d4ed8}
+    .seg-wa-btn{background:#25d366;color:white;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;margin-top:4px}
+
     @media(max-width:768px){
       .usr-grid{grid-template-columns:1fr}
       .usr-acciones{display:flex!important;flex-direction:row!important;gap:6px!important;flex-wrap:nowrap!important}
@@ -1212,6 +1236,20 @@
 
       <!-- ══ TAB: CITAS ══════════════════════════════════════ -->
       <section class="tab-section" id="tab-citas">
+
+        <!-- ── SEGUIMIENTOS AUTOMÁTICOS (Fase 8) ─────────────── -->
+        <div class="card" id="seguimientosCard" style="margin-bottom:16px">
+          <div class="usr-header" style="margin-bottom:10px">
+            <div class="card-title" style="margin:0"><i class="ti ti-robot"></i> Seguimientos de Valeria</div>
+            <button class="dash-section-hdr-link" onclick="toggleSeguimientos()" id="btnToggleSeg">Ver todos</button>
+          </div>
+          <div class="seg-stats-row" id="segStatsRow">
+            <div class="seg-stat"><div class="seg-stat-num" id="segTotal">0</div><div class="seg-stat-lbl">Enviados</div></div>
+            <div class="seg-stat"><div class="seg-stat-num green" id="segRespondidos">0</div><div class="seg-stat-lbl">Respondieron</div></div>
+            <div class="seg-stat"><div class="seg-stat-num orange" id="segSinRespuesta">0</div><div class="seg-stat-lbl">Sin respuesta</div></div>
+          </div>
+          <div id="seguimientosList" style="display:none;margin-top:14px"></div>
+        </div>
 
         <!-- ── MOBILE ─────────────────────────────────────── -->
         <div class="citas-mobile">
@@ -1773,7 +1811,7 @@ function mostrarPanel(){
   document.getElementById('mhGreeting').textContent=`\u00a1Hola, ${nombre}! \uD83D\uDC4B`;
   document.getElementById('verChatLink').href=`/${STATE.slug}`;
   aplicarRestriccionesRol();
-  cargarNegocio();cargarServicios();cargarCitas();cargarChats();cargarKPIs();cargarUsuarios();
+  cargarNegocio();cargarServicios();cargarCitas();cargarChats();cargarKPIs();cargarUsuarios();cargarSeguimientos();
   iniciarTimerSesion();
 
   // Identidad del usuario logueado (no del negocio) — sidebar + Mi cuenta
@@ -2538,6 +2576,66 @@ function tiempoRelativo(iso){
   if(diff<3600)return`hace ${Math.floor(diff/60)} min`;
   if(diff<86400)return`hace ${Math.floor(diff/3600)}h`;
   return fecha.toLocaleDateString('es-PA',{day:'numeric',month:'short'});
+}
+
+// ══ SEGUIMIENTOS VALERIA (Fase 8) ══════════════════════════════
+let _seguimientosData=[];
+let _seguimientosVisible=false;
+
+async function cargarSeguimientos(){
+  try{
+    const data=await api('GET','/api/panel/seguimientos');
+    if(!data.success)return;
+    _seguimientosData=data.seguimientos||[];
+
+    const total=_seguimientosData.length;
+    const respondidos=_seguimientosData.filter(s=>s.seguimiento_respondido===1).length;
+    const sinRespuesta=total-respondidos;
+
+    const elT=document.getElementById('segTotal');if(elT)elT.textContent=total;
+    const elR=document.getElementById('segRespondidos');if(elR)elR.textContent=respondidos;
+    const elS=document.getElementById('segSinRespuesta');if(elS)elS.textContent=sinRespuesta;
+
+    renderSeguimientosList();
+  }catch(e){console.error('Error cargando seguimientos:',e);}
+}
+
+function renderSeguimientosList(){
+  const list=document.getElementById('seguimientosList');
+  if(!list)return;
+  if(!_seguimientosData.length){
+    list.innerHTML=`<div style="padding:16px 0;color:#aaa;font-size:13px;text-align:center">A\u00fan no se han enviado seguimientos autom\u00e1ticos.</div>`;
+    return;
+  }
+  list.innerHTML=_seguimientosData.map(s=>{
+    const nombre=s.cliente_nombre||'Cliente';
+    const respondido=s.seguimiento_respondido===1;
+    const convertido=s.convertido===true;
+    let badgeCls='pendiente',badgeTxt='Sin respuesta',icoCls='pendiente',ico='\u23F3';
+    if(convertido){badgeCls='convertido';badgeTxt='Convertido';icoCls='convertido';ico='\u2705';}
+    else if(respondido){badgeCls='respondio';badgeTxt='Respondi\u00f3';icoCls='respondio';ico='\uD83D\uDCAC';}
+    const waLink=s.cliente_tel?`https://wa.me/${s.cliente_tel}`:'#';
+    return`<div class="seg-item">
+      <div class="seg-item-ico ${icoCls}">${ico}</div>
+      <div class="seg-item-info">
+        <div class="seg-item-nombre">${nombre}</div>
+        <div class="seg-item-detalle">${s.etiqueta}</div>
+        ${!respondido&&!convertido&&s.cliente_tel?`<a href="${waLink}" target="_blank"><button class="seg-wa-btn"><i class="ti ti-brand-whatsapp"></i> Seguir manualmente</button></a>`:''}
+      </div>
+      <div class="seg-item-right">
+        <span class="seg-badge ${badgeCls}">${badgeTxt}</span>
+        <span class="seg-item-tiempo">${tiempoRelativo(s.seguimiento_fecha)}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleSeguimientos(){
+  _seguimientosVisible=!_seguimientosVisible;
+  const list=document.getElementById('seguimientosList');
+  const btn=document.getElementById('btnToggleSeg');
+  if(list)list.style.display=_seguimientosVisible?'block':'none';
+  if(btn)btn.textContent=_seguimientosVisible?'Ocultar':'Ver todos';
 }
 
 function tagChat(chat){
