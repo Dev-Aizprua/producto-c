@@ -6,6 +6,8 @@
 // DELETE /api/panel/servicios?id=X   → eliminar servicio
 // ============================================================
 
+import { registrarAccion } from './auditLib.js';
+
 const cors = {
   'Access-Control-Allow-Origin':  '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -43,7 +45,10 @@ export async function onRequestPost(context) {
       .bind(data.negocio_id, nombre, descripcion || '', precio, imagen_url || '', icono || '🛎️', duracion || '45 min', orden || 0)
       .run();
 
-    return Response.json({ success: true, id: result.meta.last_row_id }, { headers: cors });
+    const nuevoId = result.meta.last_row_id;
+    await registrarAccion(env, data, 'crear', 'servicio', nuevoId, `Creó el servicio "${nombre}" — $${precio}`);
+
+    return Response.json({ success: true, id: nuevoId }, { headers: cors });
   } catch (err) {
     return Response.json({ success: false, error: err.message }, { status: 500, headers: cors });
   }
@@ -62,6 +67,11 @@ export async function onRequestPut(context) {
   const { nombre, descripcion, precio, imagen_url, icono, duracion, orden, activo } = body;
 
   try {
+    // Leer valores previos para detectar qué cambió (al menos el precio, que es lo más sensible)
+    const servicioPrevio = await env.producto_c_db
+      .prepare('SELECT nombre, precio, activo FROM servicios WHERE id = ? AND negocio_id = ? LIMIT 1')
+      .bind(id, data.negocio_id).first();
+
     await env.producto_c_db
       .prepare(`UPDATE servicios SET
         nombre = ?, descripcion = ?, precio = ?, imagen_url = ?,
@@ -69,6 +79,21 @@ export async function onRequestPut(context) {
         WHERE id = ? AND negocio_id = ?`)
       .bind(nombre, descripcion, precio, imagen_url, icono, duracion, orden, activo ?? 1, id, data.negocio_id)
       .run();
+
+    // ── Auditoría ──────────────────────────────────────────────
+    if (servicioPrevio) {
+      let detalle = `Editó el servicio "${nombre}"`;
+      if (Number(servicioPrevio.precio) !== Number(precio)) {
+        detalle = `Cambió el precio de "${servicioPrevio.nombre}" de $${servicioPrevio.precio} a $${precio}`;
+      }
+      const accionTipo = (servicioPrevio.activo === 1 && activo === 0) ? 'desactivar'
+                        : (servicioPrevio.activo === 0 && activo === 1) ? 'activar'
+                        : 'editar';
+      if (accionTipo === 'desactivar') detalle = `Desactivó el servicio "${servicioPrevio.nombre}"`;
+      if (accionTipo === 'activar')    detalle = `Activó el servicio "${servicioPrevio.nombre}"`;
+
+      await registrarAccion(env, data, accionTipo, 'servicio', Number(id), detalle);
+    }
 
     return Response.json({ success: true, mensaje: 'Servicio actualizado' }, { headers: cors });
   } catch (err) {
@@ -83,9 +108,16 @@ export async function onRequestDelete(context) {
   if (!id) return Response.json({ success: false, error: 'id requerido' }, { status: 400, headers: cors });
 
   try {
+    // Leer nombre antes de eliminar — si no, perdemos el dato para el log
+    const servicio = await env.producto_c_db
+      .prepare('SELECT nombre FROM servicios WHERE id = ? AND negocio_id = ? LIMIT 1')
+      .bind(id, data.negocio_id).first();
+
     await env.producto_c_db
       .prepare('DELETE FROM servicios WHERE id = ? AND negocio_id = ?')
       .bind(id, data.negocio_id).run();
+
+    await registrarAccion(env, data, 'eliminar', 'servicio', Number(id), `Eliminó el servicio "${servicio?.nombre || 'desconocido'}"`);
 
     return Response.json({ success: true, mensaje: 'Servicio eliminado' }, { headers: cors });
   } catch (err) {

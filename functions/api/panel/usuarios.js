@@ -5,6 +5,8 @@
 // El middleware ya validó el token y pasó negocio_id en context.data
 // ============================================================
 
+import { registrarAccion } from './auditLib.js';
+
 const cors = {
   'Access-Control-Allow-Origin':  '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -52,9 +54,13 @@ export async function onRequestPost({ request, env, data }) {
       return Response.json({ success: false, error: 'El usuario ya existe' }, { status: 409, headers: cors });
 
     const hash = await sha256(password);
-    await env.producto_c_db
+    const result = await env.producto_c_db
       .prepare('INSERT INTO usuarios (negocio_id, nombre, usuario, password_hash, rol, activo) VALUES (?,?,?,?,?,1)')
       .bind(negocio_id, nombre.trim(), usuario.toLowerCase().trim(), hash, rol).run();
+
+    const nuevoId = result.meta.last_row_id;
+    await registrarAccion(env, data, 'crear', 'usuario', nuevoId, `Creó al usuario "${nombre}" con rol ${rol}`);
+
     return Response.json({ success: true, mensaje: 'Usuario creado' }, { headers: cors });
   } catch (err) {
     return Response.json({ success: false, error: err.message }, { status: 500, headers: cors });

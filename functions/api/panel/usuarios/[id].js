@@ -3,6 +3,8 @@
 // PUT /api/panel/usuarios/:id
 // ============================================================
 
+import { registrarAccion } from '../auditLib.js';
+
 const cors = {
   'Access-Control-Allow-Origin':  '*',
   'Access-Control-Allow-Methods': 'PUT, OPTIONS',
@@ -20,7 +22,7 @@ export async function onRequestPut({ request, env, data, params }) {
   const id = params.id;
 
   const existe = await env.producto_c_db
-    .prepare('SELECT id FROM usuarios WHERE id = ? AND negocio_id = ? LIMIT 1')
+    .prepare('SELECT id, nombre, rol, activo FROM usuarios WHERE id = ? AND negocio_id = ? LIMIT 1')
     .bind(id, negocio_id).first();
   if (!existe)
     return Response.json({ success: false, error: 'Usuario no encontrado' }, { status: 404, headers: cors });
@@ -38,11 +40,13 @@ export async function onRequestPut({ request, env, data, params }) {
                                          updates.push('rol = ?');               bindings.push(rol); }
   if (activo !== undefined)            { updates.push('activo = ?');            bindings.push(activo ? 1 : 0); }
   if (debe_cambiar_pass !== undefined) { updates.push('debe_cambiar_pass = ?'); bindings.push(debe_cambiar_pass ? 1 : 0); }
+  let esResetPassword = false;
   if (password !== undefined) {
     if (password.length < 8)
       return Response.json({ success: false, error: 'Mínimo 8 caracteres' }, { status: 400, headers: cors });
     updates.push('password_hash = ?');
     bindings.push(await sha256(password));
+    esResetPassword = true;
   }
 
   if (!updates.length)
@@ -52,6 +56,23 @@ export async function onRequestPut({ request, env, data, params }) {
     await env.producto_c_db
       .prepare(`UPDATE usuarios SET ${updates.join(', ')} WHERE id = ? AND negocio_id = ?`)
       .bind(...bindings, id, negocio_id).run();
+
+    // ── Auditoría ──────────────────────────────────────────────
+    let accionTipo = 'editar';
+    let detalle = `Editó al usuario "${existe.nombre}"`;
+
+    if (activo !== undefined && existe.activo === 1 && activo === false) {
+      accionTipo = 'desactivar'; detalle = `Desactivó al usuario "${existe.nombre}"`;
+    } else if (activo !== undefined && existe.activo === 0 && activo === true) {
+      accionTipo = 'activar'; detalle = `Activó al usuario "${existe.nombre}"`;
+    } else if (esResetPassword) {
+      accionTipo = 'editar'; detalle = `Restableció la contraseña de "${existe.nombre}"`;
+    } else if (rol !== undefined && rol !== existe.rol) {
+      detalle = `Cambió el rol de "${existe.nombre}" de ${existe.rol} a ${rol}`;
+    }
+
+    await registrarAccion(env, data, accionTipo, 'usuario', Number(id), detalle);
+
     return Response.json({ success: true, mensaje: 'Usuario actualizado' }, { headers: cors });
   } catch (err) {
     return Response.json({ success: false, error: err.message }, { status: 500, headers: cors });

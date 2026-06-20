@@ -2861,14 +2861,48 @@ function cargarDispositivos(){
   </div>`;
 }
 
-function cargarHistorialAcciones(){
+const ICONO_ACCION={
+  crear:{ico:'\uD83D\uDFE2',color:'#16a34a'},
+  editar:{ico:'\uD83D\uDFE1',color:'#d97706'},
+  eliminar:{ico:'\uD83D\uDD34',color:'#dc2626'},
+  desactivar:{ico:'\uD83D\uDD34',color:'#dc2626'},
+  activar:{ico:'\uD83D\uDFE2',color:'#16a34a'},
+  cancelar:{ico:'\uD83D\uDD34',color:'#dc2626'},
+  confirmar:{ico:'\uD83D\uDFE2',color:'#16a34a'},
+};
+
+async function cargarHistorialAcciones(){
   const el=document.getElementById('historialAcciones');
   if(!el)return;
-  // Placeholder — se llenará cuando el backend tenga tabla audit_log
-  el.innerHTML=`<div style="padding:8px 0;color:#aaa;font-size:13px;text-align:center">
-    <i class="ti ti-info-circle" style="font-size:20px;display:block;margin-bottom:6px"></i>
-    El historial detallado de acciones estar\u00e1 disponible con la implementaci\u00f3n del backend.
-  </div>`;
+  el.innerHTML=`<div class="empty-state" style="padding:20px"><i class="ti ti-loader" style="animation:spin 1s linear infinite"></i><p>Cargando...</p></div>`;
+  try{
+    const data=await api('GET','/api/panel/historial');
+    if(!data.success)throw new Error(data.error||'Error al cargar historial');
+    const items=data.historial||[];
+    if(!items.length){
+      el.innerHTML=`<div style="padding:16px 0;color:#aaa;font-size:13px;text-align:center">
+        <i class="ti ti-history" style="font-size:20px;display:block;margin-bottom:6px"></i>
+        A\u00fan no hay acciones registradas.
+      </div>`;
+      return;
+    }
+    el.innerHTML=items.map(item=>{
+      const cfg=ICONO_ACCION[item.accion]||{ico:'\u26AA',color:'#888'};
+      return`<div class="acceso-item-log">
+        <div style="font-size:16px;flex-shrink:0">${cfg.ico}</div>
+        <div class="acceso-info">
+          <div class="acceso-nombre-log">${item.usuario_nombre}</div>
+          <div class="acceso-detalle-log">${item.detalle||item.accion}</div>
+        </div>
+        <div class="acceso-tiempo-log">${tiempoRelativo(item.fecha)}</div>
+      </div>`;
+    }).join('');
+  }catch(err){
+    el.innerHTML=`<div style="padding:16px 0;color:#dc2626;font-size:13px;text-align:center">
+      <i class="ti ti-alert-circle" style="font-size:20px;display:block;margin-bottom:6px"></i>
+      ${err.message}
+    </div>`;
+  }
 }
 
 // --- Modal nuevo/editar usuario ---

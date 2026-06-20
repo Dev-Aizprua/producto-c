@@ -4,6 +4,8 @@
 // PUT  /api/panel/negocio  → actualizar datos del negocio
 // ============================================================
 
+import { registrarAccion } from './auditLib.js';
+
 const cors = {
   'Access-Control-Allow-Origin':  '*',
   'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS',
@@ -36,17 +38,18 @@ export async function onRequestPut(context) {
   // Construir SET dinámico — solo actualiza los campos que vienen en el body
   const campos = [];
   const valores = [];
+  const camposEditados = []; // para el detalle de auditoría
 
-  if (nombre            !== undefined) { campos.push('nombre = ?');             valores.push(nombre); }
-  if (descripcion       !== undefined) { campos.push('descripcion = ?');        valores.push(descripcion); }
-  if (logo_url          !== undefined) { campos.push('logo_url = ?');           valores.push(logo_url); }
-  if (icono             !== undefined) { campos.push('icono = ?');              valores.push(icono); }
-  if (color_primary     !== undefined) { campos.push('color_primary = ?');      valores.push(color_primary); }
-  if (whatsapp_destino  !== undefined) { campos.push('whatsapp_destino = ?');   valores.push(whatsapp_destino); }
-  if (wa_phone_id       !== undefined) { campos.push('wa_phone_id = ?');        valores.push(wa_phone_id); }
+  if (nombre            !== undefined) { campos.push('nombre = ?');             valores.push(nombre); camposEditados.push('nombre'); }
+  if (descripcion       !== undefined) { campos.push('descripcion = ?');        valores.push(descripcion); camposEditados.push('descripción'); }
+  if (logo_url          !== undefined) { campos.push('logo_url = ?');           valores.push(logo_url); camposEditados.push('logo'); }
+  if (icono             !== undefined) { campos.push('icono = ?');              valores.push(icono); camposEditados.push('icono'); }
+  if (color_primary     !== undefined) { campos.push('color_primary = ?');      valores.push(color_primary); camposEditados.push('color'); }
+  if (whatsapp_destino  !== undefined) { campos.push('whatsapp_destino = ?');   valores.push(whatsapp_destino); camposEditados.push('WhatsApp destino'); }
+  if (wa_phone_id       !== undefined) { campos.push('wa_phone_id = ?');        valores.push(wa_phone_id); camposEditados.push('Phone ID WhatsApp'); }
   if (wa_token !== undefined && wa_token !== null && wa_token !== '') {
-                                         campos.push('wa_token = ?');           valores.push(wa_token); }
-  if (telegram_chat_id  !== undefined) { campos.push('telegram_chat_id = ?');   valores.push(telegram_chat_id); }
+                                         campos.push('wa_token = ?');           valores.push(wa_token); camposEditados.push('token WhatsApp'); }
+  if (telegram_chat_id  !== undefined) { campos.push('telegram_chat_id = ?');   valores.push(telegram_chat_id); camposEditados.push('chat Telegram'); }
 
   if (campos.length === 0) {
     return Response.json({ success: false, error: 'Nada que actualizar' }, { status: 400, headers: cors });
@@ -59,6 +62,10 @@ export async function onRequestPut(context) {
       .prepare(`UPDATE negocios SET ${campos.join(', ')} WHERE id = ?`)
       .bind(...valores)
       .run();
+
+    // ── Auditoría ──────────────────────────────────────────────
+    const detalle = `Actualizó la configuración del negocio (${camposEditados.join(', ')})`;
+    await registrarAccion(env, data, 'editar', 'negocio', data.negocio_id, detalle);
 
     return Response.json({ success: true, mensaje: 'Negocio actualizado' }, { headers: cors });
   } catch (err) {
