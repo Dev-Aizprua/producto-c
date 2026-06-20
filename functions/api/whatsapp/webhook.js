@@ -486,10 +486,12 @@ export async function onRequestPost(context) {
       const horaISO = fechaResuelta ? fechaResuelta.hora : null;
 
       // ─── VERIFICAR DISPONIBILIDAD (Agenda Real) ────────────
+      console.log(`[DIAG AGENDA] fechaISO=${fechaISO} horaISO=${horaISO} duracion=${servicioDetectado.duracion} negocioId=${negocioId}`);
       if (fechaISO && horaISO) {
         const disponibilidad = await verificarDisponibilidad(
           env, negocioId, fechaISO, horaISO, servicioDetectado.duracion || 30
         );
+        console.log(`[DIAG AGENDA] resultado=${JSON.stringify(disponibilidad)}`);
         if (!disponibilidad.disponible) {
           const respNoDisponible = `Ese horario no está disponible (${disponibilidad.motivo}). ¿Te gustaría proponer otra fecha u hora? 😊`;
           await marcarLeido(waToken, phoneNumberId, message.id);
