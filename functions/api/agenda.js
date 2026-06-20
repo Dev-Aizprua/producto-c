@@ -17,6 +17,9 @@ export async function verificarDisponibilidad(env, negocioId, fechaISO, horaInic
     return { disponible: false, motivo: "Fecha u hora no especificada" };
   }
 
+  // Blindaje: forzar duracion a número entero sin importar el tipo de dato recibido
+  const duracion = parseInt(duracionMin) || 30;
+
   const fecha = new Date(fechaISO + "T00:00:00");
   const diaSemana = fecha.getDay();
 
@@ -34,7 +37,7 @@ export async function verificarDisponibilidad(env, negocioId, fechaISO, horaInic
   }
 
   const minutosSolicitudInicio = horaAMinutos(horaInicio);
-  const minutosSolicitudFin = minutosSolicitudInicio + (duracionMin || 30);
+  const minutosSolicitudFin = minutosSolicitudInicio + duracion;
   const minutosAtencionInicio = horaAMinutos(horario.hora_inicio);
   const minutosAtencionFin = horaAMinutos(horario.hora_fin);
 
@@ -58,7 +61,7 @@ export async function verificarDisponibilidad(env, negocioId, fechaISO, horaInic
   for (const cita of citasDia) {
     if (!cita.fecha_hora) continue; // citas viejas sin hora separada — ignorar en el cruce
     const inicioExistente = horaAMinutos(cita.fecha_hora);
-    const finExistente = inicioExistente + (cita.duracion || 30);
+    const finExistente = inicioExistente + (parseInt(cita.duracion) || 30);
 
     // Hay cruce si los rangos se superponen
     const haySolape = minutosSolicitudInicio < finExistente && minutosSolicitudFin > inicioExistente;
