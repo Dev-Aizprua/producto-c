@@ -53,7 +53,33 @@ export function resolverFechaNatural(texto) {
     return construirResultado(base, extraerHora(texto));
   }
 
-  if (lower.includes("manana") || lower.includes("mañana")) {
+  // ── DÍA DE LA SEMANA (PRIORIDAD ALTA) ─────────────────────
+  // Se revisa ANTES que "mañana" porque "9 de la mañana" contiene
+  // el substring "manana" y se confundía con el día siguiente.
+  for (const [nombreDia, numeroDia] of Object.entries(DIAS_SEMANA)) {
+    if (new RegExp(`\\b${nombreDia}\\b`).test(lower)) {
+      const resultado = new Date(base);
+      const hoyDia = base.getDay();
+      let diff = numeroDia - hoyDia;
+
+      const esProximo = /\bproximo\b|\bque viene\b/.test(lower);
+      const esOtraSemana = /\bproxima semana\b|\botra semana\b|\bla otra semana\b/.test(lower);
+
+      if (esProximo || esOtraSemana) {
+        if (diff <= 0) diff += 7;
+        else diff += 7;
+      } else {
+        // Sin modificador = el más cercano en el futuro (o hoy si coincide)
+        if (diff < 0) diff += 7;
+      }
+
+      resultado.setDate(resultado.getDate() + diff);
+      return construirResultado(resultado, extraerHora(texto));
+    }
+  }
+
+  // "mañana" como DÍA (no como parte de "de la mañana") — límite de palabra
+  if (/\bmanana\b/.test(lower) && !/de la manana|por la manana/.test(lower)) {
     const manana = new Date(base);
     manana.setDate(manana.getDate() + 1);
     return construirResultado(manana, extraerHora(texto));
@@ -68,34 +94,6 @@ export function resolverFechaNatural(texto) {
   // ── ESTA SEMANA / PRÓXIMA SEMANA ──────────────────────────
   const esSemana = lower.includes("esta semana");
   const proximaSemana = lower.includes("proxima semana") || lower.includes("otra semana") || lower.includes("la otra semana");
-
-  // ── DÍA DE LA SEMANA ─────────────────────────────────────
-  for (const [nombreDia, numeroDia] of Object.entries(DIAS_SEMANA)) {
-    if (lower.includes(nombreDia)) {
-      const resultado = new Date(base);
-      const hoyDia = base.getDay();
-      let diff = numeroDia - hoyDia;
-
-      if (lower.includes("proximo") || lower.includes("próximo") || lower.includes("que viene")) {
-        // Próximo = el de la semana que viene, aunque sea mañana
-        if (diff <= 0) diff += 7;
-        else diff += 7; // "próximo" siempre es la semana siguiente
-      } else if (proximaSemana) {
-        // La otra semana = misma lógica que "próximo"
-        if (diff <= 0) diff += 7;
-        else diff += 7;
-      } else if (esSemana) {
-        // Esta semana = el más próximo dentro de esta semana
-        if (diff <= 0) diff += 7;
-      } else {
-        // Sin modificador = el más cercano en el futuro
-        if (diff <= 0) diff += 7;
-      }
-
-      resultado.setDate(resultado.getDate() + diff);
-      return construirResultado(resultado, extraerHora(texto));
-    }
-  }
 
   // ── FECHA CON MES ESCRITO ("el 25 de junio", "25 junio") ─
   for (const [nombreMes, numMes] of Object.entries(MESES)) {
