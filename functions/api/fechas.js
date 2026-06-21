@@ -151,7 +151,7 @@ export function extraerHora(texto) {
   const lower = texto.toLowerCase();
 
   // Formato "X de la tarde / noche / mañana" — acepta pm, p.m, p. m.
-  const matchTarde = lower.match(/(\d{1,2})(?::(\d{2}))?\s*(?:de la tarde|p\.?\s*m\.?)/);
+  const matchTarde = lower.match(/(\d{1,2})(?::(\d{2}))?\s*(?:de la tarde|de la noche|p\.?\s*m\.?)/);
   if (matchTarde) {
     let h = parseInt(matchTarde[1]);
     const m = matchTarde[2] ? parseInt(matchTarde[2]) : 0;
@@ -170,6 +170,17 @@ export function extraerHora(texto) {
   // Formato "mediodia" o "mediodia"
   if (lower.includes("mediodía") || lower.includes("mediodia") || lower.includes("medio dia")) {
     return "12:00";
+  }
+
+  // Formato "X y media" — con o sin am/pm/de la tarde explícito
+  const matchYMedia = lower.match(/(\d{1,2})\s*y\s*media/);
+  if (matchYMedia) {
+    let h = parseInt(matchYMedia[1]);
+    const esPM = /tarde|noche|p\.?\s*m\.?/.test(lower);
+    const esAM = /mañana|a\.?\s*m\.?/.test(lower);
+    if (esPM && h < 12) h += 12;
+    else if (!esPM && !esAM && h <= 7) h += 12; // heurística: hora baja sin contexto = tarde
+    return `${String(h).padStart(2, "0")}:30`;
   }
 
   // Formato HH:MM directo

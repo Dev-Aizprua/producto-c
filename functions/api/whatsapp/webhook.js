@@ -522,6 +522,29 @@ export async function onRequestPost(context) {
       const fechaISO = fechaResuelta ? fechaResuelta.fecha : null;
       const horaISO = fechaResuelta ? fechaResuelta.hora : null;
 
+      // ─── RED DE SEGURIDAD: el Motor de Fechas no entendió nada ──
+      // Si el paciente confirma pero no logramos extraer NINGUNA fecha,
+      // mejor preguntar de nuevo que crear una cita con "Por confirmar"
+      // silenciosamente — eso generaría una cita sin fecha real.
+      if (!fechaResuelta) {
+        const respPedirFecha = `Disculpa${primerNombrePaciente ? ` ${primerNombrePaciente}` : ""}, no logré identificar bien la fecha y hora que prefieres. ¿Me la puedes confirmar de nuevo? Por ejemplo: "el lunes a las 10am" 😊`;
+        await marcarLeido(waToken, phoneNumberId, message.id);
+        await new Promise(r => setTimeout(r, 1500));
+        await enviarMensaje(waToken, phoneNumberId, from, respPedirFecha);
+        return new Response("EVENT_RECEIVED", { status: 200 });
+      }
+
+      // ─── RED DE SEGURIDAD: hay fecha pero falta la hora ────
+      // Sin hora no podemos verificar disponibilidad real — pedirla
+      // en vez de agendar "a ciegas" sin chequear choques de horario
+      if (fechaISO && !horaISO) {
+        const respPedirHora = `Perfecto, para el ${fechaResuelta.dia} ${fechaISO.split("-")[2]}. ¿A qué hora te gustaría la cita? 😊`;
+        await marcarLeido(waToken, phoneNumberId, message.id);
+        await new Promise(r => setTimeout(r, 1500));
+        await enviarMensaje(waToken, phoneNumberId, from, respPedirHora);
+        return new Response("EVENT_RECEIVED", { status: 200 });
+      }
+
       // ─── VERIFICAR DISPONIBILIDAD (Agenda Real) ────────────
       if (fechaISO && horaISO) {
         const duracionNumerica = parseInt(servicioDetectado.duracion) || 30;
