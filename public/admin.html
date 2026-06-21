@@ -828,46 +828,40 @@
     .onyx-support-btn{
       position:fixed;
       top:50%;
-      right:0;
-      transform:translateY(-50%) rotate(-90deg);
-      transform-origin:right center;
+      right:18px;
+      transform:translateY(-50%);
       background:#1a1a2e;
       color:#fbbf24;
-      padding:9px 16px 7px;
-      border-radius:10px 10px 0 0;
-      font-size:12.5px;
-      font-weight:600;
+      width:52px;
+      height:52px;
+      border-radius:50%;
       display:flex;
       align-items:center;
-      gap:7px;
+      justify-content:center;
       text-decoration:none;
       cursor:pointer;
       z-index:60;
-      box-shadow:-2px -2px 12px rgba(0,0,0,.18);
-      transition:padding .15s,box-shadow .15s;
-      border:none;
-      white-space:nowrap;
+      box-shadow:0 4px 16px rgba(0,0,0,.25);
+      transition:transform .15s,box-shadow .15s;
+      border:2px solid #fbbf24;
     }
-    .onyx-support-btn:hover{padding:11px 20px 9px;box-shadow:-2px -4px 16px rgba(0,0,0,.25)}
-    .onyx-support-btn i{font-size:15px;color:#fbbf24;transform:rotate(90deg)}
+    .onyx-support-btn:hover{transform:translateY(-50%) scale(1.08);box-shadow:0 6px 20px rgba(0,0,0,.32)}
+    .onyx-support-btn i{font-size:21px;color:#fbbf24}
+    .onyx-support-btn span{display:none}
 
     @media(max-width:768px){
-      /* En móvil se reposiciona arriba del bottom nav y FAB, sin rotación
-         para que el dedo lo alcance fácil y no se confunda con la navegación */
+      /* En móvil se reposiciona arriba del bottom nav y FAB para que
+         el dedo lo alcance fácil y no se confunda con la navegación */
       .onyx-support-btn{
         top:auto;
         bottom:140px;
         right:16px;
         transform:none;
-        transform-origin:initial;
-        border-radius:50%;
         width:46px;
         height:46px;
-        padding:0;
-        justify-content:center;
       }
-      .onyx-support-btn span{display:none}
-      .onyx-support-btn i{transform:none;font-size:19px}
+      .onyx-support-btn:hover{transform:scale(1.05)}
+      .onyx-support-btn i{font-size:19px}
     }
 
     @media(max-width:768px){
