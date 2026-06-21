@@ -431,7 +431,18 @@ export async function onRequestPost(context) {
     // ─── RESOLVER FECHA DEL HISTORIAL CON MOTOR DE FECHAS ────
     // La IA NUNCA calcula fechas — el backend lo hace.
     const hoyMotor = obtenerHoy();
-    const textoHistorialUsuario = historial.filter(h => h.role === "user").map(h => h.content).join(" ");
+
+    // Si hubo un rechazo de fecha por Agenda Real, solo considerar mensajes
+    // POSTERIORES a ese rechazo — evita que el Motor siga viendo la fecha vieja
+    const ultimoIndiceRechazo = historial.map((h, i) =>
+      h.role === "system" && h.content?.startsWith("[FECHA_RECHAZADA:") ? i : -1
+    ).filter(i => i >= 0).pop();
+
+    const historialRelevante = ultimoIndiceRechazo !== undefined
+      ? historial.slice(ultimoIndiceRechazo + 1)
+      : historial;
+
+    const textoHistorialUsuario = historialRelevante.filter(h => h.role === "user").map(h => h.content).join(" ");
     const fechaResueltaHistorial = textoHistorialUsuario ? resolverFechaNatural(textoHistorialUsuario) : null;
     const tieneFecha = fechaResueltaHistorial !== null;
 
@@ -519,6 +530,29 @@ export async function onRequestPost(context) {
         );
         if (!disponibilidad.disponible) {
           const respNoDisponible = `Ese horario no está disponible (${disponibilidad.motivo}). ¿Te gustaría proponer otra fecha u hora? 😊`;
+
+          // Guardar marcador de fecha rechazada — evita que el Motor de Fechas
+          // siga capturando la fecha vieja del historial en el siguiente turno
+          try {
+            const nuevoHRechazo = [...historial,
+              { role: "user", content: textoConsolidado },
+              { role: "assistant", content: respNoDisponible },
+              { role: "system", content: `[FECHA_RECHAZADA:${fechaISO}_${horaISO}]` }
+            ];
+            const chatExRechazo = await env.producto_c_db.prepare(
+              `SELECT id FROM chats WHERE negocio_id = ? AND cliente_tel = ? AND completado = 0 LIMIT 1`
+            ).bind(negocioId, from).first();
+            if (chatExRechazo) {
+              await env.producto_c_db.prepare(
+                `UPDATE chats SET historial_json = ?, fecha = ? WHERE id = ?`
+              ).bind(JSON.stringify(nuevoHRechazo), new Date().toISOString(), chatExRechazo.id).run();
+            } else {
+              await env.producto_c_db.prepare(
+                `INSERT INTO chats (negocio_id, session_token, cliente_nombre, cliente_tel, historial_json, fecha, completado, canal) VALUES (?, ?, ?, ?, ?, ?, 0, 'whatsapp')`
+              ).bind(negocioId, sessionToken, nombrePaciente || "Paciente WA", from, JSON.stringify(nuevoHRechazo), new Date().toISOString()).run();
+            }
+          } catch(e) { console.log("Error guardando marcador fecha rechazada:", e.message); }
+
           await marcarLeido(waToken, phoneNumberId, message.id);
           await new Promise(r => setTimeout(r, 1500));
           await enviarMensaje(waToken, phoneNumberId, from, respNoDisponible);
@@ -735,7 +769,7 @@ export async function onRequestPost(context) {
         } catch(e) {}
 
         const respConfirmacion =
-          `Perfecto${primerNombrePaciente ? ` ${primerNombrePaciente}` : ""} 😊 He actualizado tu solicitud para el ${fechaNuevaTexto}. Un miembro del equipo te confirmará la disponibilidad en breve.`;
+          `Perfecto${primerNombrePaciente ? ` ${primerNombrePaciente}` : ""} 😊 He actualizado tu solicitud para el ${fechaNuevaTexto}.`;
 
         if (negocio.telegram_chat_id && env.TELEGRAM_TOKEN) {
           try {
@@ -907,10 +941,12 @@ Si el paciente pregunta algo de esta lista, responde:
 "No tengo esa información registrada. Con gusto solicito que un miembro del equipo te confirme ese detalle. 😊"
 
 ━━━ DISPONIBILIDAD DE CITAS ━━━
-NO confirmes disponibilidad de horarios — no tienes acceso a la agenda real.
-Cuando el paciente proponga una fecha/hora, registra su solicitud y aclara que el equipo confirmará.
-Ejemplo correcto: "Perfecto, registraré tu solicitud para el viernes 19 a las 2pm. Un miembro del equipo te confirmará la disponibilidad. 😊"
-NUNCA digas: "El miércoles está disponible" o "Tenemos ese horario libre"
+Ahora SÍ tienes Agenda Real — el sistema verifica disponibilidad automáticamente al confirmar.
+Cuando el paciente proponga una fecha/hora, dile que vas a revisar disponibilidad — NO prometas que "el equipo confirmará".
+Ejemplo correcto: "Perfecto, permíteme revisar la disponibilidad para el viernes 19 a las 2pm. 😊"
+El sistema verificará automáticamente cuando el paciente confirme la cita — si no hay disponibilidad, se lo informará con el motivo exacto.
+NUNCA digas: "El miércoles está disponible" o "Tenemos ese horario libre" antes de que el sistema lo confirme.
+NUNCA digas: "Un miembro del equipo confirmará la disponibilidad" — eso ya no es necesario, el sistema lo hace en tiempo real.
 
 ━━━ SOLO USA INFORMACIÓN CONFIRMADA — REGLA UNIVERSAL ━━━
 Esta regla aplica a TODO, no solo a servicios:
