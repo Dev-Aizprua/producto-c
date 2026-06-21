@@ -542,7 +542,7 @@
       .mini-kpi-row{display:grid}
       .chart-card-mobile{display:block}
       .dash-reservas-mobile{display:block}
-      .proximas-citas-m{display:block}
+      .proximas-citas-m.tiene-datos{display:block}
       .accesos-rapidos-m{display:block}
 
       /* Ocultar elementos desktop en dashboard */
@@ -716,7 +716,7 @@
     }
 
     /* ══ PRÓXIMAS CITAS MOBILE ══════════════════════════════ */
-    .proximas-citas-m{display:none;margin-bottom:14px}
+    .proximas-citas-m{display:none;margin-bottom:14px;max-height:280px;overflow-y:auto}
     .proximas-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
     .proximas-title{font-size:14px;font-weight:700;color:#1a1a2e}
     .proximas-ver{font-size:12.5px;font-weight:600;color:var(--primary);border:none;background:none;cursor:pointer;padding:0}
@@ -827,9 +827,10 @@
     /* ══ BOTÓN SOPORTE ONYX ══════════════════════════════════ */
     .onyx-support-btn{
       position:fixed;
-      top:50%;
+      top:auto;
+      bottom:90px;
       right:18px;
-      transform:translateY(-50%);
+      transform:none;
       background:#1a1a2e;
       color:#fbbf24;
       width:52px;
@@ -845,7 +846,7 @@
       transition:transform .15s,box-shadow .15s;
       border:2px solid #fbbf24;
     }
-    .onyx-support-btn:hover{transform:translateY(-50%) scale(1.08);box-shadow:0 6px 20px rgba(0,0,0,.32)}
+    .onyx-support-btn:hover{transform:scale(1.08);box-shadow:0 6px 20px rgba(0,0,0,.32)}
     .onyx-support-btn i{font-size:21px;color:#fbbf24}
     .onyx-support-btn span{display:none}
 
@@ -2148,13 +2149,16 @@ async function cargarKPIs(){
       </div>`).join('');}
     }
 
-    // MOBILE: Proximas citas del dia
+    // Próximas citas del día — visible SOLO en mobile vía CSS (.proximas-citas-m).
+    // Usamos una clase en vez de tocar style.display directamente: un inline
+    // style sobreescribiría el display:none de desktop y la sección se colaría
+    // ahí, creciendo sin control y tapando el resto del dashboard.
     const listPC=document.getElementById('proximasCitasList');
     const proxSec=document.getElementById('proximasCitasM');
     if(listPC&&proxSec){
       const proximas=todas.filter(c=>c.fecha_cita&&mismaFecha(c.fecha_cita,ahora)&&!['cancelada','expirada'].includes(c.estado_pago)).slice(0,3);
       if(proximas.length){
-        proxSec.style.display='block';
+        proxSec.classList.add('tiene-datos');
         listPC.innerHTML=proximas.map(c=>{
           const horaStr=c.fecha_cita?.split(' ')[1]||c.fecha_cita||'\u2014';
           return`<div class="proxima-item">
@@ -2166,7 +2170,7 @@ async function cargarKPIs(){
             <div class="proxima-monto">$${c.total||0}</div>
           </div>`;
         }).join('');
-      }else{proxSec.style.display='none';}
+      }else{proxSec.classList.remove('tiene-datos');}
     }
 
     // MOBILE: Filtros citas con contadores
