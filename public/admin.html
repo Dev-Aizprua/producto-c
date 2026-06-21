@@ -824,6 +824,52 @@
     .seg-badge.convertido{background:#dbeafe;color:#1d4ed8}
     .seg-wa-btn{background:#25d366;color:white;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;margin-top:4px}
 
+    /* ══ BOTÓN SOPORTE ONYX ══════════════════════════════════ */
+    .onyx-support-btn{
+      position:fixed;
+      top:50%;
+      right:0;
+      transform:translateY(-50%) rotate(-90deg);
+      transform-origin:right center;
+      background:#1a1a2e;
+      color:#fbbf24;
+      padding:9px 16px 7px;
+      border-radius:10px 10px 0 0;
+      font-size:12.5px;
+      font-weight:600;
+      display:flex;
+      align-items:center;
+      gap:7px;
+      text-decoration:none;
+      cursor:pointer;
+      z-index:60;
+      box-shadow:-2px -2px 12px rgba(0,0,0,.18);
+      transition:padding .15s,box-shadow .15s;
+      border:none;
+      white-space:nowrap;
+    }
+    .onyx-support-btn:hover{padding:11px 20px 9px;box-shadow:-2px -4px 16px rgba(0,0,0,.25)}
+    .onyx-support-btn i{font-size:15px;color:#fbbf24;transform:rotate(90deg)}
+
+    @media(max-width:768px){
+      /* En móvil se reposiciona arriba del bottom nav y FAB, sin rotación
+         para que el dedo lo alcance fácil y no se confunda con la navegación */
+      .onyx-support-btn{
+        top:auto;
+        bottom:140px;
+        right:16px;
+        transform:none;
+        transform-origin:initial;
+        border-radius:50%;
+        width:46px;
+        height:46px;
+        padding:0;
+        justify-content:center;
+      }
+      .onyx-support-btn span{display:none}
+      .onyx-support-btn i{transform:none;font-size:19px}
+    }
+
     @media(max-width:768px){
       .usr-grid{grid-template-columns:1fr}
       .usr-acciones{display:flex!important;flex-direction:row!important;gap:6px!important;flex-wrap:nowrap!important}
@@ -1696,6 +1742,12 @@
   </div>
 </div>
 
+<!-- ══ BOTÓN SOPORTE ONYX ══════════════════════════════════════ -->
+<a class="onyx-support-btn" id="onyxSupportBtn" href="#" target="_blank" rel="noopener" title="Soporte t&#xE9;cnico Onyx">
+  <i class="ti ti-headset" aria-hidden="true"></i>
+  <span>Soporte</span>
+</a>
+
 <div class="toast" id="toast"><i class="ti ti-check"></i><span id="toastMsg"></span></div>
 
 <script>
@@ -1764,6 +1816,21 @@ async function doLogin(){
 }
 
 // ══ RESTRICCIONES VISUALES POR ROL ═════════════════════════
+// ══ BOTÓN SOPORTE ONYX ══════════════════════════════════════
+function configurarBotonOnyx(){
+  const btn=document.getElementById('onyxSupportBtn');
+  if(!btn)return;
+  const ONYX_BASE='https://onyx-agente-ia.pages.dev/agente-ia.html';
+  const nombreUsuario=STATE.usuarioNombre||localStorage.getItem(`pc_panel_usuario_${STATE.slug}`)||'Usuario';
+  const nombreNegocio=STATE.negocio?.nombre||STATE.slug||'producto-c';
+  const params=new URLSearchParams({
+    contexto:'producto-c',
+    producto:`Panel Producto C — ${nombreNegocio}`,
+    cliente:nombreUsuario,
+  });
+  btn.href=`${ONYX_BASE}?${params.toString()}`;
+}
+
 function aplicarRestriccionesRol(){
   const rol=STATE.rol||localStorage.getItem(`pc_panel_rol_${STATE.slug}`)||'admin';
   STATE.rol=rol;
@@ -1812,6 +1879,7 @@ function mostrarPanel(){
   document.getElementById('verChatLink').href=`/${STATE.slug}`;
   aplicarRestriccionesRol();
   cargarNegocio();cargarServicios();cargarCitas();cargarChats();cargarKPIs();cargarUsuarios();cargarSeguimientos();
+  configurarBotonOnyx();
   iniciarTimerSesion();
 
   // Identidad del usuario logueado (no del negocio) — sidebar + Mi cuenta
