@@ -1108,15 +1108,39 @@ Usa estas de forma natural (no todas juntas):
     let datosCita    = null;
 
     // ─── HELPER: Motor de Fechas + Agenda Real + duplicados ───
-    // Las etiquetas CREAR_CITA y GENERAR_PAGO confiaban ciegamente en la
-    // fecha que mandaba Groq y nunca llamaban a verificarDisponibilidad().
-    // Esta función les da el mismo blindaje que ya tiene probado en
-    // producción la ruta de detección directa: nunca crea una cita sin
-    // fecha+hora resueltas por el Motor, nunca ignora un choque de horario,
-    // y nunca deja que un paciente termine con dos citas activas por tomar
-    // un camino distinto de la conversación.
+
+    // Extrae la fecha/hora del último mensaje de Valeria en el historial.
+    // Valeria ya le mostró al paciente la fecha correcta resuelta por el Motor
+    // antes de pedir confirmación — esa es la fuente de verdad.
+    // Groq tiende a poner fechas incorrectas en el campo fecha= del tag
+    // (ej. "26 de junio" cuando el correcto es "jueves 25"), así que
+    // preferimos extraer la fecha del texto del historial directamente.
+    function extraerFechaDeHistorial() {
+      // Busca en los últimos mensajes de Valeria el texto de confirmación
+      const mensajesValeria = (historial || []).filter(m => m.role === "assistant").slice(-3);
+      for (const msg of mensajesValeria.reverse()) {
+        const texto = msg.content || "";
+        // Busca patrones como "jueves 25 de junio a las 11:00 AM"
+        // o "miércoles 24 de junio a las 15:00"
+        const match = texto.match(
+          /(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+\d{1,2}\s+de\s+\w+\s+(?:de\s+\d{4}\s+)?a\s+las\s+[\d:]+\s*(?:AM|PM|am|pm)?/i
+        );
+        if (match) {
+          console.log("[FECHA_HISTORIAL] Encontrada en historial:", match[0]);
+          return match[0];
+        }
+      }
+      return null;
+    }
+
     async function resolverYVerificarCita({ negocioId, from, textoFecha, servicio, primerNombrePaciente }) {
-      const fechaResuelta = textoFecha ? resolverFechaNatural(textoFecha) : null;
+      // Preferir la fecha del historial sobre la del tag de Groq
+      // El historial tiene la fecha ya validada por el Motor que Valeria
+      // presentó al paciente — Groq puede alucinar el número de día
+      const textoFechaFinal = extraerFechaDeHistorial() || textoFecha;
+      console.log("[RESOLVER_CITA] textoFecha de Groq:", textoFecha, "| textoFecha usado:", textoFechaFinal);
+      const fechaResuelta = textoFechaFinal ? resolverFechaNatural(textoFechaFinal) : null;
+      console.log("[RESOLVER_CITA] fechaResuelta:", JSON.stringify(fechaResuelta));
 
       if (!fechaResuelta) {
         return {
