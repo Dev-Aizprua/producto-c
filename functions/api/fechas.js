@@ -28,14 +28,25 @@ const NOMBRES_MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio",
 // ─── FUNCIÓN PRINCIPAL: obtener fecha actual en Panamá ───────
 export function obtenerHoy() {
   const ahora = new Date();
-  const enPanama = new Date(ahora.toLocaleString("en-US", { timeZone: TIMEZONE }));
+  // Usamos formatToParts — más confiable que new Date(toLocaleString()) en CF Workers
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIMEZONE,
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hour12: false
+  });
+  const parts = fmt.formatToParts(ahora);
+  const get = (type) => parseInt(parts.find(p => p.type === type).value);
+  const year = get("year"), month = get("month") - 1, day = get("day");
+  const hour = get("hour"), minute = get("minute");
+  // Construimos el objeto Date con año/mes/día exactos de Panamá
+  const enPanama = new Date(year, month, day, hour, minute);
   return {
     fecha: formatearISO(enPanama),
     dia: NOMBRES_DIAS[enPanama.getDay()],
     diaSemana: enPanama.getDay(), // 0=domingo, 6=sábado
-    hora: enPanama.getHours(),
-    minutos: enPanama.getMinutes(),
-    timestamp: enPanama.getTime()
+    hora: hour,
+    minutos: minute,
+    timestamp: ahora.getTime()
   };
 }
 
@@ -46,7 +57,16 @@ export function resolverFechaNatural(texto) {
   if (!texto) return null;
   const lower = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
   const hoy = obtenerHoy();
-  const base = new Date(new Date().toLocaleString("en-US", { timeZone: TIMEZONE }));
+  // Construimos base con formatToParts para garantizar año correcto en CF Workers
+  const _ahoraBase = new Date();
+  const _fmtBase = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIMEZONE,
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hour12: false
+  });
+  const _partsBase = _fmtBase.formatToParts(_ahoraBase);
+  const _getB = (type) => parseInt(_partsBase.find(p => p.type === type).value);
+  const base = new Date(_getB("year"), _getB("month") - 1, _getB("day"), _getB("hour"), _getB("minute"));
 
   // ── CASOS SIMPLES ─────────────────────────────────────────
   if (lower === "hoy") {
@@ -96,20 +116,24 @@ export function resolverFechaNatural(texto) {
   const proximaSemana = lower.includes("proxima semana") || lower.includes("otra semana") || lower.includes("la otra semana");
 
   // ── FECHA CON MES ESCRITO ("el 25 de junio", "25 junio") ─
-  for (const [nombreMes, numMes] of Object.entries(MESES)) {
-    if (lower.includes(nombreMes)) {
-      const matchDia = lower.match(/(\d{1,2})\s*(?:de\s*)?" + nombreMes/);
-      // Buscar número antes del mes
-      const matchNum = texto.match(/(\d{1,2})\s*(?:de\s*)?(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)/i);
-      if (matchNum) {
-        const dia = parseInt(matchNum[1]);
-        const anio = base.getFullYear();
-        const fechaCandidata = new Date(anio, numMes, dia);
-        // Si ya pasó en este año, asumir el próximo año
-        if (fechaCandidata < base && fechaCandidata.getMonth() === numMes) {
-          fechaCandidata.setFullYear(anio + 1);
+  // IMPORTANTE: solo corre si NO hay día de semana en el texto.
+  // Si Groq dice "jueves 26 de junio" y el bloque de día de semana ya corrió,
+  // este bloque no debe sobreescribir con el número literal que Groq pudo alucinar.
+  const tieneDiaSemanaEnTexto = Object.keys(DIAS_SEMANA).some(d => new RegExp(`\\b${d}\\b`).test(lower));
+  if (!tieneDiaSemanaEnTexto) {
+    for (const [nombreMes, numMes] of Object.entries(MESES)) {
+      if (lower.includes(nombreMes)) {
+        const matchNum = texto.match(/(\d{1,2})\s*(?:de\s*)?(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)/i);
+        if (matchNum) {
+          const dia = parseInt(matchNum[1]);
+          const anio = base.getFullYear();
+          const fechaCandidata = new Date(anio, numMes, dia);
+          // Si ya pasó en este año, asumir el próximo año
+          if (fechaCandidata < base && fechaCandidata.getMonth() === numMes) {
+            fechaCandidata.setFullYear(anio + 1);
+          }
+          return construirResultado(fechaCandidata, extraerHora(texto));
         }
-        return construirResultado(fechaCandidata, extraerHora(texto));
       }
     }
   }
