@@ -1102,6 +1102,98 @@ Usa estas de forma natural (no todas juntas):
     let linkPago     = null;
     let datosCita    = null;
 
+    // ─── HELPER: Motor de Fechas + Agenda Real + duplicados ───
+    // Las etiquetas CREAR_CITA y GENERAR_PAGO confiaban ciegamente en la
+    // fecha que mandaba Groq y nunca llamaban a verificarDisponibilidad().
+    // Esta función les da el mismo blindaje que ya tiene probado en
+    // producción la ruta de detección directa: nunca crea una cita sin
+    // fecha+hora resueltas por el Motor, nunca ignora un choque de horario,
+    // y nunca deja que un paciente termine con dos citas activas por tomar
+    // un camino distinto de la conversación.
+    async function resolverYVerificarCita({ negocioId, from, textoFecha, servicio, primerNombrePaciente }) {
+      const fechaResuelta = textoFecha ? resolverFechaNatural(textoFecha) : null;
+
+      if (!fechaResuelta) {
+        return {
+          ok: false,
+          motivo: "sin_fecha",
+          mensaje: `Disculpa${primerNombrePaciente ? ` ${primerNombrePaciente}` : ""}, no logré identificar bien la fecha y hora que prefieres. ¿Me la puedes confirmar de nuevo? Por ejemplo: "el lunes a las 10am" 😊`
+        };
+      }
+
+      const { fecha: fechaISO, hora: horaISO, texto: fechaTexto, dia } = fechaResuelta;
+
+      if (fechaISO && !horaISO) {
+        return {
+          ok: false,
+          motivo: "sin_hora",
+          mensaje: `Perfecto, para el ${dia} ${fechaISO.split("-")[2]}. ¿A qué hora te gustaría la cita? 😊`
+        };
+      }
+
+      // Protección contra duplicados — un paciente no debería terminar con
+      // dos citas activas simultáneas por tomar una ruta distinta de Groq
+      let citaActivaExistente = null;
+      try {
+        citaActivaExistente = await env.producto_c_db.prepare(
+          `SELECT id, estado_pago FROM citas WHERE negocio_id = ? AND cliente_tel = ?
+           AND estado_pago IN ('esperando_pago','pago_por_verificar','pendiente_confirmacion','confirmada')
+           ORDER BY id DESC LIMIT 1`
+        ).bind(negocioId, from).first();
+      } catch(e) {}
+
+      if (citaActivaExistente) {
+        const mensajeDuplicado =
+          citaActivaExistente.estado_pago === "esperando_pago"
+            ? `Tu cita ya está registrada y esperando el pago. Usa el enlace que te enviamos para confirmarla. 😊`
+          : citaActivaExistente.estado_pago === "pago_por_verificar"
+            ? `Ya tenemos tu pago en revisión y tu cita en proceso de confirmación. En breve la confirmamos. 😊`
+            : `Ya tienes una cita registrada con nosotros. Si quieres cambiar la fecha, dime "reagendar" y con gusto te ayudo. 😊`;
+        return { ok: false, motivo: "duplicado", mensaje: mensajeDuplicado };
+      }
+
+      // Verificar disponibilidad real (Agenda Real)
+      if (fechaISO && horaISO) {
+        const duracionNumerica = parseInt(servicio?.duracion) || 30;
+        const disponibilidad = await verificarDisponibilidad(env, negocioId, fechaISO, horaISO, duracionNumerica);
+        if (!disponibilidad.disponible) {
+          return {
+            ok: false,
+            motivo: "no_disponible",
+            mensaje: `Ese horario no está disponible (${disponibilidad.motivo}). ¿Te gustaría proponer otra fecha u hora? 😊`,
+            fechaISO, horaISO
+          };
+        }
+      }
+
+      return { ok: true, fechaISO, horaISO, fechaTexto, dia };
+    }
+
+    // Guarda el marcador [FECHA_RECHAZADA] en el historial — mismo patrón
+    // que ya usa la ruta de detección directa, para que el Motor de Fechas
+    // no siga leyendo la fecha vieja rechazada en el siguiente turno
+    async function guardarFechaRechazada(mensajeRechazo, fechaISO, horaISO) {
+      try {
+        const nuevoHRechazo = [...historial,
+          { role: "user", content: textoConsolidado },
+          { role: "assistant", content: mensajeRechazo },
+          { role: "system", content: `[FECHA_RECHAZADA:${fechaISO}_${horaISO}]` }
+        ];
+        const chatExRechazo = await env.producto_c_db.prepare(
+          `SELECT id FROM chats WHERE negocio_id = ? AND cliente_tel = ? AND completado = 0 LIMIT 1`
+        ).bind(negocioId, from).first();
+        if (chatExRechazo) {
+          await env.producto_c_db.prepare(
+            `UPDATE chats SET historial_json = ?, fecha = ? WHERE id = ?`
+          ).bind(JSON.stringify(nuevoHRechazo), new Date().toISOString(), chatExRechazo.id).run();
+        } else {
+          await env.producto_c_db.prepare(
+            `INSERT INTO chats (negocio_id, session_token, cliente_nombre, cliente_tel, historial_json, fecha, completado, canal) VALUES (?, ?, ?, ?, ?, ?, 0, 'whatsapp')`
+          ).bind(negocioId, sessionToken, nombrePaciente || "Paciente WA", from, JSON.stringify(nuevoHRechazo), new Date().toISOString()).run();
+        }
+      } catch(e) { console.log("Error guardando marcador fecha rechazada:", e.message); }
+    }
+
     // ── CASO 1: CREAR CITA DIRECTA (solo_cita) ───────────────
     // Solo aplica en modo solo_cita — en adelanto/pago_completo siempre requiere pago
     const datosCrear = modoReserva === 'solo_cita' ? extraerEtiqueta(respuesta, "CREAR_CITA") : null;
@@ -1111,22 +1203,34 @@ Usa estas de forma natural (no todas juntas):
         (datosCrear.servicio || "").toLowerCase().includes(s.nombre.toLowerCase())
       );
 
-      // Resolver fecha de la etiqueta con Motor de Fechas
-      const fechaCrearResuelta = datosCrear.fecha ? resolverFechaNatural(datosCrear.fecha) : null;
-      const fechaCrearISO = fechaCrearResuelta ? fechaCrearResuelta.fecha : null;
-      const fechaCrearTexto = fechaCrearResuelta ? fechaCrearResuelta.texto : (datosCrear.fecha || "Por confirmar");
+      // Mismo blindaje que la ruta de detección directa: Motor de Fechas,
+      // red de seguridad (fecha/hora faltante), Agenda Real y duplicados
+      const chequeoCrear = await resolverYVerificarCita({
+        negocioId, from, textoFecha: datosCrear.fecha, servicio: svcEncontrado, primerNombrePaciente
+      });
+
+      if (!chequeoCrear.ok) {
+        if (chequeoCrear.motivo === "no_disponible") {
+          await guardarFechaRechazada(chequeoCrear.mensaje, chequeoCrear.fechaISO, chequeoCrear.horaISO);
+        }
+        await marcarLeido(waToken, phoneNumberId, message.id);
+        await new Promise(r => setTimeout(r, 1500));
+        await enviarMensaje(waToken, phoneNumberId, from, chequeoCrear.mensaje);
+        return new Response("EVENT_RECEIVED", { status: 200 });
+      }
 
       try {
         await env.producto_c_db.prepare(
           `INSERT INTO citas (negocio_id, servicio_id, cliente_nombre, cliente_tel,
-           fecha_cita, total, estado_pago, metodo_pago, session_token, canal)
-           VALUES (?, ?, ?, ?, ?, ?, 'confirmada', 'en_clinica', ?, 'whatsapp')`
+           fecha_cita, fecha_hora, total, estado_pago, metodo_pago, session_token, canal)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'confirmada', 'en_clinica', ?, 'whatsapp')`
         ).bind(
           negocioId,
           svcEncontrado?.id || null,
           datosCrear.nombre || nombrePaciente || "Paciente WA",
           from,
-          fechaCrearISO || fechaCrearTexto,
+          chequeoCrear.fechaISO || chequeoCrear.fechaTexto,
+          chequeoCrear.horaISO,
           svcEncontrado?.precio || 0,
           sessionToken
         ).run();
@@ -1149,23 +1253,37 @@ Usa estas de forma natural (no todas juntas):
       let citaIdGenerar = null;
       const nombreCitaGenerar = datosGenerar.nombre || nombrePaciente || "Paciente WA";
 
-      // Resolver fecha de la etiqueta con Motor de Fechas
-      const fechaGenerarResuelta = datosGenerar.fecha ? resolverFechaNatural(datosGenerar.fecha) : null;
-      const fechaCitaGenerarISO = fechaGenerarResuelta ? fechaGenerarResuelta.fecha : null;
-      const fechaCitaGenerar = fechaGenerarResuelta ? fechaGenerarResuelta.texto : (datosGenerar.fecha || "Por confirmar");
+      // Mismo blindaje que la ruta de detección directa: Motor de Fechas,
+      // red de seguridad (fecha/hora faltante), Agenda Real y duplicados
+      const chequeoGenerar = await resolverYVerificarCita({
+        negocioId, from, textoFecha: datosGenerar.fecha, servicio: svcEncontrado, primerNombrePaciente
+      });
+
+      if (!chequeoGenerar.ok) {
+        if (chequeoGenerar.motivo === "no_disponible") {
+          await guardarFechaRechazada(chequeoGenerar.mensaje, chequeoGenerar.fechaISO, chequeoGenerar.horaISO);
+        }
+        await marcarLeido(waToken, phoneNumberId, message.id);
+        await new Promise(r => setTimeout(r, 1500));
+        await enviarMensaje(waToken, phoneNumberId, from, chequeoGenerar.mensaje);
+        return new Response("EVENT_RECEIVED", { status: 200 });
+      }
+
+      const fechaCitaGenerar = chequeoGenerar.fechaTexto;
 
       // Crear cita en estado "esperando_pago"
       try {
         const citaRes = await env.producto_c_db.prepare(
           `INSERT INTO citas (negocio_id, servicio_id, cliente_nombre, cliente_tel,
-           fecha_cita, total, estado_pago, metodo_pago, session_token, canal)
-           VALUES (?, ?, ?, ?, ?, ?, 'esperando_pago', 'paguelofacil', ?, 'whatsapp')`
+           fecha_cita, fecha_hora, total, estado_pago, metodo_pago, session_token, canal)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'esperando_pago', 'paguelofacil', ?, 'whatsapp')`
         ).bind(
           negocioId,
           svcEncontrado?.id || null,
           nombreCitaGenerar,
           from,
-          fechaCitaGenerarISO || fechaCitaGenerar,
+          chequeoGenerar.fechaISO || chequeoGenerar.fechaTexto,
+          chequeoGenerar.horaISO,
           montoFinal,
           sessionToken
         ).run();
