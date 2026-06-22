@@ -552,7 +552,12 @@ export async function onRequestPost(context) {
           env, negocioId, fechaISO, horaISO, duracionNumerica
         );
         if (!disponibilidad.disponible) {
-          const respNoDisponible = `Ese horario no está disponible (${disponibilidad.motivo}). ¿Te gustaría proponer otra fecha u hora? 😊`;
+          const motivoLower1 = (disponibilidad.motivo || "").toLowerCase();
+          const respNoDisponible = motivoLower1.includes("no hay atenci") || motivoLower1.includes("no configurad") || motivoLower1.includes("ese d")
+            ? `Lo siento, ese día no tenemos atención. Nuestro horario es lunes a viernes. ¿Te gustaría elegir otro día? 😊`
+            : motivoLower1.includes("ocupado") || motivoLower1.includes("otra cita")
+            ? `Esa hora ya está reservada. ¿Puedes proponer otro horario? 😊`
+            : `Lo siento, ese horario no está disponible. ¿Te gustaría proponer otra fecha u hora? 😊`;
 
           // Guardar marcador de fecha rechazada — evita que el Motor de Fechas
           // siga capturando la fecha vieja del historial en el siguiente turno
@@ -1160,7 +1165,14 @@ Usa estas de forma natural (no todas juntas):
           return {
             ok: false,
             motivo: "no_disponible",
-            mensaje: `Ese horario no está disponible (${disponibilidad.motivo}). ¿Te gustaría proponer otra fecha u hora? 😊`,
+            mensaje: (() => {
+              const m = (disponibilidad.motivo || "").toLowerCase();
+              return m.includes("no hay atenci") || m.includes("no configurad") || m.includes("ese d")
+                ? `Lo siento, ese día no tenemos atención. Nuestro horario es lunes a viernes. ¿Te gustaría elegir otro día? 😊`
+                : m.includes("ocupado") || m.includes("otra cita")
+                ? `Esa hora ya está reservada. ¿Puedes proponer otro horario? 😊`
+                : `Lo siento, ese horario no está disponible. ¿Te gustaría proponer otra fecha u hora? 😊`;
+            })(),
             fechaISO, horaISO
           };
         }
