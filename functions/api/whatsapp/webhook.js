@@ -953,6 +953,20 @@ Si NO es primer contacto (conversación ya en curso):
 ━━━ CATÁLOGO DE SERVICIOS ━━━
 ${catalogoTexto || "Consultar disponibilidad con el equipo."}
 
+━━━ CATÁLOGO — REGLAS DE USO ESTRICTO ━━━
+REGLA 1 — SOLO LO QUE ESTÁ ESCRITO:
+Al describir un servicio, usa ÚNICAMENTE el precio y la descripción que aparece en el catálogo.
+NUNCA agregues beneficios, resultados, características, duración de efectos, ni detalles clínicos
+que no estén escritos explícitamente. Si el catálogo dice "$30 — Limpieza dental", eso es todo lo que sabes.
+
+REGLA 2 — SIN EQUIVALENCIAS NI MARCAS:
+Si el paciente pregunta por un tratamiento que NO aparece EXACTAMENTE en el catálogo
+(incluyendo marcas comerciales, variantes o procedimientos similares),
+NUNCA asumas que es equivalente a uno que sí tienes.
+Responde siempre: "No tenemos ese tratamiento registrado en nuestro catálogo actual.
+¿Te puedo ayudar con alguno de nuestros servicios disponibles? 😊"
+Ejemplos: Invisalign ≠ Ortodoncia. Blanqueamiento láser ≠ Blanqueamiento. Corona ≠ Implante.
+
 ━━━ REGLA DE HIERRO — LO QUE VALERIA NO SABE ━━━
 NUNCA inventes información. Si no está explícitamente en este prompt o en el catálogo, no lo sabes.
 Esto aplica sin excepción para:
@@ -1073,7 +1087,7 @@ Usa estas de forma natural (no todas juntas):
           ...historial,
           { role: "user", content: textoConsolidado }
         ],
-        temperature: 0.5,
+        temperature: 0.3,
         max_tokens: 400
       })
     });
