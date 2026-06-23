@@ -132,7 +132,7 @@ export async function onRequestPost(context) {
       const audioId  = message.audio?.id || message.voice?.id;
       const duracion = message.audio?.duration || message.voice?.duration || 0;
 
-      if (duracion > 20) {
+      if (duracion > 45) { // mensajes de voz hasta 45 segundos — Whisper los transcribe sin riesgo de alucinación
         await enviarMensaje(waToken, phoneNumberId, from,
           "Solo proceso audios de hasta 20 segundos. ¿Puedes escribirme o enviar un audio más corto? 😊"
         );
@@ -377,7 +377,8 @@ export async function onRequestPost(context) {
         imagenesServicio[servicioMencionadoAhora.nombre.toLowerCase()] || null;
 
       if (imgUrl) {
-        const caption = `🦷 ${servicioMencionadoAhora.nombre}\n💰 Desde $${servicioMencionadoAhora.precio} USD | ⏱ ${servicioMencionadoAhora.duracion} min${servicioMencionadoAhora.descripcion ? `\n${servicioMencionadoAhora.descripcion}` : ""}`;
+        const duracionLimpia = String(servicioMencionadoAhora.duracion || "").replace(/\s*min\s*/i, "").trim();
+        const caption = `🦷 ${servicioMencionadoAhora.nombre}\n💰 Desde $${servicioMencionadoAhora.precio} USD | ⏱️ ${duracionLimpia} min${servicioMencionadoAhora.descripcion ? `\n${servicioMencionadoAhora.descripcion}` : ""}`;
         await enviarImagen(waToken, phoneNumberId, from, imgUrl, caption);
         await new Promise(r => setTimeout(r, 800));
         // Marcador invisible en historial para no reenviar la imagen
@@ -1424,12 +1425,23 @@ Usa estas de forma natural (no todas juntas):
       let textoTg = `📱 <b>WhatsApp — ${negocio.nombre}</b>\n\nPaciente: +${from}${nombrePaciente ? ` (${nombrePaciente})` : ""}\n💬 "${textoConsolidado}"`;
 
       if (citaCreada && datosCita) {
-        textoTg += `\n\n✅ <b>CITA CREADA</b>\nServicio: ${datosCita.servicio}\nFecha: ${datosCita.fecha}`;
+        // Modo solo_cita: la cita ya está confirmada pero el dueño
+        // igual necesita los botones para pausar el bot o cancelar si hay error
+        const textoCitaCreada = textoTg + `\n\n✅ <b>CITA CREADA</b>\nServicio: ${datosCita.servicio}\nFecha: ${datosCita.fecha}\n\n⏳ Estado: Confirmada`;
+        try {
+          // Buscar el id de la cita recién creada para los botones
+          const citaReciente = await env.producto_c_db.prepare(
+            `SELECT id FROM citas WHERE negocio_id = ? AND cliente_tel = ? ORDER BY id DESC LIMIT 1`
+          ).bind(negocioId, from).first();
+          const citaIdTg = citaReciente ? citaReciente.id : 0;
+          await notificarTelegramConBotones(env.TELEGRAM_TOKEN, negocio.telegram_chat_id, textoCitaCreada, citaIdTg, from, negocioId);
+        } catch(e) { await notificarTelegram(env.TELEGRAM_TOKEN, negocio.telegram_chat_id, textoCitaCreada).catch(()=>{}); }
       } else if (linkPago && datosCita) {
         textoTg += `\n\n🔔 <b>ESPERANDO PAGO</b>\nServicio: ${datosCita.servicio}\nFecha: ${datosCita.fecha}\nLink enviado al paciente`;
+        try { await notificarTelegram(env.TELEGRAM_TOKEN, negocio.telegram_chat_id, textoTg); } catch(e) {}
+      } else {
+        try { await notificarTelegram(env.TELEGRAM_TOKEN, negocio.telegram_chat_id, textoTg); } catch(e) {}
       }
-
-      try { await notificarTelegram(env.TELEGRAM_TOKEN, negocio.telegram_chat_id, textoTg); } catch(e) {}
     }
 
     return new Response("EVENT_RECEIVED", { status: 200 });
