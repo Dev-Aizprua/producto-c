@@ -505,10 +505,94 @@ export async function onRequestPost(context) {
       } catch(e) {}
 
       if (citaExistente) {
-        // Ya tiene cita pendiente — responder amablemente sin generar nuevo link
+        const textoLower = textoConsolidado.toLowerCase();
+
+        // ── Intención de CANCELAR ────────────────────────────────────────
+        const quiereCancelar = /\b(cancel|no quiero|ya no quiero|no deseo|ya no deseo|no me interesa|ya no me interesa|olvid|adios|adiós|hasta luego|no gracias|no, gracias|dejalo|déjalo|no importa|lo dejo|mejor no|no va|no voy)/.test(textoLower);
+
+        if (quiereCancelar) {
+          // Marcar cita como cancelada
+          try {
+            await env.producto_c_db.prepare(
+              `UPDATE citas SET estado_pago = 'cancelada' WHERE id = ?`
+            ).bind(citaExistente.id).run();
+          } catch(e) {}
+          await marcarLeido(waToken, phoneNumberId, message.id);
+          await new Promise(r => setTimeout(r, 1000));
+          await enviarMensaje(waToken, phoneNumberId, from,
+            `No hay problema${primerNombrePaciente ? `, ${primerNombrePaciente}` : ""}. Tu cita ha sido cancelada. Si en algún momento deseas reagendar, con gusto te ayudo. 😊`
+          );
+          return new Response("EVENT_RECEIVED", { status: 200 });
+        }
+
+        // ── Enlace EXPIRADO o pide nuevo enlace ─────────────────────────
+        const quiereNuevoEnlace = /\b(expir|vencid|no funciona|no sirve|no carga|manda.*enlace|envia.*enlace|nuevo.*enlace|enlace.*nuevo|otro.*enlace|enlace.*otro|link|no me lleg|no lleg|no recib)/.test(textoLower);
+
+        if (quiereNuevoEnlace) {
+          // Regenerar link de pago para la misma cita
+          try {
+            const citaDetalle = await env.producto_c_db.prepare(
+              `SELECT c.id, c.total, c.fecha_cita, c.fecha_hora, c.session_token, c.cliente_nombre,
+                      s.nombre as servicio_nombre
+               FROM citas c LEFT JOIN servicios s ON c.servicio_id = s.id
+               WHERE c.id = ?`
+            ).bind(citaExistente.id).first();
+
+            if (citaDetalle) {
+              const pfRes = await fetch("https://sandbox.paguelofacil.com/LinkDeCobroE", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${env.PAGUELO_FACIL_TOKEN}` },
+                body: JSON.stringify({
+                  cclw: env.PAGUELO_FACIL_CCLW,
+                  amount: citaDetalle.total,
+                  phone: from,
+                  email: `${from}@whatsapp.com`,
+                  concept: `Cita ${citaDetalle.servicio_nombre} - ${citaDetalle.fecha_cita}`,
+                  description: `Cita dental ${citaDetalle.servicio_nombre}`,
+                  lang: "ES",
+                  customFieldValues: [{ id: "citaId", value: String(citaDetalle.id) }]
+                })
+              });
+              const pfData = await pfRes.json();
+              const nuevoLink = pfData?.data?.CCLW ? `https://checkout-demo.paguelofacil.com?code=${pfData.data.CCLW}` : null;
+
+              if (nuevoLink) {
+                await marcarLeido(waToken, phoneNumberId, message.id);
+                await new Promise(r => setTimeout(r, 1000));
+                await enviarMensaje(waToken, phoneNumberId, from,
+                  `Claro${primerNombrePaciente ? `, ${primerNombrePaciente}` : ""}. Te genero un enlace nuevo:
+
+💳 *Enlace de pago seguro:*
+${nuevoLink}
+
+_Una vez confirmado el pago, tu cita queda lista. ✅_`
+                );
+                return new Response("EVENT_RECEIVED", { status: 200 });
+              }
+            }
+          } catch(e) { console.log("Error regenerando link:", e.message); }
+
+          // Si falla la regeneración, avisar y notificar al dueño
+          await marcarLeido(waToken, phoneNumberId, message.id);
+          await enviarMensaje(waToken, phoneNumberId, from,
+            `Lo siento${primerNombrePaciente ? `, ${primerNombrePaciente}` : ""}, tuve un problema al generar el enlace. Un miembro del equipo te lo enviará en breve. 😊`
+          );
+          try {
+            await notificarTelegram(env.TELEGRAM_TOKEN, negocio.telegram_chat_id,
+              `⚠️ <b>ENLACE DE PAGO FALLIDO</b>
+👤 ${primerNombrePaciente || from}
+📞 +${from}
+💬 "${textoConsolidado}"
+No se pudo regenerar el enlace — requiere atención manual.`
+            );
+          } catch(e) {}
+          return new Response("EVENT_RECEIVED", { status: 200 });
+        }
+
+        // ── Sin intención clara: recordar el enlace original ─────────────
         await marcarLeido(waToken, phoneNumberId, message.id);
         await enviarMensaje(waToken, phoneNumberId, from,
-          `Tu cita ya está registrada y esperando el pago. Usa el enlace que te enviamos para confirmarla. 😊`
+          `${primerNombrePaciente ? `${primerNombrePaciente}, tu` : "Tu"} cita está reservada y esperando el pago. Si el enlace anterior no funciona, escríbeme "nuevo enlace" y te genero uno. Si prefieres cancelar, solo dímelo. 😊`
         );
         return new Response("EVENT_RECEIVED", { status: 200 });
       }
@@ -985,11 +1069,15 @@ Si el paciente pregunta algo de esta lista, responde:
 
 ━━━ DISPONIBILIDAD DE CITAS ━━━
 Ahora SÍ tienes Agenda Real — el sistema verifica disponibilidad automáticamente al confirmar.
-Cuando el paciente proponga una fecha/hora, dile que vas a revisar disponibilidad — NO prometas que "el equipo confirmará".
-Ejemplo correcto: "Perfecto, permíteme revisar la disponibilidad para el viernes 19 a las 2pm. 😊"
-El sistema verificará automáticamente cuando el paciente confirme la cita — si no hay disponibilidad, se lo informará con el motivo exacto.
 NUNCA digas: "El miércoles está disponible" o "Tenemos ese horario libre" antes de que el sistema lo confirme.
 NUNCA digas: "Un miembro del equipo confirmará la disponibilidad" — eso ya no es necesario, el sistema lo hace en tiempo real.
+
+⚠️ REGLA CRÍTICA — NO USES "permíteme revisar" COMO MENSAJE DE PAUSA:
+Cuando el paciente te da la fecha/hora, NO mandes un mensaje de transición que quede esperando respuesta.
+Si ya tienes nombre + servicio + fecha + hora → ve DIRECTO al resumen en el mismo mensaje.
+Formato correcto cuando tienes todo:
+"Perfecto [nombre]. Resumen: [Servicio], [día completo con fecha y año] a las [hora], $[precio]. ¿Confirmas la cita? 😊"
+Si todavía falta algo (nombre, fecha u hora) → pide ESO específico en el mismo mensaje, no digas "permíteme revisar".
 
 ━━━ SOLO USA INFORMACIÓN CONFIRMADA — REGLA UNIVERSAL ━━━
 Esta regla aplica a TODO, no solo a servicios:
@@ -1055,7 +1143,9 @@ El resumen y la etiqueta siempre van en mensajes separados.
 Primero preguntas si confirma. Cuando responde que sí, entonces incluyes la etiqueta.
 
 Ejemplo CORRECTO:
-Valeria: "Perfecto Eduardo. Resumen: Limpieza Dental, miércoles 9 AM, $30. ¿Confirmas la cita?"
+Valeria: "Perfecto Eduardo. Resumen: Limpieza Dental, miércoles 24 de junio de 2026 a las 9:00 AM, $30. ¿Confirmas la cita?"
+⚠️ El resumen SIEMPRE debe incluir: nombre del servicio, DÍA DE SEMANA + FECHA COMPLETA (día, mes y año) + hora, y precio.
+NUNCA escribas solo "lunes a las 9am" — escribe "lunes 29 de junio de 2026 a las 9:00 AM".
 Paciente: "Sí"
 Valeria: "¡Listo! Aquí tu enlace de pago. [GENERAR_PAGO:...]"
 
