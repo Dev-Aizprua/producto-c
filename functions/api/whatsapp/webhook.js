@@ -151,7 +151,7 @@ export async function onRequestPost(context) {
 
         const formData = new FormData();
         formData.append("file", new Blob([audioBlob], { type: "audio/ogg" }), "audio.ogg");
-        formData.append("model", "whisper-large-v3");
+        formData.append("model", "whisper-large-v3-turbo");
         formData.append("language", "es");
 
         const whisperRes  = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
@@ -1082,7 +1082,7 @@ Usa estas de forma natural (no todas juntas):
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "openai/gpt-oss-120b",
         messages: [
           { role: "system", content: systemPrompt },
           ...historial,
