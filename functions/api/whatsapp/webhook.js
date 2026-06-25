@@ -1528,6 +1528,72 @@ Usa estas de forma natural (no todas juntas):
       }
     } catch(e) { console.log("Error guardando chat:", e.message, e.stack); }
 
+    // ─── FILTRO POST-GROQ ────────────────────────────────────
+    // Última línea de defensa antes de que el mensaje llegue al paciente.
+    // Detecta frases peligrosas que Groq pudo haber inventado a pesar del prompt,
+    // y las reemplaza con respuestas seguras predefinidas.
+    // Estructura: { patron: regex, reemplazo: string, notificar: bool }
+    const FILTROS_ALUCINACION = [
+      // Financiamiento / pagos parciales
+      {
+        patron: /pag(o|ar|amos).{0,40}(parte|parcial|cuota|plazo|meses|quincena|abono)|financiam|pago.{0,20}en.{0,20}(dos|tres|cuatro|dos partes|cuotas)/i,
+        reemplazo: "No tengo información registrada sobre opciones de financiamiento o pagos parciales. Un miembro del equipo puede orientarte directamente. 😊",
+        notificar: true
+      },
+      // Descuentos / promociones inventadas
+      {
+        patron: /descuento|promoci[oó]n|oferta especial|precio especial|rebaja|te (puedo |podemos )?(dar|hacer|ofrecer|aplicar).{0,30}(descuento|rebaja|mejor precio)/i,
+        reemplazo: "No tengo información sobre descuentos o promociones activas en este momento. Para confirmarlo, un miembro del equipo puede ayudarte. 😊",
+        notificar: true
+      },
+      // Garantías inventadas
+      {
+        patron: /garant[ií]a.{0,30}(incluye|cubre|tiene|ofrece|d[ao]mos)|incluye.{0,30}garant[ií]a/i,
+        reemplazo: "No tengo información registrada sobre garantías. Te recomiendo consultar directamente con nuestro equipo para que te orienten. 😊",
+        notificar: true
+      },
+      // Beneficios no registrados en el catálogo
+      {
+        patron: /incluye.{0,60}(seguimiento|control|evaluaci[oó]n gratuita|radiograf[ií]a|blanqueamiento gratis|cepillo|kit dental|diagn[oó]stico gratis)/i,
+        reemplazo: "Para más detalles sobre qué incluye el tratamiento, un miembro del equipo puede orientarte con precisión. 😊",
+        notificar: true
+      },
+      // Afirmar disponibilidad sin verificar
+      {
+        patron: /(ese horario|esa fecha|el (lunes|martes|mi[eé]rcoles|jueves|viernes)).{0,30}(est[aá] disponible|tenemos disponible|hay disponibilidad|podemos agendarte|te podemos atender)/i,
+        reemplazo: null, // null = no reemplazar, solo loguear — la Agenda Real ya maneja esto
+        notificar: false
+      },
+      // Inventar seguros o coberturas
+      {
+        patron: /seguro.{0,30}(cubre|aplica|acepta|incluye)|acepta(mos)?.{0,20}seguro/i,
+        reemplazo: "No tengo información sobre coberturas de seguro. Un miembro del equipo puede orientarte directamente. 😊",
+        notificar: true
+      }
+    ];
+
+    let filtroActivado = false;
+    for (const filtro of FILTROS_ALUCINACION) {
+      if (filtro.patron.test(respuesta)) {
+        console.log("[FILTRO_POST_GROQ] Alucinación detectada:", filtro.patron.toString().substring(0, 60));
+        if (filtro.reemplazo) {
+          respuesta = filtro.reemplazo;
+          filtroActivado = true;
+        }
+        if (filtro.notificar && negocio?.telegram_chat_id && env.TELEGRAM_TOKEN) {
+          try {
+            await notificarTelegram(env.TELEGRAM_TOKEN, negocio.telegram_chat_id,
+              `⚠️ <b>FILTRO POST-GROQ ACTIVADO</b>
+👤 ${primerNombrePaciente || from}
+💬 Paciente dijo: "${textoConsolidado}"
+🚫 Groq respondió algo fuera de catálogo — respuesta reemplazada automáticamente.`
+            );
+          } catch(e) {}
+        }
+        break; // Un filtro a la vez — el primero que coincide gana
+      }
+    }
+
     // ─── DELAY HUMANO + ENVIAR ────────────────────────────────
     await marcarLeido(waToken, phoneNumberId, msgId);
     const palabras = respuesta.split(" ").length;
