@@ -114,12 +114,23 @@ export async function onRequestPost(context) {
       }
     } catch(e) {}
 
+    let citaSeguimientoId = null; // ID de la cita específica que disparó el seguimiento
+
     // ─── DETECCIÓN: respuesta a seguimiento de cita sin pagar ──────
     // Fase 8 — visibilidad panel. Si el cliente tiene una cita con
     // seguimiento_enviado=1 y aún no respondida, cualquier mensaje
     // entrante de su número cuenta como respuesta. Se hace temprano
     // y de forma genérica para no duplicar lógica en cada rama del flujo.
     try {
+      // Capturar el ID de la cita específica del seguimiento ANTES de marcarla
+      try {
+        const citaSeg = await env.producto_c_db.prepare(
+          `SELECT id FROM citas WHERE negocio_id = ? AND cliente_tel = ?
+           AND seguimiento_enviado = 1 AND seguimiento_respondido = 0
+           ORDER BY id DESC LIMIT 1`
+        ).bind(negocioId, from).first();
+        if (citaSeg) citaSeguimientoId = citaSeg.id;
+      } catch(e) {}
       await env.producto_c_db.prepare(
         `UPDATE citas SET seguimiento_respondido = 1
          WHERE negocio_id = ? AND cliente_tel = ?
@@ -1275,13 +1286,19 @@ Usa estas de forma natural (no todas juntas):
 
       // Protección contra duplicados — un paciente no debería terminar con
       // dos citas activas simultáneas por tomar una ruta distinta de Groq
+      // Si el paciente viene respondiendo un seguimiento, usar ESA cita específica
+      // en vez de la más reciente — evita confundir servicios distintos
       let citaActivaExistente = null;
       try {
-        citaActivaExistente = await env.producto_c_db.prepare(
-          `SELECT id, estado_pago FROM citas WHERE negocio_id = ? AND cliente_tel = ?
-           AND estado_pago IN ('esperando_pago','pago_por_verificar','pendiente_confirmacion','confirmada')
-           ORDER BY id DESC LIMIT 1`
-        ).bind(negocioId, from).first();
+        citaActivaExistente = citaSeguimientoId
+          ? await env.producto_c_db.prepare(
+              `SELECT id, estado_pago FROM citas WHERE id = ? AND negocio_id = ? LIMIT 1`
+            ).bind(citaSeguimientoId, negocioId).first()
+          : await env.producto_c_db.prepare(
+              `SELECT id, estado_pago FROM citas WHERE negocio_id = ? AND cliente_tel = ?
+               AND estado_pago IN ('esperando_pago','pago_por_verificar','pendiente_confirmacion','confirmada')
+               ORDER BY id DESC LIMIT 1`
+            ).bind(negocioId, from).first();
       } catch(e) {}
 
       if (citaActivaExistente) {

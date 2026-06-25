@@ -121,7 +121,33 @@ export async function onRequestGet(context) {
         const saludo = primerNombre ? `Hola ${primerNombre} 😊` : "Hola 😊";
         const nombreServicio = cita.servicio_nombre || "tu cita";
 
-        const mensajeSeguimiento = `${saludo} Tu solicitud para ${nombreServicio} (${cita.fecha_cita || "fecha pendiente"}) sigue activa y reservada a tu nombre. Si gustas confirmarla, aquí tienes el enlace de pago nuevamente:\n\nSi ya no deseas continuar, no hay problema — solo dímelo y la liberamos. 😊`;
+        // Generar nuevo link de pago real (el anterior puede haber expirado)
+        let nuevoLink = null;
+        try {
+          const pfRes = await fetch("https://sandbox.paguelofacil.com/LinkDeCobroE", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${env.PAGUELO_FACIL_TOKEN}` },
+            body: JSON.stringify({
+              cclw: env.PAGUELO_FACIL_CCLW,
+              amount: cita.total,
+              phone: cita.cliente_tel,
+              email: `${cita.cliente_tel}@whatsapp.com`,
+              concept: `Cita ${nombreServicio} - ${cita.fecha_cita}`,
+              description: `Seguimiento cita dental ${nombreServicio}`,
+              lang: "ES",
+              customFieldValues: [{ id: "citaId", value: String(cita.id) }]
+            })
+          });
+          const pfData = await pfRes.json();
+          nuevoLink = pfData?.data?.CCLW
+            ? `https://checkout-demo.paguelofacil.com?code=${pfData.data.CCLW}`
+            : null;
+        } catch(e) { console.log("Error generando link seguimiento:", e.message); }
+
+        // Mensaje con o sin link según si se pudo generar
+        const mensajeSeguimiento = nuevoLink
+          ? `${saludo} Tu solicitud para ${nombreServicio} (${cita.fecha_cita || "fecha pendiente"}) sigue activa y reservada a tu nombre.\n\n💳 Enlace de pago:\n${nuevoLink}\n\nSi prefieres cancelar o tienes alguna duda, escríbeme y con gusto te ayudo. 😊`
+          : `${saludo} Tu solicitud para ${nombreServicio} (${cita.fecha_cita || "fecha pendiente"}) sigue activa y reservada a tu nombre. Si deseas confirmarla o tienes alguna duda, escríbeme y con gusto te ayudo. 😊`;
 
         await enviarMensajeWA(cita.wa_token, cita.wa_phone_id, cita.cliente_tel, mensajeSeguimiento);
 
