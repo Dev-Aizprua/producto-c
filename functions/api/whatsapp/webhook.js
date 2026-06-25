@@ -1534,40 +1534,143 @@ Usa estas de forma natural (no todas juntas):
     // y las reemplaza con respuestas seguras predefinidas.
     // Estructura: { patron: regex, reemplazo: string, notificar: bool }
     const FILTROS_ALUCINACION = [
+
+      // ══════════════════════════════════════════════════════
+      // NIVEL CRÍTICO — Riesgo legal o médico inmediato
+      // ══════════════════════════════════════════════════════
+
+      // Diagnósticos clínicos — PRIORIDAD MÁXIMA
+      {
+        nivel: "CRÍTICO",
+        patron: /parece (que tiene|una|un|ser)|probablemente (tiene|es|necesita|sea)|seguramente (tiene|necesita|es)|puede ser (una|un|que)|luce como|suena a.{0,30}(caries|infec|dolor|muela|pieza)|caries|gingivitis|periodontitis|absceso|infecci[oó]n.{0,20}(dental|muela|boca)|pieza.{0,20}(infectada|rota|perdida)|necesita.{0,20}(extracci[oó]n|endodoncia|cirug[ií]a)/i,
+        reemplazo: "Para evaluar cualquier situación dental, lo mejor es agendar una cita con nuestro equipo. Ellos podrán orientarte con precisión. ¿Te gustaría que revisemos horarios disponibles? 😊",
+        notificar: true
+      },
+      // Recomendaciones médicas / medicación
+      {
+        nivel: "CRÍTICO",
+        patron: /le recomiendo (tomar|usar|aplicar|medicarse|comprar)|debe (tomar|usar|medicarse|aplicarse|comprar).{0,30}(pastilla|antibiótico|antibi[oó]tico|ibuprofeno|acetaminof[eé]n|analgésico|gel|enjuague)|necesita antibiótico|puede tomar.{0,30}para el dolor|aplíquese|enjuáguese con/i,
+        reemplazo: "Para cualquier consulta sobre medicación o alivio del dolor, te recomiendo comunicarte directamente con nuestro equipo o visitar a un profesional. 😊",
+        notificar: true
+      },
+      // Garantías de resultados — riesgo legal en salud
+      {
+        nivel: "CRÍTICO",
+        patron: /resultado.{0,30}(garantizado|permanente|definitivo|100%)|garant(ía|izamos|izo).{0,40}(result|éxito|funciona|curar|sanar|solucionar)|quedar[aá].{0,30}(completamente|totalmente).{0,30}(solucionado|curado|bien|perfecto)|dolor (desaparecer[aá]|se ir[aá]|desaparecerá)|100% efectivo/i,
+        reemplazo: "Los resultados de cada tratamiento dependen de la evaluación del equipo dental. Con gusto te orientan en la cita. 😊",
+        notificar: true
+      },
+      // Información médica tranquilizante sin base
+      {
+        nivel: "CRÍTICO",
+        patron: /no (es|parece|luce|suena) (grave|serio|peligroso|urgente)|no debe preocuparse|es algo normal|no necesita tratamiento|eso no es nada|no es para alarmarse/i,
+        reemplazo: "Para cualquier situación dental, lo más recomendable es que nuestro equipo la evalúe directamente. ¿Deseas agendar una cita? 😊",
+        notificar: true
+      },
+
+      // ══════════════════════════════════════════════════════
+      // NIVEL ALTO — Compromiso comercial falso
+      // ══════════════════════════════════════════════════════
+
       // Financiamiento / pagos parciales
       {
-        patron: /pag(o|ar|amos).{0,40}(parte|parcial|cuota|plazo|meses|quincena|abono)|financiam|pago.{0,20}en.{0,20}(dos|tres|cuatro|dos partes|cuotas)/i,
+        nivel: "ALTO",
+        patron: /pag(o|ar|amos).{0,40}(partes|parcial|cuotas|plazos|meses|quincena|abono)|financiam|pago.{0,20}en.{0,20}(dos|tres|cuatro|cuotas|partes)/i,
         reemplazo: "No tengo información registrada sobre opciones de financiamiento o pagos parciales. Un miembro del equipo puede orientarte directamente. 😊",
         notificar: true
       },
-      // Descuentos / promociones inventadas
+      // Descuentos inventados
       {
-        patron: /descuento|promoci[oó]n|oferta especial|precio especial|rebaja|te (puedo |podemos )?(dar|hacer|ofrecer|aplicar).{0,30}(descuento|rebaja|mejor precio)/i,
-        reemplazo: "No tengo información sobre descuentos o promociones activas en este momento. Para confirmarlo, un miembro del equipo puede ayudarte. 😊",
+        nivel: "ALTO",
+        patron: /descuento|rebaja|te (puedo|podemos) (dar|hacer|ofrecer|aplicar).{0,30}(descuento|rebaja|mejor precio)/i,
+        reemplazo: "No tengo información sobre descuentos activos en este momento. Para confirmarlo, un miembro del equipo puede ayudarte. 😊",
+        notificar: true
+      },
+      // Promociones inventadas
+      {
+        nivel: "ALTO",
+        patron: /promoci[oó]n.{0,30}(este mes|esta semana|activa|especial|nuevos pacientes)|oferta especial|precio especial|en descuento esta (semana|mes)|hay (una )?oferta/i,
+        reemplazo: "No tengo información sobre promociones activas en este momento. Un miembro del equipo puede confirmarte si hay alguna disponible. 😊",
         notificar: true
       },
       // Garantías inventadas
       {
-        patron: /garant[ií]a.{0,30}(incluye|cubre|tiene|ofrece|d[ao]mos)|incluye.{0,30}garant[ií]a/i,
-        reemplazo: "No tengo información registrada sobre garantías. Te recomiendo consultar directamente con nuestro equipo para que te orienten. 😊",
+        nivel: "ALTO",
+        patron: /garant[ií]a.{0,30}(incluye|cubre|tiene|ofrecemos|damos)|incluye.{0,30}garant[ií]a/i,
+        reemplazo: "No tengo información registrada sobre garantías. Te recomiendo consultar directamente con nuestro equipo. 😊",
         notificar: true
       },
-      // Beneficios no registrados en el catálogo
+      // Políticas de cancelación inventadas
       {
-        patron: /incluye.{0,60}(seguimiento|control|evaluaci[oó]n gratuita|radiograf[ií]a|blanqueamiento gratis|cepillo|kit dental|diagn[oó]stico gratis)/i,
+        nivel: "ALTO",
+        patron: /puede cancelar (sin costo|gratis|sin penalización|cuando quiera)|puede reprogramar (ilimitadamente|sin costo|cuando guste)|no hay (costo|cargo|penalización).{0,20}cancel/i,
+        reemplazo: "Para consultas sobre cancelaciones o reprogramaciones, un miembro del equipo puede orientarte con las políticas exactas. 😊",
+        notificar: true
+      },
+
+      // ══════════════════════════════════════════════════════
+      // NIVEL MEDIO — Información operativa no verificada
+      // ══════════════════════════════════════════════════════
+
+      // Regalos / beneficios no registrados
+      {
+        nivel: "MEDIO",
+        patron: /incluye.{0,60}(kit dental|cepillo gratis|pasta dental|radiograf[ií]a gratis|blanqueamiento gratis|evaluaci[oó]n gratuita|diagn[oó]stico gratis|consulta gratis|obsequi)/i,
         reemplazo: "Para más detalles sobre qué incluye el tratamiento, un miembro del equipo puede orientarte con precisión. 😊",
         notificar: true
       },
-      // Afirmar disponibilidad sin verificar
+      // Horarios inventados
       {
-        patron: /(ese horario|esa fecha|el (lunes|martes|mi[eé]rcoles|jueves|viernes)).{0,30}(est[aá] disponible|tenemos disponible|hay disponibilidad|podemos agendarte|te podemos atender)/i,
-        reemplazo: null, // null = no reemplazar, solo loguear — la Agenda Real ya maneja esto
+        nivel: "MEDIO",
+        patron: /abrimos (hasta|desde).{0,20}(las \d|los \d)|trabajamos (domingos|s[aá]bados|feriados|fines de semana)|atendemos (domingos|feriados|24 horas|toda la noche|fines de semana)/i,
+        reemplazo: "Para confirmar nuestros horarios de atención exactos, un miembro del equipo puede orientarte. 😊",
+        notificar: true
+      },
+      // Métodos de pago inventados
+      {
+        nivel: "MEDIO",
+        patron: /aceptamos.{0,30}(yappy|paypal|ach|criptomoneda|bitcoin|transferencia|sinpe|nequi|daviplata|zelle)|pagos? con.{0,20}(yappy|paypal|bitcoin|criptomoneda)/i,
+        reemplazo: "Para consultar los métodos de pago disponibles, un miembro del equipo puede confirmarte las opciones. 😊",
+        notificar: true
+      },
+      // Especialistas inventados
+      {
+        nivel: "MEDIO",
+        patron: /tenemos.{0,30}(ortodoncista|cirujano|periodoncista|endodoncista|especialista en|pedi[ao]tra|radiólogo)|contamos con.{0,30}especialista/i,
+        reemplazo: "Para consultar sobre nuestro equipo de especialistas, un miembro del equipo puede orientarte directamente. 😊",
+        notificar: true
+      },
+      // Sedes / sucursales inventadas
+      {
+        nivel: "MEDIO",
+        patron: /tenemos.{0,30}(otra (clínica|sede|sucursal|local)|dos (clínicas|sedes))|puede visitarnos en.{0,30}(calle|avenida|local|centro)/i,
+        reemplazo: "Para información sobre ubicaciones, un miembro del equipo puede orientarte directamente. 😊",
+        notificar: true
+      },
+      // Seguros inventados
+      {
+        nivel: "MEDIO",
+        patron: /seguro.{0,30}(cubre|aplica|acepta|incluye|trabaja)|acepta(mos)?.{0,20}(seguro|p[oó]liza)/i,
+        reemplazo: "No tengo información sobre coberturas de seguro. Un miembro del equipo puede orientarte directamente. 😊",
+        notificar: true
+      },
+
+      // ══════════════════════════════════════════════════════
+      // NIVEL BAJO — Solo log, Agenda Real ya lo maneja
+      // ══════════════════════════════════════════════════════
+
+      // Disponibilidad futura sin verificar
+      {
+        nivel: "BAJO",
+        patron: /ma[nñ]ana (tendremos|hay|habrá|seguro hay) (espacio|cupo|disponibilidad)|la pr[oó]xima semana.{0,30}(hay|habrá|seguro|podemos)|puede acudir cuando (guste|quiera|pueda)/i,
+        reemplazo: null, // La Agenda Real lo maneja — solo logueamos
         notificar: false
       },
-      // Inventar seguros o coberturas
+      // Urgencias / atención 24h inventada
       {
-        patron: /seguro.{0,30}(cubre|aplica|acepta|incluye)|acepta(mos)?.{0,20}seguro/i,
-        reemplazo: "No tengo información sobre coberturas de seguro. Un miembro del equipo puede orientarte directamente. 😊",
+        nivel: "BAJO",
+        patron: /atendemos urgencias.{0,20}(24|toda la noche)|servicio de emergencia.{0,20}(disponible|24)|puede acudir esta noche/i,
+        reemplazo: "Para urgencias dentales, te recomiendo contactar directamente a la clínica. 😊",
         notificar: true
       }
     ];
@@ -1582,11 +1685,12 @@ Usa estas de forma natural (no todas juntas):
         }
         if (filtro.notificar && negocio?.telegram_chat_id && env.TELEGRAM_TOKEN) {
           try {
+            const emoji = filtro.nivel === "CRÍTICO" ? "🔴" : filtro.nivel === "ALTO" ? "🟠" : filtro.nivel === "MEDIO" ? "🟡" : "🟢";
             await notificarTelegram(env.TELEGRAM_TOKEN, negocio.telegram_chat_id,
-              `⚠️ <b>FILTRO POST-GROQ ACTIVADO</b>
+              `${emoji} <b>FILTRO POST-GROQ — NIVEL ${filtro.nivel}</b>
 👤 ${primerNombrePaciente || from}
 💬 Paciente dijo: "${textoConsolidado}"
-🚫 Groq respondió algo fuera de catálogo — respuesta reemplazada automáticamente.`
+🚫 Groq respondió algo fuera de catálogo — respuesta reemplazada.`
             );
           } catch(e) {}
         }
