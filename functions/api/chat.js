@@ -1,12 +1,22 @@
 // ============================================================
-// functions/api/chat.js
+// functions/api/chat.js  — Valeria Web v2
 // POST /api/chat
-// Motor de IA conversacional con Groq LLaMA 3.3-70b
-// Guarda historial en D1 tabla chats
+// Actualizado para igualar el nivel del webhook de WhatsApp:
+// - Modelo openai/gpt-oss-120b (igual que WA)
+// - Temperature 0.3 (menos alucinaciones)
+// - Personalidad Valeria completa
+// - Catálogo estricto + sin equivalencias
+// - Motor de Fechas (resolverFechaNatural desde fechas.js)
+// - Agenda Real (verificarDisponibilidad desde agenda.js)
+// - Filtro post-Groq 20 patrones con niveles
+// - Protección de duplicados por sessionToken
 // ============================================================
 
+import { resolverFechaNatural } from './fechas.js';
+import { verificarDisponibilidad } from './agenda.js';
+
 const GROQ_API = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL    = 'llama-3.3-70b-versatile';
+const MODEL    = 'openai/gpt-oss-120b';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin':  '*',
@@ -15,133 +25,286 @@ const corsHeaders = {
   'Content-Type': 'application/json',
 };
 
+// ─── FILTRO POST-GROQ (mismo que WhatsApp) ────────────────────────────────
+// Si Groq inventa algo peligroso, se reemplaza antes de enviarlo al paciente.
+const FILTROS_ALUCINACION = [
+  // NIVEL CRÍTICO
+  {
+    nivel: "CRÍTICO",
+    patron: /parece (que tiene|una|un|ser)|probablemente (tiene|es|necesita)|seguramente (tiene|necesita)|caries|gingivitis|periodontitis|absceso|infecci[oó]n.{0,20}(dental|muela)|necesita.{0,20}(extracci[oó]n|endodoncia)/i,
+    reemplazo: "Para evaluar cualquier situación dental, lo mejor es agendar una cita con nuestro equipo. ¿Te gustaría que revisemos horarios disponibles? 😊"
+  },
+  {
+    nivel: "CRÍTICO",
+    patron: /le recomiendo (tomar|usar|medicarse)|debe (tomar|medicarse).{0,30}(pastilla|antibiótico|ibuprofeno|acetaminof[eé]n|analgésico)|necesita antibiótico/i,
+    reemplazo: "Para consultas sobre medicación, te recomiendo comunicarte directamente con nuestro equipo. 😊"
+  },
+  {
+    nivel: "CRÍTICO",
+    patron: /resultado.{0,30}(garantizado|permanente|100%)|garant(ía|izamos).{0,40}(result|éxito)|quedar[aá].{0,30}completamente.{0,30}(curado|bien)|100% efectivo/i,
+    reemplazo: "Los resultados dependen de la evaluación del equipo dental. Con gusto te orientan en la cita. 😊"
+  },
+  {
+    nivel: "CRÍTICO",
+    patron: /no (es|parece) (grave|serio|peligroso)|no debe preocuparse|es algo normal|no necesita tratamiento/i,
+    reemplazo: "Para cualquier situación dental, lo más recomendable es que nuestro equipo la evalúe. ¿Deseas agendar? 😊"
+  },
+  // NIVEL ALTO
+  {
+    nivel: "ALTO",
+    patron: /pag(o|ar|amos).{0,40}(partes|parcial|cuotas|plazos|meses|abono)|financiam/i,
+    reemplazo: "No tengo información sobre opciones de financiamiento. Un miembro del equipo puede orientarte. 😊"
+  },
+  {
+    nivel: "ALTO",
+    patron: /descuento|rebaja|te (puedo|podemos) (dar|hacer|ofrecer).{0,30}(descuento|rebaja)/i,
+    reemplazo: "No tengo información sobre descuentos activos. Un miembro del equipo puede confirmarte. 😊"
+  },
+  {
+    nivel: "ALTO",
+    patron: /promoci[oó]n.{0,30}(este mes|esta semana|especial|nuevos pacientes)|oferta especial|en descuento esta (semana|mes)/i,
+    reemplazo: "No tengo información sobre promociones activas. Un miembro del equipo puede confirmarte. 😊"
+  },
+  {
+    nivel: "ALTO",
+    patron: /garant[ií]a.{0,30}(incluye|cubre|ofrecemos)|incluye.{0,30}garant[ií]a/i,
+    reemplazo: "No tengo información sobre garantías. Te recomiendo consultar con nuestro equipo. 😊"
+  },
+  {
+    nivel: "ALTO",
+    patron: /puede cancelar (sin costo|gratis|sin penalización)|puede reprogramar ilimitadamente/i,
+    reemplazo: "Para consultas sobre cancelaciones, un miembro del equipo puede orientarte. 😊"
+  },
+  // NIVEL MEDIO
+  {
+    nivel: "MEDIO",
+    patron: /incluye.{0,60}(kit dental|cepillo gratis|radiograf[ií]a gratis|evaluaci[oó]n gratuita|diagn[oó]stico gratis)/i,
+    reemplazo: "Para detalles sobre qué incluye el tratamiento, un miembro del equipo puede orientarte. 😊"
+  },
+  {
+    nivel: "MEDIO",
+    patron: /abrimos (hasta|desde).{0,20}las \d|trabajamos (domingos|feriados)|atendemos 24 horas/i,
+    reemplazo: "Para confirmar nuestros horarios exactos, un miembro del equipo puede orientarte. 😊"
+  },
+  {
+    nivel: "MEDIO",
+    patron: /aceptamos.{0,30}(yappy|paypal|bitcoin|criptomoneda|zelle)|pagos? con.{0,20}(yappy|paypal|bitcoin)/i,
+    reemplazo: "Para consultar los métodos de pago disponibles, un miembro del equipo puede confirmarte. 😊"
+  },
+  {
+    nivel: "MEDIO",
+    patron: /tenemos.{0,30}(ortodoncista|cirujano|periodoncista|especialista en)|contamos con.{0,30}especialista/i,
+    reemplazo: "Para información sobre nuestro equipo, un miembro puede orientarte directamente. 😊"
+  },
+  {
+    nivel: "MEDIO",
+    patron: /tenemos.{0,30}(otra clínica|otra sede|dos sedes)|puede visitarnos en.{0,30}(calle|avenida|local)/i,
+    reemplazo: "Para información sobre ubicaciones, un miembro del equipo puede orientarte. 😊"
+  },
+  {
+    nivel: "MEDIO",
+    patron: /seguro.{0,30}(cubre|aplica|acepta)|acepta(mos)?.{0,20}(seguro|póliza)/i,
+    reemplazo: "No tengo información sobre coberturas de seguro. Un miembro del equipo puede orientarte. 😊"
+  }
+];
+
+function aplicarFiltroPostGroq(respuesta) {
+  for (const filtro of FILTROS_ALUCINACION) {
+    if (filtro.patron.test(respuesta)) {
+      console.log(`[FILTRO_WEB] Nivel ${filtro.nivel} activado`);
+      return { respuesta: filtro.reemplazo, filtroActivado: true, nivel: filtro.nivel };
+    }
+  }
+  return { respuesta, filtroActivado: false, nivel: null };
+}
+
 export async function onRequestPost(context) {
   const { request, env } = context;
 
   let body;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ success: false, error: 'JSON inválido' }, { status: 400, headers: corsHeaders });
-  }
+  try { body = await request.json(); }
+  catch { return Response.json({ success: false, error: 'JSON inválido' }, { status: 400, headers: corsHeaders }); }
 
   const { slug, mensaje, sessionToken, historial = [] } = body;
-
   if (!slug || !mensaje) {
     return Response.json({ success: false, error: 'slug y mensaje requeridos' }, { status: 400, headers: corsHeaders });
   }
 
   try {
-    // 1. Cargar negocio y servicios desde D1
+    // 1. Cargar negocio y servicios
     const negocio = await env.producto_c_db
       .prepare('SELECT * FROM negocios WHERE slug = ? AND activo = 1 LIMIT 1')
-      .bind(slug)
-      .first();
-
-    if (!negocio) {
-      return Response.json({ success: false, error: 'Negocio no encontrado' }, { status: 404, headers: corsHeaders });
-    }
+      .bind(slug).first();
+    if (!negocio) return Response.json({ success: false, error: 'Negocio no encontrado' }, { status: 404, headers: corsHeaders });
 
     const { results: servicios } = await env.producto_c_db
       .prepare('SELECT * FROM servicios WHERE negocio_id = ? AND activo = 1 ORDER BY orden ASC')
-      .bind(negocio.id)
-      .all();
+      .bind(negocio.id).all();
 
-    // 2. Construir system prompt con contexto del negocio
+    // 2. Motor de Fechas — resolver fecha del mensaje antes de Groq
+    const fechaResuelta = resolverFechaNatural(mensaje);
+
+    // 3. Protección de duplicados — verificar si ya tiene cita activa
+    let citaActivaWeb = null;
+    if (sessionToken) {
+      try {
+        citaActivaWeb = await env.producto_c_db.prepare(
+          `SELECT id, estado_pago FROM citas WHERE negocio_id = ? AND session_token = ?
+           AND estado_pago IN ('esperando_pago','pago_por_verificar','confirmada')
+           ORDER BY id DESC LIMIT 1`
+        ).bind(negocio.id, sessionToken).first();
+      } catch(e) {}
+    }
+
+    // 4. System prompt — nivel Valeria completo
     const listaServicios = servicios.map(s =>
-      `- ${s.nombre}: $${s.precio} USD (${s.duracion || 'consultar'})`
+      `- ${s.nombre}: $${s.precio} USD | ${s.duracion || 'consultar'} | ${s.descripcion || ''}`
     ).join('\n');
 
-    // Instrucción de pago según modo de reserva
-    const modoReserva   = negocio.modo_reserva   || 'adelanto';
-    const montoReserva  = negocio.monto_reserva  || 5;
-
+    const modoReserva  = negocio.modo_reserva  || 'adelanto';
+    const montoReserva = negocio.monto_reserva || 5;
     const instruccionPago =
       modoReserva === 'solo_cita'
-        ? `POLÍTICA DE PAGO: Este negocio NO requiere pago anticipado. El cliente agenda su cita gratis y paga el servicio completo directamente en el negocio el día de la cita.`
+        ? `POLÍTICA DE PAGO: No se requiere pago anticipado. El cliente agenda gratis y paga en el negocio el día de la cita.`
       : modoReserva === 'adelanto'
-        ? `POLÍTICA DE PAGO: Para reservar una cita se requiere un adelanto de $${montoReserva} USD. El cliente paga ese adelanto en línea ahora y el saldo restante lo paga en el negocio el día de la cita.`
-      : `POLÍTICA DE PAGO: Este negocio requiere pago completo al momento de reservar. El cliente paga el total del servicio en línea para confirmar su cita.`;
+        ? `POLÍTICA DE PAGO: Se requiere adelanto de $${montoReserva} USD para reservar. El saldo se paga en el negocio.`
+        : `POLÍTICA DE PAGO: Se requiere pago completo al reservar.`;
 
-    const systemPrompt = `Eres el asistente virtual de "${negocio.nombre}".
-Tu trabajo es ayudar a los clientes a conocer los servicios disponibles, responder preguntas y agendar citas.
+    const fechaContexto = fechaResuelta
+      ? `FECHA DETECTADA EN EL MENSAJE: ${fechaResuelta.texto} (${fechaResuelta.fecha}${fechaResuelta.hora ? ` a las ${fechaResuelta.hora}` : ''}) — usa esta fecha exacta en tu respuesta, no calcules fechas tú mismo.`
+      : `Si el paciente menciona una fecha o día, inclúyela en tu respuesta tal como él la dijo.`;
 
-SERVICIOS DISPONIBLES:
-${listaServicios || 'No hay servicios cargados aún.'}
+    const systemPrompt = `Eres Valeria, la secretaria virtual premium de "${negocio.nombre}". Atiendes el chat de la clínica dental con un tono cálido, profesional y panameño. Eres eficiente y amable — una sola pregunta a la vez.
+
+CATÁLOGO DE SERVICIOS (ÚNICA FUENTE DE VERDAD):
+${listaServicios || 'No hay servicios cargados.'}
 
 ${instruccionPago}
 
-INSTRUCCIONES:
-- Responde siempre en español, de forma amable y profesional.
-- Sé breve (máximo 3 oraciones por respuesta).
-- Si el cliente quiere agendar, confirma el servicio y la fecha.
-- Si preguntan por precio, menciona el costo exacto del servicio.
-- Si preguntan si tienen que pagar algo ahora, explica la política de pago claramente.
-- Si no puedes ayudar con algo, sugiere llamar al negocio por WhatsApp.
-- NUNCA inventes servicios ni precios que no estén en la lista.
-- NUNCA menciones que eres una IA de Groq o cualquier proveedor externo.
-- IMPORTANTE: Cuando el cliente mencione un servicio específico que quiere agendar (aunque no lo confirme explícitamente), confirma brevemente y termina SIEMPRE tu respuesta con: [MOSTRAR_RESUMEN]
-- Ejemplos que deben disparar [MOSTRAR_RESUMEN]: "quiero blanqueamiento", "agenda una limpieza", "reserva para mañana", "quiero una cita de implante".
+${fechaContexto}
+
+━━━ CATÁLOGO — REGLAS DE USO ESTRICTO ━━━
+REGLA 1 — SOLO LO QUE ESTÁ ESCRITO:
+Al describir un servicio, usa ÚNICAMENTE el precio y descripción del catálogo. NUNCA agregues beneficios, resultados, garantías, duraciones de efectos ni detalles clínicos que no estén escritos.
+
+REGLA 2 — SIN EQUIVALENCIAS NI MARCAS:
+Si el paciente pregunta por un tratamiento que NO aparece EXACTAMENTE en el catálogo, responde:
+"No tenemos ese tratamiento registrado en nuestro catálogo actual. ¿Te puedo ayudar con alguno de nuestros servicios disponibles? 😊"
+Ejemplos: Invisalign ≠ Ortodoncia. Blanqueamiento láser ≠ Blanqueamiento. Corona ≠ Implante.
+
+━━━ REGLA DE HIERRO — LO QUE VALERIA NO SABE ━━━
+- NO conoces: financiamiento, pagos parciales, descuentos, promociones, garantías, seguros, horarios exactos, métodos de pago adicionales, especialistas por nombre, otras sedes.
+- Si preguntan por algo que no está en el catálogo → "No tengo esa información registrada. Un miembro del equipo puede orientarte directamente. 😊"
+- NUNCA inventes diagnósticos, síntomas, ni recomendaciones clínicas — eso lo hace el dentista.
+- NUNCA confirmes disponibilidad antes de que el sistema la verifique.
+
+━━━ FLUJO DE AGENDAMIENTO ━━━
+1. Entiende qué servicio le interesa
+2. Si no tienes el nombre del paciente, pídelo
+3. Confirma fecha y hora con la fecha ya resuelta por el sistema
+4. Muestra resumen y pregunta ¿Confirmas la cita? — termina con [MOSTRAR_RESUMEN]
+5. SOLO cuando confirme → termina con [CREAR_CITA]
+
+━━━ REGLAS DE COMUNICACIÓN ━━━
+- Máximo 3 oraciones por respuesta
+- Una sola pregunta a la vez
+- Usa solo el primer nombre del paciente
+- Nunca menciones que eres IA de Groq o cualquier proveedor externo
+- Nunca hagas diagnósticos ni recomendaciones médicas
 
 NEGOCIO: ${negocio.nombre}
-WHATSAPP: ${negocio.whatsapp_destino || 'No disponible'}`;
+WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
 
-    // 3. Construir historial para Groq
+    // 5. Construir mensajes para Groq
     const mensajesGroq = [
       { role: 'system', content: systemPrompt },
-      ...historial.slice(-6).map(m => ({
-        role:    m.role === 'bot' ? 'assistant' : 'user',
+      ...historial.slice(-8).map(m => ({
+        role: m.role === 'bot' ? 'assistant' : 'user',
         content: m.text,
       })),
       { role: 'user', content: mensaje },
     ];
 
-    // 4. Llamar a Groq
+    // 6. Llamar a Groq
     const groqRes = await fetch(GROQ_API, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${env.GROQ_API_KEY}`,
-        'Content-Type':  'application/json',
-      },
-      body: JSON.stringify({
-        model:       MODEL,
-        messages:    mensajesGroq,
-        max_tokens:  256,
-        temperature: 0.6,
-      }),
+      headers: { 'Authorization': `Bearer ${env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: MODEL, messages: mensajesGroq, max_tokens: 300, temperature: 0.3 }),
     });
 
-    if (!groqRes.ok) {
-      const err = await groqRes.text();
-      throw new Error(`Groq error: ${err}`);
-    }
+    if (!groqRes.ok) throw new Error(`Groq error: ${await groqRes.text()}`);
+    const groqData = await groqRes.json();
+    let respuesta  = groqData.choices?.[0]?.message?.content?.trim() || 'Disculpa, no pude procesar tu mensaje.';
 
-    const groqData  = await groqRes.json();
-    let respuesta   = groqData.choices?.[0]?.message?.content?.trim() || 'Disculpa, no pude procesar tu mensaje.';
+    // 7. Filtro post-Groq (mismo que WhatsApp)
+    const filtroResult = aplicarFiltroPostGroq(respuesta);
+    respuesta = filtroResult.respuesta;
 
-    // 5. Detectar si hay que mostrar resumen
+    // 8. Detectar etiquetas de acción
     let mostrarResumen = false;
+    let crearCita      = false;
     let servicioResumen = null;
 
     if (respuesta.includes('[MOSTRAR_RESUMEN]')) {
       respuesta = respuesta.replace('[MOSTRAR_RESUMEN]', '').trim();
       mostrarResumen = true;
-      // Detectar cuál servicio eligió el cliente
       const msgLower = mensaje.toLowerCase();
       servicioResumen = servicios.find(s => msgLower.includes(s.nombre.toLowerCase())) || null;
     }
 
-    // 6. Detectar si hay que mostrar carrusel
-    const mostrarServicios = /servicio|agendar|cita|opciones|disponible/i.test(mensaje)
-      && !mostrarResumen;
+    if (respuesta.includes('[CREAR_CITA]')) {
+      respuesta = respuesta.replace('[CREAR_CITA]', '').trim();
+      crearCita = true;
+    }
 
-    // 7. Guardar en D1 tabla chats
+    // 9. Agenda Real — verificar disponibilidad si hay fecha y servicio
+    let disponibilidadInfo = null;
+    if (fechaResuelta?.fecha && fechaResuelta?.hora && servicioResumen) {
+      const duracion = parseInt(servicioResumen.duracion) || 30;
+      try {
+        disponibilidadInfo = await verificarDisponibilidad(env, negocio.id, fechaResuelta.fecha, fechaResuelta.hora, duracion);
+        if (!disponibilidadInfo.disponible) {
+          const motivo = (disponibilidadInfo.motivo || "").toLowerCase();
+          respuesta = motivo.includes("no hay atenci") || motivo.includes("ese d")
+            ? `Lo siento, ese día no tenemos atención. Nuestro horario es lunes a viernes. ¿Te gustaría otro día? 😊`
+            : `Lo siento, esa hora ya está reservada. ¿Puedes proponer otro horario? 😊`;
+          mostrarResumen = false;
+          crearCita = false;
+        }
+      } catch(e) { console.log('Agenda Real error:', e.message); }
+    }
+
+    // 10. Crear cita si se confirmó y pasa todas las validaciones
+    let citaCreada = null;
+    if (crearCita && sessionToken && !citaActivaWeb && fechaResuelta?.fecha && servicioResumen) {
+      try {
+        const duracion = parseInt(servicioResumen.duracion) || 30;
+        const disponible = await verificarDisponibilidad(env, negocio.id, fechaResuelta.fecha, fechaResuelta.hora || '09:00', duracion);
+        if (disponible.disponible) {
+          const estadoCita = modoReserva === 'solo_cita' ? 'confirmada' : 'esperando_pago';
+          await env.producto_c_db.prepare(
+            `INSERT INTO citas (negocio_id, servicio_id, cliente_nombre, cliente_tel,
+             fecha_cita, fecha_hora, total, estado_pago, metodo_pago, session_token, canal)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'web', ?, 'web')`
+          ).bind(
+            negocio.id, servicioResumen.id, 'Paciente Web', sessionToken,
+            fechaResuelta.fecha, fechaResuelta.hora || null,
+            servicioResumen.precio, estadoCita, sessionToken
+          ).run();
+          citaCreada = { servicio: servicioResumen.nombre, fecha: fechaResuelta.texto };
+        }
+      } catch(e) { console.log('Error creando cita web:', e.message); }
+    }
+
+    // 11. Detectar carrusel
+    const mostrarServicios = /servicio|agendar|cita|opciones|disponible|tratamiento/i.test(mensaje) && !mostrarResumen;
+
+    // 12. Guardar historial en D1
     if (sessionToken) {
       try {
         const existente = await env.producto_c_db
-          .prepare('SELECT id, historial_json FROM chats WHERE session_token = ? AND negocio_id = ? LIMIT 1')
-          .bind(sessionToken, negocio.id)
-          .first();
+          .prepare('SELECT id, historial_json FROM chats WHERE session_token = ? AND negocio_id = ? AND completado = 0 LIMIT 1')
+          .bind(sessionToken, negocio.id).first();
 
         const nuevoHistorial = [
           ...(existente ? JSON.parse(existente.historial_json || '[]') : []),
@@ -152,32 +315,30 @@ WHATSAPP: ${negocio.whatsapp_destino || 'No disponible'}`;
         if (existente) {
           await env.producto_c_db
             .prepare('UPDATE chats SET historial_json = ?, fecha = ? WHERE id = ?')
-            .bind(JSON.stringify(nuevoHistorial), new Date().toISOString(), existente.id)
-            .run();
+            .bind(JSON.stringify(nuevoHistorial), new Date().toISOString(), existente.id).run();
         } else {
           await env.producto_c_db
-            .prepare(`INSERT INTO chats (negocio_id, session_token, historial_json, fecha, completado)
-                      VALUES (?, ?, ?, ?, 0)`)
-            .bind(negocio.id, sessionToken, JSON.stringify(nuevoHistorial), new Date().toISOString())
-            .run();
+            .prepare(`INSERT INTO chats (negocio_id, session_token, cliente_nombre, cliente_tel, historial_json, fecha, completado, canal)
+                      VALUES (?, ?, 'Paciente Web', ?, ?, ?, 0, 'web')`)
+            .bind(negocio.id, sessionToken, sessionToken, JSON.stringify(nuevoHistorial), new Date().toISOString()).run();
         }
-      } catch (dbErr) {
-        // No bloquear la respuesta si falla el guardado
-        console.error('DB chat error:', dbErr.message);
-      }
+      } catch(e) { console.error('DB chat error:', e.message); }
     }
 
-    // 8. Responder al frontend
+    // 13. Responder
     return Response.json({
-      success:         true,
+      success: true,
       respuesta,
       mostrar_servicios: mostrarServicios,
       mostrar_resumen:   mostrarResumen,
-      servicio:          servicioResumen ? {
-        id:      servicioResumen.id,
-        nombre:  servicioResumen.nombre,
-        precio:  servicioResumen.precio,
-        duracion:servicioResumen.duracion,
+      cita_creada:       citaCreada,
+      filtro_activado:   filtroResult.filtroActivado,
+      servicio: servicioResumen ? {
+        id: servicioResumen.id, nombre: servicioResumen.nombre,
+        precio: servicioResumen.precio, duracion: servicioResumen.duracion,
+      } : null,
+      fecha_resuelta: fechaResuelta ? {
+        fecha: fechaResuelta.fecha, hora: fechaResuelta.hora, texto: fechaResuelta.texto
       } : null,
       servicios: mostrarServicios ? servicios.map(s => ({
         id: s.id, nombre: s.nombre, precio: s.precio,
@@ -185,11 +346,8 @@ WHATSAPP: ${negocio.whatsapp_destino || 'No disponible'}`;
       })) : [],
     }, { headers: corsHeaders });
 
-  } catch (err) {
-    return Response.json(
-      { success: false, error: 'Error interno', detail: err.message },
-      { status: 500, headers: corsHeaders }
-    );
+  } catch(err) {
+    return Response.json({ success: false, error: 'Error interno', detail: err.message }, { status: 500, headers: corsHeaders });
   }
 }
 

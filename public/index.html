@@ -902,12 +902,10 @@ function selSvcDesktop(id){
 }
 
 function bens(nombre){
-  const n=nombre.toLowerCase();
-  if(n.includes('limpieza'))return['Elimina sarro y placa bacteriana','Revisión general incluida','Resultado inmediato'];
-  if(n.includes('blanquea'))return['Hasta 8 tonos más blancos','Tratamiento profesional','Resultados duraderos'];
-  if(n.includes('implante'))return['Titanio de alta durabilidad','Se integra naturalmente','Solución permanente'];
-  if(n.includes('orto'))return['Corrección precisa y progresiva','Brackets o alineadores','Seguimiento personalizado'];
-  return['Atención profesional','Servicio garantizado','Reserva en minutos'];
+  // Beneficios genéricos y seguros — sin inventar resultados ni garantías
+  // que la clínica no haya aprobado. Los detalles específicos los explica
+  // el equipo de la clínica directamente.
+  return['Atención profesional','Equipo dental certificado','Agenda en minutos'];
 }
 
 function mostrarDetalleDesktop(s){
