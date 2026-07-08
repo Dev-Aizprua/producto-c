@@ -245,24 +245,60 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
     let crearCita      = false;
     let servicioResumen = null;
 
+    // Buscar el servicio en el mensaje actual Y en el historial reciente
+    // Cuando el paciente dice "si confirmo", el servicio está en mensajes anteriores
+    function detectarServicioEnContexto() {
+      const textos = [
+        mensaje,
+        ...historial.slice(-6).map(m => m.text || '')
+      ].join(' ').toLowerCase();
+      return servicios.find(s => textos.includes(s.nombre.toLowerCase())) || null;
+    }
+
+    // Extraer fecha del historial — igual que en WhatsApp
+    // Cuando el paciente confirma, la fecha está en un mensaje anterior de Valeria
+    function extraerFechaDeHistorial() {
+      const mensajesBot = historial.filter(m => m.role === 'bot').slice(-3);
+      for (const msg of mensajesBot.reverse()) {
+        const texto = msg.text || '';
+        const match = texto.match(
+          /(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+\d{1,2}\s+de\s+\w+\s+(?:de\s+\d{4}\s+)?a\s+las\s+[\d:]+\s*(?:AM|PM|am|pm)?/i
+        );
+        if (match) return resolverFechaNatural(match[0]);
+      }
+      return null;
+    }
+
     if (respuesta.includes('[MOSTRAR_RESUMEN]')) {
       respuesta = respuesta.replace('[MOSTRAR_RESUMEN]', '').trim();
       mostrarResumen = true;
-      const msgLower = mensaje.toLowerCase();
-      servicioResumen = servicios.find(s => msgLower.includes(s.nombre.toLowerCase())) || null;
+      servicioResumen = detectarServicioEnContexto();
     }
 
     if (respuesta.includes('[CREAR_CITA]')) {
       respuesta = respuesta.replace('[CREAR_CITA]', '').trim();
       crearCita = true;
+      // Asegurar que tenemos servicio aunque Groq no lo repita en este mensaje
+      if (!servicioResumen) servicioResumen = detectarServicioEnContexto();
+      // Si Groq devolvió SOLO la etiqueta, dar respuesta de confirmación por defecto
+      if (!respuesta) {
+        const nombreSvc = servicioResumen?.nombre || 'tu cita';
+        respuesta = `¡Listo! Tu cita de ${nombreSvc} ha sido registrada. En breve recibirás la confirmación. 😊`;
+      }
     }
+
+    // Si después del filtro y etiquetas la respuesta quedó vacía, dar fallback amigable
+    if (!respuesta) respuesta = 'Entendido. ¿Te puedo ayudar con algo más? 😊';
+
+    // Complementar fecha resuelta con la del historial si el mensaje actual no tiene fecha
+    const fechaFinal = fechaResuelta || (crearCita || mostrarResumen ? extraerFechaDeHistorial() : null);
 
     // 9. Agenda Real — verificar disponibilidad si hay fecha y servicio
     let disponibilidadInfo = null;
-    if (fechaResuelta?.fecha && fechaResuelta?.hora && servicioResumen) {
+    if (fechaFinal?.fecha && fechaFinal?.hora && servicioResumen) {
       const duracion = parseInt(servicioResumen.duracion) || 30;
       try {
-        disponibilidadInfo = await verificarDisponibilidad(env, negocio.id, fechaResuelta.fecha, fechaResuelta.hora, duracion);
+        disponibilidadInfo = await verificarDisponibilidad(env, negocio.id, fechaFinal.fecha, fechaFinal.hora, duracion);
         if (!disponibilidadInfo.disponible) {
           const motivo = (disponibilidadInfo.motivo || "").toLowerCase();
           respuesta = motivo.includes("no hay atenci") || motivo.includes("ese d")
@@ -276,10 +312,10 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
 
     // 10. Crear cita si se confirmó y pasa todas las validaciones
     let citaCreada = null;
-    if (crearCita && sessionToken && !citaActivaWeb && fechaResuelta?.fecha && servicioResumen) {
+    if (crearCita && sessionToken && !citaActivaWeb && fechaFinal?.fecha && servicioResumen) {
       try {
         const duracion = parseInt(servicioResumen.duracion) || 30;
-        const disponible = await verificarDisponibilidad(env, negocio.id, fechaResuelta.fecha, fechaResuelta.hora || '09:00', duracion);
+        const disponible = await verificarDisponibilidad(env, negocio.id, fechaFinal.fecha, fechaFinal.hora || '09:00', duracion);
         if (disponible.disponible) {
           const estadoCita = modoReserva === 'solo_cita' ? 'confirmada' : 'esperando_pago';
           await env.producto_c_db.prepare(
@@ -288,10 +324,10 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'web', ?, 'web')`
           ).bind(
             negocio.id, servicioResumen.id, 'Paciente Web', sessionToken,
-            fechaResuelta.fecha, fechaResuelta.hora || null,
+            fechaFinal.fecha, fechaFinal.hora || null,
             servicioResumen.precio, estadoCita, sessionToken
           ).run();
-          citaCreada = { servicio: servicioResumen.nombre, fecha: fechaResuelta.texto };
+          citaCreada = { servicio: servicioResumen.nombre, fecha: fechaFinal.texto };
         }
       } catch(e) { console.log('Error creando cita web:', e.message); }
     }
@@ -337,8 +373,8 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
         id: servicioResumen.id, nombre: servicioResumen.nombre,
         precio: servicioResumen.precio, duracion: servicioResumen.duracion,
       } : null,
-      fecha_resuelta: fechaResuelta ? {
-        fecha: fechaResuelta.fecha, hora: fechaResuelta.hora, texto: fechaResuelta.texto
+      fecha_resuelta: fechaFinal ? {
+        fecha: fechaFinal.fecha, hora: fechaFinal.hora, texto: fechaFinal.texto
       } : null,
       servicios: mostrarServicios ? servicios.map(s => ({
         id: s.id, nombre: s.nombre, precio: s.precio,
