@@ -141,6 +141,23 @@ export async function onRequestPost(context) {
       .prepare('SELECT * FROM servicios WHERE negocio_id = ? AND activo = 1 ORDER BY orden ASC')
       .bind(negocio.id).all();
 
+    // 2a. Detección temprana de servicio mencionado — igual que WhatsApp
+    // Si el paciente menciona un servicio por primera vez, mostrar la tarjeta
+    // con foto inmediatamente, sin esperar a que Groq ponga [MOSTRAR_RESUMEN]
+    const msgLowerDetect = mensaje.toLowerCase();
+    const servicioMencionadoAhora = servicios.find(s =>
+      msgLowerDetect.includes(s.nombre.toLowerCase())
+    );
+
+    // Verificar si ya mostramos esta tarjeta antes (evitar duplicados)
+    const historialTexto = historial.map(m => m.text || '').join(' ').toLowerCase();
+    const yaSeMotstroTarjeta = servicioMencionadoAhora
+      ? historialTexto.includes(servicioMencionadoAhora.nombre.toLowerCase())
+      : false;
+
+    // Si el servicio se menciona por primera vez → mostrar tarjeta con foto
+    const mostrarTarjetaServicio = servicioMencionadoAhora && !yaSeMotstroTarjeta;
+
     // 2. Motor de Fechas — resolver fecha del mensaje antes de Groq
     const fechaResuelta = resolverFechaNatural(mensaje);
 
@@ -332,8 +349,11 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
       } catch(e) { console.log('Error creando cita web:', e.message); }
     }
 
-    // 11. Detectar carrusel
-    const mostrarServicios = /servicio|agendar|cita|opciones|disponible|tratamiento/i.test(mensaje) && !mostrarResumen;
+    // 11. Detectar carrusel general
+    // No mostrar carrusel si se acaba de confirmar/crear una cita, mostrar resumen,
+    // o si ya estamos mostrando la tarjeta de un servicio específico
+    const mostrarServicios = /servicio|agendar|cita|opciones|disponible|tratamiento/i.test(mensaje)
+      && !mostrarResumen && !crearCita && !citaCreada && !mostrarTarjetaServicio;
 
     // 12. Guardar historial en D1
     if (sessionToken) {
@@ -362,16 +382,25 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
     }
 
     // 13. Responder
+    // Si se detectó servicio por primera vez, incluirlo para mostrar tarjeta con foto
+    const servicioParaFrontend = servicioResumen || (mostrarTarjetaServicio ? servicioMencionadoAhora : null);
+
     return Response.json({
       success: true,
       respuesta,
-      mostrar_servicios: mostrarServicios,
-      mostrar_resumen:   mostrarResumen,
-      cita_creada:       citaCreada,
-      filtro_activado:   filtroResult.filtroActivado,
-      servicio: servicioResumen ? {
-        id: servicioResumen.id, nombre: servicioResumen.nombre,
-        precio: servicioResumen.precio, duracion: servicioResumen.duracion,
+      mostrar_servicios:       mostrarServicios,
+      mostrar_resumen:         mostrarResumen,
+      mostrar_tarjeta_servicio: mostrarTarjetaServicio,
+      cita_creada:             citaCreada,
+      filtro_activado:         filtroResult.filtroActivado,
+      servicio: servicioParaFrontend ? {
+        id:        servicioParaFrontend.id,
+        nombre:    servicioParaFrontend.nombre,
+        precio:    servicioParaFrontend.precio,
+        duracion:  servicioParaFrontend.duracion,
+        icono:     servicioParaFrontend.icono,
+        imagen_url: servicioParaFrontend.imagen_url,
+        descripcion: servicioParaFrontend.descripcion,
       } : null,
       fecha_resuelta: fechaFinal ? {
         fecha: fechaFinal.fecha, hora: fechaFinal.hora, texto: fechaFinal.texto
