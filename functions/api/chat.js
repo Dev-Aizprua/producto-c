@@ -265,9 +265,13 @@ export async function onRequestPost(context) {
     );
 
     // Verificar si ya mostramos esta tarjeta antes (evitar duplicados)
-    const historialTexto = historial.map(m => m.text || '').join(' ').toLowerCase();
+    // Solo revisar mensajes del USUARIO — el bot puede mencionar el servicio
+    // en sus respuestas y eso no debe bloquear mostrar la tarjeta
+    const historialUsuario = historial
+      .filter(m => m.role === 'user')
+      .map(m => m.text || '').join(' ').toLowerCase();
     const yaSeMotstroTarjeta = servicioMencionadoAhora
-      ? historialTexto.includes(servicioMencionadoAhora.nombre.toLowerCase())
+      ? historialUsuario.includes(servicioMencionadoAhora.nombre.toLowerCase())
       : false;
 
     // Si el servicio se menciona por primera vez → mostrar tarjeta con foto
