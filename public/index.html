@@ -1114,11 +1114,10 @@ async function procesarRespuesta(texto){
       body:JSON.stringify({slug:C.slug,mensaje:texto,sessionToken:C.sessionToken,historial:C.historial.slice(-6)})});
     if(!res.ok)throw new Error('Error');
     const data=await res.json();removeTyping();
-    if(data.respuesta){botBubble(data.respuesta);C.historial.push({role:'bot',text:data.respuesta});saveHist();}
-    if(data.mostrar_servicios){await delay(300);appendCarrusel(data.servicios||C.negocio?.servicios||svcFallback());}
-    // Tarjeta con foto cuando el paciente menciona un servicio por primera vez — igual que WhatsApp
+
+    // FOTO PRIMERO — si el paciente menciona un servicio por primera vez,
+    // mostrar la tarjeta con imagen ANTES del texto de Valeria
     if(data.mostrar_tarjeta_servicio&&data.servicio){
-      await delay(300);
       const s=data.servicio;
       const tipo=tipoNegocio(C.negocio?.nombre||'');
       const foto=s.imagen_url||fotoSvc(s.nombre,tipo);
@@ -1133,7 +1132,12 @@ async function procesarRespuesta(texto){
       </div>`;
       botBubble(captionHtml);
       mostrarDetalleDesktop(s);
+      await delay(400);
     }
+
+    // TEXTO de Valeria después de la foto
+    if(data.respuesta){botBubble(data.respuesta);C.historial.push({role:'bot',text:data.respuesta});saveHist();}
+    if(data.mostrar_servicios){await delay(300);appendCarrusel(data.servicios||C.negocio?.servicios||svcFallback());}
     if(data.mostrar_resumen&&data.servicio){await delay(300);appendResumen(data.servicio,data.fecha_resuelta?.texto||proxFecha());mostrarDetalleDesktop(data.servicio);}
   }catch{
     removeTyping();

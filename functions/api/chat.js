@@ -331,6 +331,10 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
     let citaCreada = null;
     if (crearCita && sessionToken && !citaActivaWeb && fechaFinal?.fecha && servicioResumen) {
       try {
+        // Extraer nombre del paciente del historial
+        const historialTextoNombre = historial.map(m => m.text || '').join(' ');
+        const matchNombre = historialTextoNombre.match(/(?:me llamo|soy|mi nombre es|llámame)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?)/i);
+        const nombrePacienteWeb = matchNombre ? matchNombre[1] : (historial.find(m => m.role === 'user' && m.text?.length < 30 && /^[A-Z]/i.test(m.text))?.text || 'Paciente Web');
         const duracion = parseInt(servicioResumen.duracion) || 30;
         const disponible = await verificarDisponibilidad(env, negocio.id, fechaFinal.fecha, fechaFinal.hora || '09:00', duracion);
         if (disponible.disponible) {
@@ -340,11 +344,54 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
              fecha_cita, fecha_hora, total, estado_pago, metodo_pago, session_token, canal)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'web', ?, 'web')`
           ).bind(
-            negocio.id, servicioResumen.id, 'Paciente Web', sessionToken,
+            negocio.id, servicioResumen.id, nombrePacienteWeb, sessionToken,
             fechaFinal.fecha, fechaFinal.hora || null,
             servicioResumen.precio, estadoCita, sessionToken
           ).run();
           citaCreada = { servicio: servicioResumen.nombre, fecha: fechaFinal.texto };
+
+          // Notificar Telegram — igual que WhatsApp
+          try {
+            if (negocio.telegram_chat_id && env.TELEGRAM_TOKEN) {
+              const estadoTexto = estadoCita === 'confirmada' ? 'Confirmada ✅' : 'Esperando pago ⏳';
+              const textoTg = `🌐 <b>NUEVA CITA — Canal Web</b>
+` +
+                `👤 Cliente: ${nombrePacienteWeb}
+` +
+                `🦷 Servicio: ${servicioResumen.nombre}
+` +
+                `📅 Fecha: ${fechaFinal.texto}
+` +
+                `💰 Total: $${servicioResumen.precio} USD
+` +
+                `📌 Estado: ${estadoTexto}`;
+
+              // Buscar id de la cita recién creada para los botones
+              const citaNueva = await env.producto_c_db.prepare(
+                `SELECT id FROM citas WHERE negocio_id = ? AND session_token = ? ORDER BY id DESC LIMIT 1`
+              ).bind(negocio.id, sessionToken).first();
+              const citaIdTg = citaNueva?.id || 0;
+
+              // Botones igual que WhatsApp
+              await fetch(`https://api.telegram.org/bot${env.TELEGRAM_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: negocio.telegram_chat_id,
+                  text: textoTg,
+                  parse_mode: 'HTML',
+                  reply_markup: {
+                    inline_keyboard: [
+                      [
+                        { text: '✅ Confirmar Cita', callback_data: `confirmar:${citaIdTg}` },
+                        { text: '❌ Rechazar/Cancelar', callback_data: `rechazar:${citaIdTg}` }
+                      ]
+                    ]
+                  }
+                })
+              });
+            }
+          } catch(e) { console.log('Error Telegram web:', e.message); }
         }
       } catch(e) { console.log('Error creando cita web:', e.message); }
     }
