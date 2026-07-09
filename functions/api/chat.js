@@ -12,8 +12,123 @@
 // - Protección de duplicados por sessionToken
 // ============================================================
 
-import { resolverFechaNatural } from './fechas.js';
-import { verificarDisponibilidad } from './agenda.js';
+// Motor de Fechas inline — evita problema de imports entre CF Pages Functions
+// Versión simplificada de fechas.js suficiente para el chat web
+function resolverFechaNatural(texto) {
+  if (!texto) return null;
+  const lower = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+  const TIMEZONE = "America/Panama";
+  const ahoraBase = new Date();
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hour12: false
+  });
+  const parts = fmt.formatToParts(ahoraBase);
+  const gp = (type) => parseInt(parts.find(p => p.type === type).value);
+  const base = new Date(gp("year"), gp("month") - 1, gp("day"), gp("hour"), gp("minute"));
+
+  const DIAS = { domingo:0, lunes:1, martes:2, miercoles:3, jueves:4, viernes:5, sabado:6 };
+  const NOMBRES_DIAS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+  const MESES = { enero:0,febrero:1,marzo:2,abril:3,mayo:4,junio:5,julio:6,agosto:7,septiembre:8,octubre:9,noviembre:10,diciembre:11 };
+  const NOMBRES_MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+
+  function extraerHora(t) {
+    const l = t.toLowerCase();
+    const mT = l.match(/(\d{1,2})(?::(\d{2}))?\s*(?:de la tarde|de la noche|p\.?\s*m\.?)/);
+    if (mT) { let h=parseInt(mT[1]); if(h<12)h+=12; return `${String(h).padStart(2,"0")}:${mT[2]||"00"}`; }
+    const mM = l.match(/(\d{1,2})(?::(\d{2}))?\s*(?:de la ma[nñ]ana|a\.?\s*m\.?)/);
+    if (mM) { let h=parseInt(mM[1]); if(h===12)h=0; return `${String(h).padStart(2,"0")}:${mM[2]||"00"}`; }
+    if (l.includes("mediodia")||l.includes("mediod")) return "12:00";
+    const mYM = l.match(/(\d{1,2})\s*y\s*media/);
+    if (mYM) { let h=parseInt(mYM[1]); if(/tarde|noche/.test(l)&&h<12)h+=12; else if(h<=7)h+=12; return `${String(h).padStart(2,"0")}:30`; }
+    const mHM = l.match(/(\d{1,2}):(\d{2})/);
+    if (mHM) return `${String(parseInt(mHM[1])).padStart(2,"0")}:${mHM[2]}`;
+    const mHS = l.match(/a las (\d{1,2})(?:\s|$)/);
+    if (mHS) { const h=parseInt(mHS[1]); return `${String(h<=7?h+12:h).padStart(2,"0")}:00`; }
+    return null;
+  }
+
+  function construir(fecha, hora) {
+    const y=fecha.getFullYear(), m=fecha.getMonth(), d=fecha.getDate();
+    const iso=`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    return { fecha:iso, dia:NOMBRES_DIAS[fecha.getDay()], hora, texto: hora ? `${NOMBRES_DIAS[fecha.getDay()]} ${d} de ${NOMBRES_MESES[m]} de ${y} a las ${hora}` : `${NOMBRES_DIAS[fecha.getDay()]} ${d} de ${NOMBRES_MESES[m]} de ${y}` };
+  }
+
+  // Día de semana (prioridad alta)
+  for (const [nombre, num] of Object.entries(DIAS)) {
+    if (new RegExp(`\\b${nombre}\\b`).test(lower)) {
+      const r = new Date(base); let diff = num - base.getDay();
+      if (/proximo|que viene/.test(lower)) { if(diff<=0)diff+=7; else diff+=7; }
+      else { if(diff<0)diff+=7; }
+      r.setDate(r.getDate()+diff);
+      return construir(r, extraerHora(texto));
+    }
+  }
+
+  // Mañana
+  if (/\bmanana\b/.test(lower) && !/de la manana/.test(lower)) {
+    const r=new Date(base); r.setDate(r.getDate()+1); return construir(r, extraerHora(texto));
+  }
+  // Hoy
+  if (lower==="hoy" || /^hoy\b/.test(lower)) return construir(base, extraerHora(texto));
+
+  // Fecha con mes escrito
+  const tieneDia = Object.keys(DIAS).some(d=>new RegExp(`\\b${d}\\b`).test(lower));
+  if (!tieneDia) {
+    for (const [nombreMes, numMes] of Object.entries(MESES)) {
+      if (lower.includes(nombreMes)) {
+        const mn = texto.match(/(\d{1,2})\s*(?:de\s*)?(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)/i);
+        if (mn) {
+          const dia=parseInt(mn[1]), anio=base.getFullYear();
+          const fc=new Date(anio,numMes,dia);
+          if(fc<base)fc.setFullYear(anio+1);
+          return construir(fc, extraerHora(texto));
+        }
+      }
+    }
+  }
+
+  // Solo hora
+  const horaEx = extraerHora(texto);
+  if (horaEx) {
+    const r=new Date(base); const [h,m]=horaEx.split(":").map(Number);
+    if(h<base.getHours()||(h===base.getHours()&&m<=base.getMinutes()))r.setDate(r.getDate()+1);
+    return construir(r, horaEx);
+  }
+  return null;
+}
+
+// verificarDisponibilidad inline — llama al endpoint existente via HTTP
+async function verificarDisponibilidadWeb(env, negocioId, fechaISO, horaInicio, duracionMin) {
+  try {
+    // Importar directamente la lógica desde D1
+    const horarios = await env.producto_c_db.prepare(
+      `SELECT hora_inicio, hora_fin FROM horarios_atencion
+       WHERE negocio_id = ? AND activo = 1
+       AND dia_semana = (CAST(strftime('%w', ?) AS INTEGER))
+       LIMIT 1`
+    ).bind(negocioId, fechaISO).first();
+
+    if (!horarios) return { disponible: false, motivo: "No hay atención configurada ese día" };
+
+    const [hIni] = horaInicio.split(":").map(Number);
+    const [hFin] = horarios.hora_fin.split(":").map(Number);
+    const hFinCita = hIni + Math.ceil(duracionMin / 60);
+    if (hFinCita > hFin) return { disponible: false, motivo: "La cita excede el horario de atención" };
+
+    const choque = await env.producto_c_db.prepare(
+      `SELECT id FROM citas WHERE negocio_id = ? AND fecha_cita = ? AND fecha_hora = ?
+       AND estado_pago NOT IN ('cancelada','expirada') LIMIT 1`
+    ).bind(negocioId, fechaISO, horaInicio).first();
+
+    if (choque) return { disponible: false, motivo: "Horario ocupado por otra cita" };
+    return { disponible: true };
+  } catch(e) {
+    console.log("verificarDisponibilidadWeb error:", e.message);
+    return { disponible: true }; // En caso de error, permitir la cita
+  }
+}
 
 const GROQ_API = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL    = 'openai/gpt-oss-120b';
@@ -315,7 +430,7 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
     if (fechaFinal?.fecha && fechaFinal?.hora && servicioResumen) {
       const duracion = parseInt(servicioResumen.duracion) || 30;
       try {
-        disponibilidadInfo = await verificarDisponibilidad(env, negocio.id, fechaFinal.fecha, fechaFinal.hora, duracion);
+        disponibilidadInfo = await verificarDisponibilidadWeb(env, negocio.id, fechaFinal.fecha, fechaFinal.hora, duracion);
         if (!disponibilidadInfo.disponible) {
           const motivo = (disponibilidadInfo.motivo || "").toLowerCase();
           respuesta = motivo.includes("no hay atenci") || motivo.includes("ese d")
@@ -332,11 +447,29 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
     if (crearCita && sessionToken && !citaActivaWeb && fechaFinal?.fecha && servicioResumen) {
       try {
         // Extraer nombre del paciente del historial
-        const historialTextoNombre = historial.map(m => m.text || '').join(' ');
-        const matchNombre = historialTextoNombre.match(/(?:me llamo|soy|mi nombre es|llámame)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?)/i);
-        const nombrePacienteWeb = matchNombre ? matchNombre[1] : (historial.find(m => m.role === 'user' && m.text?.length < 30 && /^[A-Z]/i.test(m.text))?.text || 'Paciente Web');
+        // Extraer nombre: buscar la respuesta del usuario justo después
+        // de que Valeria preguntó el nombre ("¿me puedes indicar tu nombre?")
+        let nombrePacienteWeb = 'Paciente Web';
+        for (let i = 0; i < historial.length - 1; i++) {
+          const msg = historial[i];
+          const siguiente = historial[i + 1];
+          if (msg.role === 'bot' && /nombre|llamas|llamo/i.test(msg.text || '')) {
+            const respNombre = (siguiente?.text || '').trim();
+            // Nombre válido: corto (< 40 chars), no contiene verbos de servicio
+            if (respNombre.length < 40 && !/quiero|agendar|cita|blanquea|limpieza|implante|ortodon/i.test(respNombre)) {
+              nombrePacienteWeb = respNombre;
+              break;
+            }
+          }
+        }
+        // Fallback: buscar patrón "me llamo / soy / mi nombre es"
+        if (nombrePacienteWeb === 'Paciente Web') {
+          const textoH = historial.map(m => m.text || '').join(' ');
+          const mn = textoH.match(/(?:me llamo|soy|mi nombre es)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?)/i);
+          if (mn) nombrePacienteWeb = mn[1];
+        }
         const duracion = parseInt(servicioResumen.duracion) || 30;
-        const disponible = await verificarDisponibilidad(env, negocio.id, fechaFinal.fecha, fechaFinal.hora || '09:00', duracion);
+        const disponible = await verificarDisponibilidadWeb(env, negocio.id, fechaFinal.fecha, fechaFinal.hora || '09:00', duracion);
         if (disponible.disponible) {
           const estadoCita = modoReserva === 'solo_cita' ? 'confirmada' : 'esperando_pago';
           await env.producto_c_db.prepare(
