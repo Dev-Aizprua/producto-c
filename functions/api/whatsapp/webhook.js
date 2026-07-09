@@ -43,11 +43,31 @@ export async function onRequestPost(context) {
     const message       = value?.messages?.[0];
     if (!message) return new Response("EVENT_RECEIVED", { status: 200 });
 
-    const from          = message.from;
+    // ─── IDENTIFICADOR DEL REMITENTE ─────────────────────────
+    // A partir de julio 2026, Meta puede omitir message.from cuando
+    // el usuario activa la privacidad de número y usa @usuario.
+    // En ese caso llega un BSUID (Business-Scoped User ID) en wa_id.
+    // El sistema funciona igual con ambos — el BSUID se trata como
+    // identificador único igual que el número de teléfono.
+    const contacto      = value?.contacts?.[0];
+    const from          = message.from
+                       || contacto?.wa_id
+                       || contacto?.user_id
+                       || null;
+
+    // Si no hay ningún identificador, no podemos procesar el mensaje
+    if (!from) {
+      console.log("[BSUID] Mensaje sin identificador de remitente — ignorado");
+      return new Response("EVENT_RECEIVED", { status: 200 });
+    }
+
+    // Detectar si es BSUID (no es un número) para ajustar el formato
+    const esBSUID       = !/^\d+$/.test(from);
+    if (esBSUID) console.log("[BSUID] Mensaje con nombre de usuario — from:", from);
+
     const tipo          = message.type;
     const phoneNumberId = value?.metadata?.phone_number_id;
-    const contacto      = value?.contacts?.[0];
-    const nombrePerfil  = contacto?.profile?.name || null;
+    const nombrePerfil  = contacto?.profile?.name || contacto?.username || null;
 
     // ─── DIAGNÓSTICO DE RETRASO META ──────────────────────────
     // message.timestamp viene en segundos UNIX (string).
@@ -89,7 +109,7 @@ export async function onRequestPost(context) {
         `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
         `⏱ Retraso: ${delaySegundos}s (${minutos} min)\n` +
         `📱 Negocio: ${negocio.nombre}\n` +
-        `📞 Número origen: +${from}\n\n` +
+        `📞 ${esBSUID ? "Usuario" : "Número"}: ${esBSUID ? "@" : "+"}${from}\n\n` +
         `⚠️ <i>Posible incidencia Meta/WhatsApp Business API. ` +
         `Si el bot dejó de responder, puede ser una falla transitoria del proveedor.</i>`;
       try {
@@ -107,7 +127,7 @@ export async function onRequestPost(context) {
         const textoCliente = message.text?.body || "[imagen/audio]";
         if (negocio.telegram_chat_id && env.TELEGRAM_TOKEN) {
           await notificarTelegram(env.TELEGRAM_TOKEN, negocio.telegram_chat_id,
-            `🎮 <b>MODO MANUAL — ${negocio.nombre}</b>\n\nPaciente: +${from}\n💬 "${textoCliente}"\n\n<i>IA pausada.</i>`
+            `🎮 <b>MODO MANUAL — ${negocio.nombre}</b>\n\nPaciente: ${esBSUID?"@":"+"}${from}\n💬 "${textoCliente}"\n\n<i>IA pausada.</i>`
           );
         }
         return new Response("EVENT_RECEIVED", { status: 200 });
@@ -229,7 +249,7 @@ export async function onRequestPost(context) {
           const textoTgPago =
             `🔵 <b>PAGO POR VERIFICAR</b>\n` +
             `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-            `📞 Paciente: +${from}${nombrePerfil ? ` (${nombrePerfil})` : ""}\n` +
+            `📞 Paciente: ${esBSUID?"@":"+"}${from}${nombrePerfil ? ` (${nombrePerfil})` : ""}\n` +
             `🆔 Cita #${citaActualizada.id}\n\n` +
             `💳 <i>El paciente reporta haber completado el pago. Verifica en Páguelo Fácil y confirma la cita desde los botones anteriores.</i>`;
           try {
