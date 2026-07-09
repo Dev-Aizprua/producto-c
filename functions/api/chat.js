@@ -16,17 +16,13 @@
 // Versión simplificada de fechas.js suficiente para el chat web
 function resolverFechaNatural(texto) {
   if (!texto) return null;
+  try {
   const lower = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
-  const TIMEZONE = "America/Panama";
-  const ahoraBase = new Date();
-  const fmt = new Intl.DateTimeFormat("en-CA", {
-    timeZone: TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", hour12: false
-  });
-  const parts = fmt.formatToParts(ahoraBase);
-  const gp = (type) => parseInt(parts.find(p => p.type === type).value);
-  const base = new Date(gp("year"), gp("month") - 1, gp("day"), gp("hour"), gp("minute"));
+  // Panama = UTC-5 fijo, sin horario de verano
+  // Más simple y confiable que Intl.DateTimeFormat en CF Workers
+  const ahoraUTC = new Date();
+  const base = new Date(ahoraUTC.getTime() - (5 * 60 * 60 * 1000));
 
   const DIAS = { domingo:0, lunes:1, martes:2, miercoles:3, jueves:4, viernes:5, sabado:6 };
   const NOMBRES_DIAS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
@@ -97,6 +93,10 @@ function resolverFechaNatural(texto) {
     return construir(r, horaEx);
   }
   return null;
+  } catch(e) {
+    console.log('[MOTOR_FECHAS_WEB] Error:', e.message);
+    return null;
+  }
 }
 
 // verificarDisponibilidad inline — llama al endpoint existente via HTTP
