@@ -361,12 +361,33 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
     const groqRes = await fetch(GROQ_API, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: MODEL, messages: mensajesGroq, max_tokens: 300, temperature: 0.3 }),
+      body: JSON.stringify({ model: MODEL, messages: mensajesGroq, max_tokens: 500, temperature: 0.3 }),
     });
 
     if (!groqRes.ok) throw new Error(`Groq error: ${await groqRes.text()}`);
     const groqData = await groqRes.json();
-    let respuesta  = groqData.choices?.[0]?.message?.content?.trim() || 'Disculpa, no pude procesar tu mensaje.';
+
+    // Log para diagnóstico — ver qué devuelve Groq exactamente
+    if (!groqData.choices?.[0]?.message?.content) {
+      console.log('[GROQ_WEB] Respuesta vacía. finish_reason:',
+        groqData.choices?.[0]?.finish_reason,
+        '| error:', JSON.stringify(groqData.error || null));
+    }
+
+    let respuesta = groqData.choices?.[0]?.message?.content?.trim();
+
+    // Si Groq devolvió contenido vacío, generar respuesta de contexto
+    if (!respuesta) {
+      const nombreCorto = historial.find(m => m.role === 'user' && m.text?.length < 30)?.text?.split(' ')[0] || '';
+      const svcCtx = servicioMencionadoAhora?.nombre || servicios[0]?.nombre || 'el tratamiento';
+      if (fechaResuelta) {
+        // Tenemos fecha — avanzar al resumen directamente
+        respuesta = `Perfecto${nombreCorto ? `, ${nombreCorto}` : ''}. Resumen: ${svcCtx}, ${fechaResuelta.texto}, $${servicioMencionadoAhora?.precio || servicios.find(s=>s.nombre===svcCtx)?.precio || '—'} USD. ¿Confirmas la cita? 😊 [MOSTRAR_RESUMEN]`;
+      } else {
+        // Sin fecha — pedir la fecha
+        respuesta = `Disculpa, tuve un problema técnico momentáneo. ¿Podrías decirme nuevamente la fecha y hora que prefieres? 😊`;
+      }
+    }
 
     // 7. Filtro post-Groq (mismo que WhatsApp)
     const filtroResult = aplicarFiltroPostGroq(respuesta);
