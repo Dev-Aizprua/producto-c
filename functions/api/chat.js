@@ -271,7 +271,22 @@ export async function onRequestPost(context) {
     // 2. Motor de Fechas — resolver fecha del mensaje antes de Groq
     const fechaResuelta = resolverFechaNatural(mensaje);
 
-    // 3. Protección de duplicados — verificar si ya tiene cita activa
+    // 3. Paciente recurrente — buscar por sessionToken
+    let pacienteRecurrente = null;
+    if (sessionToken && historial.length === 0) {
+      // Solo al inicio de la conversación (historial vacío = primer mensaje)
+      try {
+        pacienteRecurrente = await env.producto_c_db.prepare(
+          `SELECT c.cliente_nombre, s.nombre as ultimo_servicio, c.fecha_cita
+           FROM citas c LEFT JOIN servicios s ON s.id = c.servicio_id
+           WHERE c.session_token = ? AND c.negocio_id = ?
+           AND c.estado_pago IN ('confirmada','esperando_pago','pagado')
+           ORDER BY c.id DESC LIMIT 1`
+        ).bind(sessionToken, negocio.id).first();
+      } catch(e) {}
+    }
+
+    // 3b. Protección de duplicados — verificar si ya tiene cita activa
     let citaActivaWeb = null;
     if (sessionToken) {
       try {
@@ -297,6 +312,11 @@ export async function onRequestPost(context) {
         ? `POLÍTICA DE PAGO: Se requiere adelanto de $${montoReserva} USD para reservar. El saldo se paga en el negocio.`
         : `POLÍTICA DE PAGO: Se requiere pago completo al reservar.`;
 
+    // Contexto de paciente recurrente para el prompt
+    const contextoRecurrente = pacienteRecurrente
+      ? `PACIENTE RECURRENTE: Ya conocemos a este paciente. Nombre: ${pacienteRecurrente.cliente_nombre}. Último servicio: ${pacienteRecurrente.ultimo_servicio || 'desconocido'} el ${pacienteRecurrente.fecha_cita || 'fecha desconocida'}. Salúdalo por su nombre y pregunta si viene por el mismo tratamiento o algo diferente. NO le pidas el nombre — ya lo tienes.`
+      : '';
+
     const fechaContexto = fechaResuelta
       ? `FECHA DETECTADA EN EL MENSAJE: ${fechaResuelta.texto} (${fechaResuelta.fecha}${fechaResuelta.hora ? ` a las ${fechaResuelta.hora}` : ''}) — usa esta fecha exacta en tu respuesta, no calcules fechas tú mismo.`
       : `Si el paciente menciona una fecha o día, inclúyela en tu respuesta tal como él la dijo.`;
@@ -310,7 +330,7 @@ ${instruccionPago}
 
 ${fechaContexto}
 
-━━━ CATÁLOGO — REGLAS DE USO ESTRICTO ━━━
+${contextoRecurrente ? contextoRecurrente + '\n\n' : ''}━━━ CATÁLOGO — REGLAS DE USO ESTRICTO ━━━
 REGLA 1 — SOLO LO QUE ESTÁ ESCRITO:
 Al describir un servicio, usa ÚNICAMENTE el precio y descripción del catálogo. NUNCA agregues beneficios, resultados, garantías, duraciones de efectos ni detalles clínicos que no estén escritos.
 
@@ -371,33 +391,48 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
 
     let respuesta = groqData.choices?.[0]?.message?.content?.trim();
 
-    // Si Groq devolvió contenido vacío, generar respuesta de contexto
+    // ── MODO EMERGENCIA CUANDO GROQ FALLA ───────────────────────────────────
+    // Sin modelo — solo lógica determinista según el contexto de la conversación.
+    // Cero alucinaciones porque no hay LLM involucrado.
     if (!respuesta) {
-      // Nombre: buscar la respuesta del usuario DESPUÉS de que Valeria preguntó el nombre
-      let nombreFallback = '';
+      console.log('[MODO_EMERGENCIA_WEB] Groq devolvió vacío — activando respuesta determinista');
+
+      // Extraer nombre del historial de forma segura
+      let nombreEmergencia = '';
       for (let i = 0; i < historial.length - 1; i++) {
-        const msg = historial[i];
-        const sig = historial[i + 1];
+        const msg = historial[i]; const sig = historial[i + 1];
         if (msg.role === 'bot' && /nombre|llamas/i.test(msg.text || '')) {
           const r = (sig?.text || '').trim();
           if (r.length < 40 && !/quiero|agendar|cita|blanquea|limpieza|implante|ortodon/i.test(r)) {
-            nombreFallback = r.split(' ')[0];
-            break;
+            nombreEmergencia = r.split(' ')[0]; break;
           }
         }
       }
 
-      // Servicio: priorizar servicio_guardado del frontend, luego detección actual
-      const svcFallback = servicio_guardado
+      // Servicio: priorizar servicio_guardado (más confiable)
+      const svcEmerg = servicio_guardado
         ? servicios.find(s => s.id === servicio_guardado.id || s.nombre === servicio_guardado.nombre)
-        : (servicioMencionadoAhora || servicios[0]);
-      const svcNombre = svcFallback?.nombre || 'el tratamiento';
-      const svcPrecio = svcFallback?.precio || '—';
+        : servicioMencionadoAhora;
 
-      if (fechaResuelta) {
-        respuesta = `Perfecto${nombreFallback ? `, ${nombreFallback}` : ''}. Resumen: ${svcNombre}, ${fechaResuelta.texto}, $${svcPrecio} USD. ¿Confirmas la cita? 😊 [MOSTRAR_RESUMEN]`;
+      // Detectar en qué etapa está la conversación y responder apropiadamente
+      const tieneNombre   = nombreEmergencia.length > 0;
+      const tieneServicio = !!svcEmerg;
+      const tieneFecha    = !!fechaResuelta;
+      const ultMsgBot     = historial.filter(m => m.role === 'bot').slice(-1)[0]?.text || '';
+      const preguntaFecha = /fecha|hora|día|cuándo/i.test(ultMsgBot);
+      const preguntaNombre = /nombre/i.test(ultMsgBot);
+
+      if (tieneFecha && tieneServicio) {
+        // Tenemos todo — generar resumen seguro
+        respuesta = `Perfecto${nombreEmergencia ? `, ${nombreEmergencia}` : ''}. Resumen: ${svcEmerg.nombre}, ${fechaResuelta.texto}, $${svcEmerg.precio} USD. ¿Confirmas la cita? 😊 [MOSTRAR_RESUMEN]`;
+      } else if (preguntaNombre && !tieneNombre) {
+        respuesta = `Disculpa el retraso. ¿Me podrías repetir tu nombre, por favor? 😊`;
+      } else if (preguntaFecha || (tieneServicio && tieneNombre && !tieneFecha)) {
+        respuesta = `Disculpa, tuve un inconveniente técnico. ¿Me podrías repetir la fecha y hora que prefieres para tu cita? 😊`;
+      } else if (tieneServicio && !tieneNombre) {
+        respuesta = `Perfecto. Para continuar, ¿me podrías indicar tu nombre completo? 😊`;
       } else {
-        respuesta = `Disculpa, tuve un problema técnico momentáneo. ¿Podrías decirme nuevamente la fecha y hora que prefieres? 😊`;
+        respuesta = `Disculpa el inconveniente. ¿En qué servicio dental puedo ayudarte hoy? 😊`;
       }
     }
 
@@ -455,6 +490,19 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
 
     // Si después del filtro y etiquetas la respuesta quedó vacía, dar fallback amigable
     if (!respuesta) respuesta = 'Entendido. ¿Te puedo ayudar con algo más? 😊';
+
+    // ── MENSAJE DE CONFIRMACIÓN COMPLETO ─────────────────────────────────────
+    // Cuando se crea la cita, enriquecer el mensaje de Valeria con contexto real
+    // En vez de solo "¡Cita confirmada!" dar toda la info que necesita el paciente
+    if (citaCreada && respuesta && respuesta.length < 40) {
+      // El mensaje es demasiado corto — enriquecerlo
+      const nombreCortoConf = historial.filter(m=>m.role==='user')
+        .map(m=>m.text||'').join(' ').match(/([A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,})/)?.[1] || '';
+      const modoMsg = modoReserva === 'solo_cita'
+        ? `Te esperamos el ${citaCreada.fecha}. Si necesitas reagendar, escríbenos con anticipación. 😊`
+        : `Para confirmarla necesitas completar el pago. Revisa el enlace que te enviamos. 😊`;
+      respuesta = `¡Listo${nombreCortoConf ? `, ${nombreCortoConf}` : ''}! Tu cita de ${citaCreada.servicio} está registrada para el ${citaCreada.fecha}. ${modoMsg}`;
+    }
 
     // Complementar fecha resuelta con la del historial si el mensaje actual no tiene fecha
     // Buscar fecha en historial expandido si los métodos principales fallaron
