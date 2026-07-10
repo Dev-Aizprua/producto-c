@@ -373,13 +373,30 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
 
     // Si Groq devolvió contenido vacío, generar respuesta de contexto
     if (!respuesta) {
-      const nombreCorto = historial.find(m => m.role === 'user' && m.text?.length < 30)?.text?.split(' ')[0] || '';
-      const svcCtx = servicioMencionadoAhora?.nombre || servicios[0]?.nombre || 'el tratamiento';
+      // Nombre: buscar la respuesta del usuario DESPUÉS de que Valeria preguntó el nombre
+      let nombreFallback = '';
+      for (let i = 0; i < historial.length - 1; i++) {
+        const msg = historial[i];
+        const sig = historial[i + 1];
+        if (msg.role === 'bot' && /nombre|llamas/i.test(msg.text || '')) {
+          const r = (sig?.text || '').trim();
+          if (r.length < 40 && !/quiero|agendar|cita|blanquea|limpieza|implante|ortodon/i.test(r)) {
+            nombreFallback = r.split(' ')[0];
+            break;
+          }
+        }
+      }
+
+      // Servicio: priorizar servicio_guardado del frontend, luego detección actual
+      const svcFallback = servicio_guardado
+        ? servicios.find(s => s.id === servicio_guardado.id || s.nombre === servicio_guardado.nombre)
+        : (servicioMencionadoAhora || servicios[0]);
+      const svcNombre = svcFallback?.nombre || 'el tratamiento';
+      const svcPrecio = svcFallback?.precio || '—';
+
       if (fechaResuelta) {
-        // Tenemos fecha — avanzar al resumen directamente
-        respuesta = `Perfecto${nombreCorto ? `, ${nombreCorto}` : ''}. Resumen: ${svcCtx}, ${fechaResuelta.texto}, $${servicioMencionadoAhora?.precio || servicios.find(s=>s.nombre===svcCtx)?.precio || '—'} USD. ¿Confirmas la cita? 😊 [MOSTRAR_RESUMEN]`;
+        respuesta = `Perfecto${nombreFallback ? `, ${nombreFallback}` : ''}. Resumen: ${svcNombre}, ${fechaResuelta.texto}, $${svcPrecio} USD. ¿Confirmas la cita? 😊 [MOSTRAR_RESUMEN]`;
       } else {
-        // Sin fecha — pedir la fecha
         respuesta = `Disculpa, tuve un problema técnico momentáneo. ¿Podrías decirme nuevamente la fecha y hora que prefieres? 😊`;
       }
     }
@@ -631,7 +648,8 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
     // 13. Responder
     // Si se detectó servicio por primera vez, incluirlo para mostrar tarjeta con foto
     // Activar tarjeta de servicio también cuando hay resumen (foto antes del texto)
-    const debesMostrarTarjeta = mostrarTarjetaServicio || (mostrarResumen && !!servicioResumen);
+    // La tarjeta separada solo aparece sin resumen — cuando hay resumen el card visual lo cubre
+    const debesMostrarTarjeta = mostrarTarjetaServicio && !mostrarResumen;
     const servicioParaFrontend = servicioResumen || (debesMostrarTarjeta ? servicioMencionadoAhora : null);
 
     return Response.json({
