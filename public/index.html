@@ -1160,11 +1160,25 @@ async function procesarRespuesta(texto){
   }catch{
     removeTyping();
     const t=texto.toLowerCase();
-    if(t.includes('cita')||t.includes('agendar')||t.includes('reservar')){botBubble('Con gusto te ayudo. Aquí están nuestros tratamientos:');appendCarrusel(C.negocio?.servicios||svcFallback());}
-    else if(t.includes('precio')||t.includes('costo')||t.includes('cuánto')){await quickAction('precios');}
-    else if(t.includes('hola')||t.includes('buenos')||t.includes('buenas')){botBubble(`¡Hola! Bienvenido a <strong>${C.negocio?.nombre||'nuestro negocio'}</strong>. ¿En qué puedo ayudarte?`);}
-    else if(t.includes('gracias')){botBubble('¡Con mucho gusto! Estoy aquí para lo que necesites. 😊');}
-    else{botBubble('Entendido. ¿Te ayudo a agendar una cita o consultar nuestros servicios?');appendQR([{icono:'ti-calendar',texto:'Agendar cita',accion:'agendar'},{icono:'ti-list',texto:'Ver servicios',accion:'servicios'}]);}
+    const servicios=C.negocio?.servicios||svcFallback();
+    // Verificar si el paciente mencionó un servicio específico
+    const svcMencionado=servicios.find(s=>t.includes(s.nombre.toLowerCase()));
+    if(svcMencionado){
+      // Servicio específico mencionado — pedir nombre directamente, no mostrar carrusel
+      botBubble(`Perfecto. Para agendar tu ${svcMencionado.nombre}, ¿me podrías indicar tu nombre completo? 😊`);
+    } else if(t.includes('cita')||t.includes('agendar')||t.includes('reservar')){
+      // Quiere agendar pero no dijo qué servicio — mostrar opciones
+      botBubble('Con gusto te ayudo. ¿Qué tratamiento te interesa?');
+      appendCarrusel(servicios);
+    } else if(t.includes('precio')||t.includes('costo')){
+      await quickAction('precios');
+    } else if(t.includes('hola')||t.includes('buenos')||t.includes('buenas')){
+      botBubble(`¡Hola! Bienvenido a <strong>${C.negocio?.nombre||'nuestro negocio'}</strong>. ¿En qué puedo ayudarte?`);
+    } else if(t.includes('gracias')){
+      botBubble('¡Con mucho gusto! Estoy aquí para lo que necesites. 😊');
+    } else {
+      botBubble('Disculpa el inconveniente técnico. ¿En qué servicio dental puedo ayudarte? 😊');
+    }
   }
 }
 
