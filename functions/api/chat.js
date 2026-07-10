@@ -256,26 +256,17 @@ export async function onRequestPost(context) {
       .prepare('SELECT * FROM servicios WHERE negocio_id = ? AND activo = 1 ORDER BY orden ASC')
       .bind(negocio.id).all();
 
-    // 2a. Detección temprana de servicio mencionado — igual que WhatsApp
-    // Si el paciente menciona un servicio por primera vez, mostrar la tarjeta
-    // con foto inmediatamente, sin esperar a que Groq ponga [MOSTRAR_RESUMEN]
+    // 2a. Detección de servicio en el mensaje actual
     const msgLowerDetect = mensaje.toLowerCase();
     const servicioMencionadoAhora = servicios.find(s =>
       msgLowerDetect.includes(s.nombre.toLowerCase())
     );
-
-    // Verificar si ya mostramos esta tarjeta antes (evitar duplicados)
-    // Solo revisar mensajes del USUARIO — el bot puede mencionar el servicio
-    // en sus respuestas y eso no debe bloquear mostrar la tarjeta
-    const historialUsuario = historial
-      .filter(m => m.role === 'user')
-      .map(m => m.text || '').join(' ').toLowerCase();
-    const yaSeMotstroTarjeta = servicioMencionadoAhora
-      ? historialUsuario.includes(servicioMencionadoAhora.nombre.toLowerCase())
-      : false;
-
-    // Si el servicio se menciona por primera vez → mostrar tarjeta con foto
-    const mostrarTarjetaServicio = servicioMencionadoAhora && !yaSeMotstroTarjeta;
+    // La tarjeta con foto se activa desde aquí solo como fallback —
+    // el trigger principal es mostrar_resumen (cuando Groq confirma el servicio).
+    // Aquí solo lo marcamos si el usuario lo menciona Y el bot no lo ha
+    // preguntado todavía (historial corto = primeros 2 mensajes del bot)
+    const mensajesBot = historial.filter(m => m.role === 'bot').length;
+    const mostrarTarjetaServicio = servicioMencionadoAhora && mensajesBot <= 2;
 
     // 2. Motor de Fechas — resolver fecha del mensaje antes de Groq
     const fechaResuelta = resolverFechaNatural(mensaje);
@@ -588,14 +579,16 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
 
     // 13. Responder
     // Si se detectó servicio por primera vez, incluirlo para mostrar tarjeta con foto
-    const servicioParaFrontend = servicioResumen || (mostrarTarjetaServicio ? servicioMencionadoAhora : null);
+    // Activar tarjeta de servicio también cuando hay resumen (foto antes del texto)
+    const debesMostrarTarjeta = mostrarTarjetaServicio || (mostrarResumen && !!servicioResumen);
+    const servicioParaFrontend = servicioResumen || (debesMostrarTarjeta ? servicioMencionadoAhora : null);
 
     return Response.json({
       success: true,
       respuesta,
       mostrar_servicios:       mostrarServicios,
       mostrar_resumen:         mostrarResumen,
-      mostrar_tarjeta_servicio: mostrarTarjetaServicio,
+      mostrar_tarjeta_servicio: debesMostrarTarjeta,
       cita_creada:             citaCreada,
       filtro_activado:         filtroResult.filtroActivado,
       servicio: servicioParaFrontend ? {

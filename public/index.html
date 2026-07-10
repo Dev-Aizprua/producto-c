@@ -1136,9 +1136,22 @@ async function procesarRespuesta(texto){
     }
 
     // TEXTO de Valeria después de la foto
-    if(data.respuesta){botBubble(data.respuesta);C.historial.push({role:'bot',text:data.respuesta});saveHist();}
-    if(data.mostrar_servicios){await delay(300);appendCarrusel(data.servicios||C.negocio?.servicios||svcFallback());}
-    if(data.mostrar_resumen&&data.servicio){await delay(300);appendResumen(data.servicio,data.fecha_resuelta?.texto||proxFecha());mostrarDetalleDesktop(data.servicio);}
+    // Orden de renderizado:
+    // Si hay resumen → mostrar resumen ANTES del texto (el texto pregunta "¿Confirmas?")
+    // Si no hay resumen → texto primero, luego carrusel/tarjeta
+    if(data.mostrar_resumen&&data.servicio){
+      // Resumen primero — el paciente ve la tarjeta visual antes de leer la pregunta
+      await delay(300);
+      appendResumen(data.servicio,data.fecha_resuelta?.texto||proxFecha());
+      mostrarDetalleDesktop(data.servicio);
+      await delay(400);
+      // Luego el texto de confirmación
+      if(data.respuesta){botBubble(data.respuesta);C.historial.push({role:'bot',text:data.respuesta});saveHist();}
+    } else {
+      // Sin resumen: texto normal primero
+      if(data.respuesta){botBubble(data.respuesta);C.historial.push({role:'bot',text:data.respuesta});saveHist();}
+      if(data.mostrar_servicios){await delay(300);appendCarrusel(data.servicios||C.negocio?.servicios||svcFallback());}
+    }
   }catch{
     removeTyping();
     const t=texto.toLowerCase();
