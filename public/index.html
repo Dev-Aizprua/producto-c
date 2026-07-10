@@ -1161,23 +1161,47 @@ async function procesarRespuesta(texto){
     removeTyping();
     const t=texto.toLowerCase();
     const servicios=C.negocio?.servicios||svcFallback();
-    // Verificar si el paciente mencionó un servicio específico
+
+    // Analizar el historial para saber en qué etapa está la conversación
+    const ultimoBotMsg=(C.historial.filter(m=>m.role==='bot').slice(-1)[0]?.text||'').toLowerCase();
+    const svcEnHistorial=servicios.find(s=>C.historial.some(m=>m.text?.toLowerCase().includes(s.nombre.toLowerCase())));
     const svcMencionado=servicios.find(s=>t.includes(s.nombre.toLowerCase()));
+    const preguntaNombre=/nombre|llamas/i.test(ultimoBotMsg);
+    const preguntaFecha=/fecha|hora|día|cuándo|qué día/i.test(ultimoBotMsg);
+    const parece_nombre=texto.trim().length<50 && /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]/.test(texto.trim()) && !svcMencionado;
+
     if(svcMencionado){
-      // Servicio específico mencionado — pedir nombre directamente, no mostrar carrusel
+      // Servicio específico mencionado
       botBubble(`Perfecto. Para agendar tu ${svcMencionado.nombre}, ¿me podrías indicar tu nombre completo? 😊`);
+    } else if(preguntaNombre && parece_nombre){
+      // Paciente dio su nombre — guardar y pedir fecha
+      const primerNombre=texto.trim().split(' ')[0];
+      const svcActual=svcEnHistorial||servicios[0];
+      botBubble(`Gracias, ${primerNombre}. ¿Qué fecha y hora te gustaría para tu ${svcActual?.nombre||'cita'}? 😊`);
+    } else if(preguntaFecha || (svcEnHistorial && !preguntaNombre && !svcMencionado)){
+      // Paciente dio la fecha o está en etapa de fecha
+      const fechaLocal=C.ultimaFechaResuelta;
+      if(fechaLocal&&svcEnHistorial){
+        const svcAct=svcEnHistorial;
+        botBubble(`Resumen: ${svcAct.nombre}, ${fechaLocal.texto}, $${svcAct.precio} USD. ¿Confirmas la cita? 😊`);
+        if(C.ultimoServicio||svcAct) appendResumen(svcAct, fechaLocal.texto);
+      } else {
+        botBubble(`¿Me podrías repetir la fecha y hora que prefieres? Por ejemplo: "el lunes a las 10am" 😊`);
+      }
     } else if(t.includes('cita')||t.includes('agendar')||t.includes('reservar')){
-      // Quiere agendar pero no dijo qué servicio — mostrar opciones
-      botBubble('Con gusto te ayudo. ¿Qué tratamiento te interesa?');
+      botBubble('¿Qué tratamiento te interesa agendar? 😊');
       appendCarrusel(servicios);
     } else if(t.includes('precio')||t.includes('costo')){
       await quickAction('precios');
     } else if(t.includes('hola')||t.includes('buenos')||t.includes('buenas')){
-      botBubble(`¡Hola! Bienvenido a <strong>${C.negocio?.nombre||'nuestro negocio'}</strong>. ¿En qué puedo ayudarte?`);
+      botBubble(`¡Hola! Bienvenido a <strong>${C.negocio?.nombre||'nuestra clínica'}</strong>. ¿En qué puedo ayudarte? 😊`);
     } else if(t.includes('gracias')){
       botBubble('¡Con mucho gusto! Estoy aquí para lo que necesites. 😊');
+    } else if(t.includes('confirm')||t.includes('sí')||t.includes('si ')){
+      // Paciente confirma — intentar crear cita desde frontend
+      botBubble('Procesando tu cita... un momento por favor. 😊');
     } else {
-      botBubble('Disculpa el inconveniente técnico. ¿En qué servicio dental puedo ayudarte? 😊');
+      botBubble('Disculpa el inconveniente. ¿En qué servicio dental puedo ayudarte hoy? 😊');
     }
   }
 }
