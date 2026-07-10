@@ -240,7 +240,7 @@ export async function onRequestPost(context) {
   try { body = await request.json(); }
   catch { return Response.json({ success: false, error: 'JSON inválido' }, { status: 400, headers: corsHeaders }); }
 
-  const { slug, mensaje, sessionToken, historial = [] } = body;
+  const { slug, mensaje, sessionToken, historial = [], fecha_guardada = null, servicio_guardado = null } = body;
   if (!slug || !mensaje) {
     return Response.json({ success: false, error: 'slug y mensaje requeridos' }, { status: 400, headers: corsHeaders });
   }
@@ -409,8 +409,9 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
       const mensajesBot = historial.filter(m => m.role === 'bot').slice(-3);
       for (const msg of mensajesBot.reverse()) {
         const texto = msg.text || '';
+        // Acepta "a las 13:00", "a la 1:00 p.m.", "a las 9am", etc.
         const match = texto.match(
-          /(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+\d{1,2}\s+de\s+\w+\s+(?:de\s+\d{4}\s+)?a\s+las\s+[\d:]+\s*(?:AM|PM|am|pm)?/i
+          /(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+\d{1,2}\s+de\s+\w+(?:\s+de\s+\d{4})?\s+a\s+la[s]?\s+[\d:]+\s*(?:p\.?\s*m\.?|a\.?\s*m\.?|PM|AM|pm|am)?/i
         );
         if (match) return resolverFechaNatural(match[0]);
       }
@@ -439,7 +440,51 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
     if (!respuesta) respuesta = 'Entendido. ¿Te puedo ayudar con algo más? 😊';
 
     // Complementar fecha resuelta con la del historial si el mensaje actual no tiene fecha
-    const fechaFinal = fechaResuelta || (crearCita || mostrarResumen ? extraerFechaDeHistorial() : null);
+    // Buscar fecha en historial expandido si los métodos principales fallaron
+    function extraerFechaDeHistorialExpandido() {
+      // Busca en todos los mensajes del bot, no solo los últimos 3
+      const todosMensajesBot = historial.filter(m => m.role === 'bot');
+      for (const msg of [...todosMensajesBot].reverse()) {
+        const texto = msg.text || '';
+        // Patrón amplio: acepta "a la" / "a las" / "a las X:XX p.m."
+        const match = texto.match(
+          /(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+\d{1,2}\s+de\s+\w+(?:\s+de\s+\d{4})?\s+a\s+la[s]?\s+[\d:]+\s*(?:p\.?\s*m\.?|a\.?\s*m\.?|PM|AM|pm|am)?/i
+        );
+        if (match) {
+          console.log('[FECHA_HISTORIAL_WEB] Encontrada:', match[0]);
+          return resolverFechaNatural(match[0]);
+        }
+        // También buscar formato ISO en el texto
+        const matchISO = texto.match(/(\d{4}-\d{2}-\d{2})/);
+        if (matchISO) {
+          const horaMatch = texto.match(/(\d{2}:\d{2})/);
+          if (horaMatch) return { fecha: matchISO[1], hora: horaMatch[1], texto: matchISO[1] };
+        }
+      }
+      return null;
+    }
+
+    // Fuente de verdad para fecha y servicio al confirmar:
+    // 1. fecha_guardada del frontend (más confiable — guardada cuando llegó mostrar_resumen)
+    // 2. fecha resuelta del mensaje actual
+    // 3. extraída del historial como último recurso
+    const fechaFinal = fecha_guardada
+      || fechaResuelta
+      || (crearCita || mostrarResumen ? extraerFechaDeHistorial() : null)
+      || (crearCita ? extraerFechaDeHistorialExpandido() : null);
+
+    // Servicio guardado por el frontend — evita depender de detectarServicioEnContexto
+    // cuando el usuario confirma y no menciona el servicio en ese mensaje
+    if (servicio_guardado && !servicioResumen) {
+      // Verificar que el servicio guardado existe en el catálogo actual
+      const svcGuardado = servicios.find(s => s.id === servicio_guardado.id || s.nombre === servicio_guardado.nombre);
+      if (svcGuardado) {
+        // No podemos reasignar servicioResumen directamente (const) — lo manejamos abajo
+        console.log('[SERVICIO_GUARDADO]', svcGuardado.nombre);
+      }
+    }
+    const servicioFinal = servicioResumen
+      || (servicio_guardado ? servicios.find(s => s.id === servicio_guardado.id || s.nombre === servicio_guardado.nombre) : null);
 
     // 9. Agenda Real — verificar disponibilidad si hay fecha y servicio
     let disponibilidadInfo = null;
@@ -460,7 +505,13 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
 
     // 10. Crear cita si se confirmó y pasa todas las validaciones
     let citaCreada = null;
-    if (crearCita && sessionToken && !citaActivaWeb && fechaFinal?.fecha && servicioResumen) {
+    if (crearCita) {
+      console.log('[CREAR_CITA_WEB] crearCita=true | sessionToken:', !!sessionToken,
+        '| citaActivaWeb:', !!citaActivaWeb,
+        '| fechaFinal:', fechaFinal?.fecha || 'null',
+        '| servicioResumen:', servicioResumen?.nombre || 'null');
+    }
+    if (crearCita && sessionToken && !citaActivaWeb && fechaFinal?.fecha && servicioFinal) {
       try {
         // Extraer nombre del paciente del historial
         // Extraer nombre: buscar la respuesta del usuario justo después
@@ -493,11 +544,11 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
              fecha_cita, fecha_hora, total, estado_pago, metodo_pago, session_token, canal)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'web', ?, 'web')`
           ).bind(
-            negocio.id, servicioResumen.id, nombrePacienteWeb, sessionToken,
+            negocio.id, servicioFinal.id, nombrePacienteWeb, sessionToken,
             fechaFinal.fecha, fechaFinal.hora || null,
-            servicioResumen.precio, estadoCita, sessionToken
+            servicioFinal.precio, estadoCita, sessionToken
           ).run();
-          citaCreada = { servicio: servicioResumen.nombre, fecha: fechaFinal.texto };
+          citaCreada = { servicio: servicioFinal.nombre, fecha: fechaFinal.texto };
 
           // Notificar Telegram — igual que WhatsApp
           try {
@@ -507,11 +558,11 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
 ` +
                 `👤 Cliente: ${nombrePacienteWeb}
 ` +
-                `🦷 Servicio: ${servicioResumen.nombre}
+                `🦷 Servicio: ${servicioFinal.nombre}
 ` +
                 `📅 Fecha: ${fechaFinal.texto}
 ` +
-                `💰 Total: $${servicioResumen.precio} USD
+                `💰 Total: $${servicioFinal.precio} USD
 ` +
                 `📌 Estado: ${estadoTexto}`;
 

@@ -450,7 +450,7 @@
 </div><!-- /frame -->
 
 <script>
-const C={slug:null,negocio:null,sessionToken:null,historial:[],svcSeleccionado:null,svcIndex:0};
+const C={slug:null,negocio:null,sessionToken:null,historial:[],svcSeleccionado:null,svcIndex:0,ultimaFechaResuelta:null,ultimoServicio:null};
 
 // ── Fotos Pexels por categoría ───────────────────────────────
 const FOTOS={
@@ -1111,7 +1111,7 @@ async function procesarRespuesta(texto){
   appendTyping();await delay(200);
   try{
     const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({slug:C.slug,mensaje:texto,sessionToken:C.sessionToken,historial:C.historial.slice(-6)})});
+      body:JSON.stringify({slug:C.slug,mensaje:texto,sessionToken:C.sessionToken,historial:C.historial.slice(-6),fecha_guardada:C.ultimaFechaResuelta,servicio_guardado:C.ultimoServicio})});
     if(!res.ok)throw new Error('Error');
     const data=await res.json();removeTyping();
 
@@ -1146,7 +1146,12 @@ async function procesarRespuesta(texto){
       mostrarDetalleDesktop(data.servicio);
       await delay(400);
       // Luego el texto de confirmación
-      if(data.respuesta){botBubble(data.respuesta);C.historial.push({role:'bot',text:data.respuesta});saveHist();}
+      // Guardar fecha resuelta y servicio para usarlos en la confirmación
+    // Esto evita depender de extraer estos datos del texto libre de Groq
+    if(data.fecha_resuelta) C.ultimaFechaResuelta = data.fecha_resuelta;
+    if(data.servicio) C.ultimoServicio = data.servicio;
+
+    if(data.respuesta){botBubble(data.respuesta);C.historial.push({role:'bot',text:data.respuesta});saveHist();}
     } else {
       // Sin resumen: texto normal primero
       if(data.respuesta){botBubble(data.respuesta);C.historial.push({role:'bot',text:data.respuesta});saveHist();}
