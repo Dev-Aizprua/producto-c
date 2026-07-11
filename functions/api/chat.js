@@ -552,6 +552,7 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
     if (respuesta.includes('[CREAR_CITA]')) {
       respuesta = respuesta.replace('[CREAR_CITA]', '').trim();
       crearCita = true;
+      mostrarResumen = false; // No mostrar resumen de nuevo al confirmar — ya se mostró antes
       // Asegurar que tenemos servicio aunque Groq no lo repita en este mensaje
       if (!servicioResumen) servicioResumen = detectarServicioEnContexto();
       // Si Groq devolvió SOLO la etiqueta, dar respuesta de confirmación por defecto
@@ -663,7 +664,7 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
             .replace(/\s+/g, ' ').trim();
           const palabras = limpio.split(' ').filter(p => p.length >= 2);
           if (palabras.length >= 1 && palabras.length <= 4 &&
-              !/quiero|agendar|interesa|buenos|buenas|hola|limpieza|blanquea|implante|ortodon|martes|lunes|miércoles|jueves|viernes|tarde|mañana/i.test(limpio)) {
+              !/quiero|agendar|interesa|buenos|buenas|hola|limpieza|blanquea|implante|ortodon|martes|lunes|miércoles|jueves|viernes|tarde|mañana|confirmo|confirma|perfecto|entendido|claro|gracias/i.test(limpio)) {
             nombrePacienteWeb = palabras.join(' '); break;
           }
         }
@@ -684,12 +685,13 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
 
           // Enriquecer el mensaje de confirmación si Groq lo dejó muy corto
           if (respuesta && respuesta.length < 50) {
-            const nombreCortoConf = historial.filter(m=>m.role==='user')
-              .map(m=>m.text||'').join(' ').match(/\b([A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,})\b/)?.[1] || '';
+            // Usar nombrePacienteWeb que ya fue extraído correctamente del historial
+            const primerNombreConf = nombrePacienteWeb !== 'Paciente Web'
+              ? nombrePacienteWeb.split(' ')[0] : '';
             const modoMsg = modoReserva === 'solo_cita'
               ? `Te esperamos el ${citaCreada.fecha}. Si necesitas reagendar, escríbenos con anticipación. 😊`
               : `Para confirmarla, completa el pago con el enlace que te enviamos. 😊`;
-            respuesta = `¡Listo${nombreCortoConf ? `, ${nombreCortoConf}` : ''}! Tu cita de ${citaCreada.servicio} está registrada para el ${citaCreada.fecha}. ${modoMsg}`;
+            respuesta = `¡Listo${primerNombreConf ? `, ${primerNombreConf}` : ''}! Tu cita de ${citaCreada.servicio} está registrada para el ${citaCreada.fecha}. ${modoMsg}`;
           }
 
           // Notificar Telegram — igual que WhatsApp
