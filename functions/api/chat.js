@@ -479,11 +479,18 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
     // Buscar el servicio en el mensaje actual Y en el historial reciente
     // Cuando el paciente dice "si confirmo", el servicio está en mensajes anteriores
     function detectarServicioEnContexto() {
-      const textos = [
+      // Buscar el servicio más reciente mencionado — priorizar mensaje actual
+      // luego historial reciente de más nuevo a más viejo
+      const fuentes = [
         mensaje,
-        ...historial.slice(-6).map(m => m.text || '')
-      ].join(' ').toLowerCase();
-      return servicios.find(s => textos.includes(s.nombre.toLowerCase())) || null;
+        ...historial.slice(-6).reverse().map(m => m.text || '')
+      ];
+      for (const texto of fuentes) {
+        const t = texto.toLowerCase();
+        const encontrado = servicios.find(s => t.includes(s.nombre.toLowerCase()));
+        if (encontrado) return encontrado;
+      }
+      return null;
     }
 
     // Extraer fecha del historial — igual que en WhatsApp
