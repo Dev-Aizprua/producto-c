@@ -342,6 +342,37 @@ export async function onRequestPost(context) {
       ? `PACIENTE RECURRENTE: Ya conocemos a este paciente. Nombre: ${pacienteRecurrente.cliente_nombre}. Último servicio: ${pacienteRecurrente.ultimo_servicio || 'desconocido'} el ${pacienteRecurrente.fecha_cita || 'fecha desconocida'}. Salúdalo por su nombre y pregunta si viene por el mismo tratamiento o algo diferente. NO le pidas el nombre — ya lo tienes.`
       : '';
 
+    // Extraer nombre y teléfono del historial actual para que Valeria los recuerde
+    let nombreEnHistorial = '';
+    let telEnHistorial    = '';
+    for (let i = 0; i < historial.length - 1; i++) {
+      const msg = historial[i];
+      const sig = historial[i + 1];
+      if (msg.role === 'bot' && /nombre.*tel|tel.*nombre|nombre.*correo/i.test(msg.text || '')) {
+        const r = (sig?.text || '').trim();
+        const emailM = r.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+        const telM   = r.match(/\+?[\d][\d\s\-\(\)]{6,14}/);
+        if (emailM) telEnHistorial = emailM[0];
+        if (telM)   telEnHistorial = telEnHistorial || telM[0].replace(/\D/g,'');
+        const limpio = r
+          .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,'')
+          .replace(/\+?[\d][\d\s\-\(\)]{6,14}/g,'')
+          .replace(/\b(mi nombre es|me llamo|soy|nombre|teléfono|telefono|celular|correo|email|número|numero|mi|es|y|el)\b/gi,'')
+          .replace(/\s+/g,' ').trim();
+        if (limpio.length >= 2) nombreEnHistorial = limpio;
+      }
+    }
+    // Fallback: buscar teléfono en cualquier mensaje del usuario del historial
+    if (!telEnHistorial) {
+      for (const msg of historial.filter(m => m.role === 'user')) {
+        const telM = (msg.text||'').match(/\+?[\d][\d\s\-\(\)]{6,14}/);
+        if (telM && telM[0].replace(/\D/g,'').length >= 7) { telEnHistorial = telM[0].replace(/\D/g,''); break; }
+      }
+    }
+    const contextoDatosCapturados = (nombreEnHistorial || telEnHistorial)
+      ? `DATOS YA CAPTURADOS EN ESTA CONVERSACIÓN — NO VOLVER A PEDIR:${nombreEnHistorial ? ` Nombre: ${nombreEnHistorial}.` : ''}${telEnHistorial ? ` Teléfono: ${telEnHistorial}.` : ''} Usa estos datos directamente al confirmar la cita.`
+      : '';
+
     const fechaContexto = fechaResuelta
       ? `FECHA DETECTADA EN EL MENSAJE: ${fechaResuelta.texto} (${fechaResuelta.fecha}${fechaResuelta.hora ? ` a las ${fechaResuelta.hora}` : ''}) — usa esta fecha exacta en tu respuesta, no calcules fechas tú mismo.`
       : `Si el paciente menciona una fecha o día, inclúyela en tu respuesta tal como él la dijo.`;
@@ -355,7 +386,7 @@ ${instruccionPago}
 
 ${fechaContexto}
 
-${contextoRecurrente ? contextoRecurrente + '\n\n' : ''}━━━ CATÁLOGO — REGLAS DE USO ESTRICTO ━━━
+${contextoRecurrente ? contextoRecurrente + '\n\n' : ''}${contextoDatosCapturados ? contextoDatosCapturados + '\n\n' : ''}━━━ CATÁLOGO — REGLAS DE USO ESTRICTO ━━━
 REGLA 1 — SOLO LO QUE ESTÁ ESCRITO:
 Al describir un servicio, usa ÚNICAMENTE el precio y descripción del catálogo. NUNCA agregues beneficios, resultados, garantías, duraciones de efectos ni detalles clínicos que no estén escritos.
 
@@ -382,6 +413,7 @@ REGLAS DE CONTACTO:
 - Si el paciente da solo el nombre sin teléfono: agradece y pide el teléfono o correo en el siguiente mensaje.
 - Si el paciente se niega a dar teléfono: acepta con amabilidad y continúa con el agendamiento.
 - NUNCA vuelvas a pedir nombre o teléfono si el paciente ya los proporcionó en esta conversación — búscalos en el historial.
+- ANTES de pedir confirmación de cita, revisa el historial. Si ya tienes nombre Y teléfono, procede directamente a confirmar la cita sin pedir nada más.
 
 ━━━ REGLAS DE COMUNICACIÓN ━━━
 - Máximo 3 oraciones por respuesta
@@ -743,7 +775,7 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
               let nombreLimpio = r
                 .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '')
                 .replace(/\+?[\d][\d\s\-\(\)]{6,14}/g, '')
-                .replace(/\b(tel[eé]fono|celular|correo|email|n[uú]mero|mi|es|y|el)\b/gi, '')
+                .replace(/\b(mi nombre es|me llamo|soy|nombre|tel[eé]fono|celular|correo|email|n[uú]mero|mi|es|y|el|teléfono)\b/gi, '')
                 .replace(/\s+/g, ' ').trim();
               // Validar que quedó algo parecido a un nombre
               if (nombreLimpio.length >= 2 && nombreLimpio.length <= 60) {
