@@ -491,19 +491,6 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
     // Si después del filtro y etiquetas la respuesta quedó vacía, dar fallback amigable
     if (!respuesta) respuesta = 'Entendido. ¿Te puedo ayudar con algo más? 😊';
 
-    // ── MENSAJE DE CONFIRMACIÓN COMPLETO ─────────────────────────────────────
-    // Cuando se crea la cita, enriquecer el mensaje de Valeria con contexto real
-    // En vez de solo "¡Cita confirmada!" dar toda la info que necesita el paciente
-    if (citaCreada && respuesta && respuesta.length < 40) {
-      // El mensaje es demasiado corto — enriquecerlo
-      const nombreCortoConf = historial.filter(m=>m.role==='user')
-        .map(m=>m.text||'').join(' ').match(/([A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,})/)?.[1] || '';
-      const modoMsg = modoReserva === 'solo_cita'
-        ? `Te esperamos el ${citaCreada.fecha}. Si necesitas reagendar, escríbenos con anticipación. 😊`
-        : `Para confirmarla necesitas completar el pago. Revisa el enlace que te enviamos. 😊`;
-      respuesta = `¡Listo${nombreCortoConf ? `, ${nombreCortoConf}` : ''}! Tu cita de ${citaCreada.servicio} está registrada para el ${citaCreada.fecha}. ${modoMsg}`;
-    }
-
     // Complementar fecha resuelta con la del historial si el mensaje actual no tiene fecha
     // Buscar fecha en historial expandido si los métodos principales fallaron
     function extraerFechaDeHistorialExpandido() {
@@ -614,6 +601,16 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
             servicioFinal.precio, estadoCita, sessionToken
           ).run();
           citaCreada = { servicio: servicioFinal.nombre, fecha: fechaFinal.texto };
+
+          // Enriquecer el mensaje de confirmación si Groq lo dejó muy corto
+          if (respuesta && respuesta.length < 50) {
+            const nombreCortoConf = historial.filter(m=>m.role==='user')
+              .map(m=>m.text||'').join(' ').match(/\b([A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,})\b/)?.[1] || '';
+            const modoMsg = modoReserva === 'solo_cita'
+              ? `Te esperamos el ${citaCreada.fecha}. Si necesitas reagendar, escríbenos con anticipación. 😊`
+              : `Para confirmarla, completa el pago con el enlace que te enviamos. 😊`;
+            respuesta = `¡Listo${nombreCortoConf ? `, ${nombreCortoConf}` : ''}! Tu cita de ${citaCreada.servicio} está registrada para el ${citaCreada.fecha}. ${modoMsg}`;
+          }
 
           // Notificar Telegram — igual que WhatsApp
           try {
