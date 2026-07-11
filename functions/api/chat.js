@@ -722,38 +722,66 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
         ].slice(-20);
 
         if (existente) {
-          // Intentar extraer nombre real del historial para actualizar el registro
           let nombreActualizado = null;
           let telActualizado    = null;
           const hist = nuevoHistorial;
+
           for (let i = 0; i < hist.length - 1; i++) {
             const msg = hist[i];
             const sig = hist[i + 1];
-            if (msg.role === 'bot' && /nombre|llamas|llamo/i.test(msg.text || '')) {
+
+            // Caso A: Valeria pidió nombre/teléfono juntos (primer mensaje)
+            // El usuario responde con todo junto: "Eduardo Aizprua teléfono 64230862"
+            if (msg.role === 'bot' && /nombre.*tel[eé]fono|tel[eé]fono.*nombre|nombre.*correo|correo.*nombre/i.test(msg.text || '')) {
               const r = (sig?.text || '').trim();
-              if (r.length < 40 && !/quiero|agendar|cita|blanquea|limpieza|implante|ortodon/i.test(r)) {
-                const m = r.match(/(?:si[,]?\s+)?(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?)/i);
-                nombreActualizado = m ? m[1] : r;
+              // Extraer teléfono o correo primero
+              const emailMatch = r.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+              const telMatch   = r.match(/\+?[\d][\d\s\-\(\)]{6,14}/);
+              if (emailMatch) telActualizado = emailMatch[0];
+              if (telMatch)   telActualizado = telActualizado || telMatch[0].replace(/[\s\-\(\)]/g,'').trim();
+              // Limpiar el nombre quitando el teléfono/correo y palabras clave
+              let nombreLimpio = r
+                .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '')
+                .replace(/\+?[\d][\d\s\-\(\)]{6,14}/g, '')
+                .replace(/\b(tel[eé]fono|celular|correo|email|n[uú]mero|mi|es|y|el)\b/gi, '')
+                .replace(/\s+/g, ' ').trim();
+              // Validar que quedó algo parecido a un nombre
+              if (nombreLimpio.length >= 2 && nombreLimpio.length <= 60) {
+                nombreActualizado = nombreLimpio;
               }
             }
-            // Detectar teléfono o correo cuando Valeria los pidió
-            if (msg.role === 'bot' && /tel[eé]fono|correo|contacto|número|whatsapp/i.test(msg.text || '')) {
+
+            // Caso B: Valeria pidió solo el nombre
+            if (!nombreActualizado && msg.role === 'bot' && /nombre|llamas|llamo/i.test(msg.text || '') && !/tel[eé]fono|correo/i.test(msg.text || '')) {
               const r = (sig?.text || '').trim();
-              const telMatch   = r.match(/\+?[\d\s\-\(\)]{7,15}/);
+              if (r.length < 50 && !/quiero|agendar|cita|blanquea|limpieza|implante|ortodon/i.test(r)) {
+                const m = r.match(/(?:si[,]?\s+)?(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?)/i);
+                const nombreLimpio = m ? m[1] : r.replace(/\+?[\d][\d\s\-\(\)]{6,14}/g,'').replace(/\s+/g,' ').trim();
+                if (nombreLimpio.length >= 2) nombreActualizado = nombreLimpio;
+              }
+            }
+
+            // Caso C: Valeria pidió teléfono/correo por separado
+            if (!telActualizado && msg.role === 'bot' && /tel[eé]fono|correo|contacto|n[uú]mero|whatsapp/i.test(msg.text || '')) {
+              const r = (sig?.text || '').trim();
               const emailMatch = r.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-              if (telMatch)   telActualizado = telMatch[0].replace(/\s+/g,'').trim();
+              const telMatch   = r.match(/\+?[\d][\d\s\-\(\)]{6,14}/);
               if (emailMatch) telActualizado = emailMatch[0];
+              if (telMatch)   telActualizado = telActualizado || telMatch[0].replace(/[\s\-\(\)]/g,'').trim();
             }
           }
-          // Fallback: buscar teléfono en cualquier mensaje del usuario
+
+          // Fallback: buscar teléfono o correo en cualquier mensaje del usuario
           if (!telActualizado) {
             for (const msg of hist.filter(m => m.role === 'user')) {
-              const telMatch   = (msg.text||'').match(/\+?[\d\s\-\(\)]{7,15}/);
-              const emailMatch = (msg.text||'').match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+              const t = msg.text || '';
+              const emailMatch = t.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+              const telMatch   = t.match(/\+?[\d][\d\s\-\(\)]{6,14}/);
               if (emailMatch) { telActualizado = emailMatch[0]; break; }
-              if (telMatch && telMatch[0].replace(/\D/g,'').length >= 7) { telActualizado = telMatch[0].trim(); break; }
+              if (telMatch && telMatch[0].replace(/\D/g,'').length >= 7) { telActualizado = telMatch[0].replace(/[\s\-\(\)]/g,'').trim(); break; }
             }
           }
+
           const nombreFinal = nombreActualizado || existente.cliente_nombre || 'Visitante Web';
           const telFinal    = telActualizado    || existente.cliente_tel    || 'web';
           await env.producto_c_db
