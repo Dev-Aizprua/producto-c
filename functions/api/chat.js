@@ -371,11 +371,16 @@ Ejemplos: Invisalign ≠ Ortodoncia. Blanqueamiento láser ≠ Blanqueamiento. C
 - NUNCA confirmes disponibilidad antes de que el sistema la verifique.
 
 ━━━ FLUJO DE AGENDAMIENTO ━━━
-1. Entiende qué servicio le interesa
-2. Si no tienes el nombre del paciente, pídelo
+1. Si es el PRIMER mensaje del paciente (historial vacío): saluda con calidez y pide nombre y teléfono en el mismo mensaje. Ejemplo: "¡Hola! Soy Valeria 😊 Antes de ayudarte, ¿me puedes indicar tu nombre y un número de teléfono o correo por si necesitamos confirmar algo?"
+2. Una vez que tengas nombre y teléfono/correo: entiende qué servicio le interesa
 3. Confirma fecha y hora con la fecha ya resuelta por el sistema
 4. Muestra resumen y pregunta ¿Confirmas la cita? — termina con [MOSTRAR_RESUMEN]
 5. SOLO cuando confirme → termina con [CREAR_CITA]
+
+REGLAS DE CONTACTO:
+- Si el paciente es RECURRENTE (ya lo conocemos) NO le pidas nombre ni teléfono — ya los tienes.
+- Si el paciente da solo el nombre sin teléfono: agradece y pide el teléfono o correo en el siguiente mensaje.
+- Si el paciente se niega a dar teléfono: acepta con amabilidad y continúa con el agendamiento.
 
 ━━━ REGLAS DE COMUNICACIÓN ━━━
 - Máximo 3 oraciones por respuesta
@@ -721,15 +726,24 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
               if (r.length < 40 && !/quiero|agendar|cita|blanquea|limpieza|implante|ortodon/i.test(r)) {
                 const m = r.match(/(?:si[,]?\s+)?(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?)/i);
                 nombreActualizado = m ? m[1] : r;
-                break;
               }
             }
-            // Detectar teléfono o correo en respuestas del usuario
-            if (msg.role === 'user') {
-              const telMatch   = (msg.text||'').match(/\+?[\d\s\-]{7,15}/);
-              const emailMatch = (msg.text||'').match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-              if (telMatch)   telActualizado = telMatch[0].trim();
+            // Detectar teléfono o correo cuando Valeria los pidió
+            if (msg.role === 'bot' && /tel[eé]fono|correo|contacto|número|whatsapp/i.test(msg.text || '')) {
+              const r = (sig?.text || '').trim();
+              const telMatch   = r.match(/\+?[\d\s\-\(\)]{7,15}/);
+              const emailMatch = r.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+              if (telMatch)   telActualizado = telMatch[0].replace(/\s+/g,'').trim();
               if (emailMatch) telActualizado = emailMatch[0];
+            }
+          }
+          // Fallback: buscar teléfono en cualquier mensaje del usuario
+          if (!telActualizado) {
+            for (const msg of hist.filter(m => m.role === 'user')) {
+              const telMatch   = (msg.text||'').match(/\+?[\d\s\-\(\)]{7,15}/);
+              const emailMatch = (msg.text||'').match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+              if (emailMatch) { telActualizado = emailMatch[0]; break; }
+              if (telMatch && telMatch[0].replace(/\D/g,'').length >= 7) { telActualizado = telMatch[0].trim(); break; }
             }
           }
           const nombreFinal = nombreActualizado || existente.cliente_nombre || 'Visitante Web';
