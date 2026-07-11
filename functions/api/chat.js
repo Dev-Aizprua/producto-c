@@ -709,14 +709,39 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
         ].slice(-20);
 
         if (existente) {
+          // Intentar extraer nombre real del historial para actualizar el registro
+          let nombreActualizado = null;
+          let telActualizado    = null;
+          const hist = nuevoHistorial;
+          for (let i = 0; i < hist.length - 1; i++) {
+            const msg = hist[i];
+            const sig = hist[i + 1];
+            if (msg.role === 'bot' && /nombre|llamas|llamo/i.test(msg.text || '')) {
+              const r = (sig?.text || '').trim();
+              if (r.length < 40 && !/quiero|agendar|cita|blanquea|limpieza|implante|ortodon/i.test(r)) {
+                const m = r.match(/(?:si[,]?\s+)?(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?)/i);
+                nombreActualizado = m ? m[1] : r;
+                break;
+              }
+            }
+            // Detectar teléfono o correo en respuestas del usuario
+            if (msg.role === 'user') {
+              const telMatch   = (msg.text||'').match(/\+?[\d\s\-]{7,15}/);
+              const emailMatch = (msg.text||'').match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+              if (telMatch)   telActualizado = telMatch[0].trim();
+              if (emailMatch) telActualizado = emailMatch[0];
+            }
+          }
+          const nombreFinal = nombreActualizado || existente.cliente_nombre || 'Visitante Web';
+          const telFinal    = telActualizado    || existente.cliente_tel    || 'web';
           await env.producto_c_db
-            .prepare('UPDATE chats SET historial_json = ?, fecha = ? WHERE id = ?')
-            .bind(JSON.stringify(nuevoHistorial), new Date().toISOString(), existente.id).run();
+            .prepare('UPDATE chats SET historial_json = ?, fecha = ?, cliente_nombre = ?, cliente_tel = ? WHERE id = ?')
+            .bind(JSON.stringify(nuevoHistorial), new Date().toISOString(), nombreFinal, telFinal, existente.id).run();
         } else {
           await env.producto_c_db
             .prepare(`INSERT INTO chats (negocio_id, session_token, cliente_nombre, cliente_tel, historial_json, fecha, completado, canal)
-                      VALUES (?, ?, 'Paciente Web', ?, ?, ?, 0, 'web')`)
-            .bind(negocio.id, sessionToken, sessionToken, JSON.stringify(nuevoHistorial), new Date().toISOString()).run();
+                      VALUES (?, ?, ?, ?, ?, ?, 0, 'web')`)
+            .bind(negocio.id, sessionToken, 'Visitante Web', 'web', JSON.stringify(nuevoHistorial), new Date().toISOString()).run();
         }
       } catch(e) { console.error('DB chat error:', e.message); }
     }
