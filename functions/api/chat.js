@@ -342,33 +342,36 @@ export async function onRequestPost(context) {
       ? `PACIENTE RECURRENTE: Ya conocemos a este paciente. Nombre: ${pacienteRecurrente.cliente_nombre}. Último servicio: ${pacienteRecurrente.ultimo_servicio || 'desconocido'} el ${pacienteRecurrente.fecha_cita || 'fecha desconocida'}. Salúdalo por su nombre y pregunta si viene por el mismo tratamiento o algo diferente. NO le pidas el nombre — ya lo tienes.`
       : '';
 
-    // Extraer nombre y teléfono del historial actual para que Valeria los recuerde
+    // Extraer nombre y teléfono del historial — escaneo directo de mensajes del usuario
     let nombreEnHistorial = '';
     let telEnHistorial    = '';
-    for (let i = 0; i < historial.length - 1; i++) {
-      const msg = historial[i];
-      const sig = historial[i + 1];
-      if (msg.role === 'bot' && /nombre.*tel|tel.*nombre|nombre.*correo/i.test(msg.text || '')) {
-        const r = (sig?.text || '').trim();
-        const emailM = r.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-        const telM   = r.match(/\+?[\d][\d\s\-\(\)]{6,14}/);
-        if (emailM) telEnHistorial = emailM[0];
-        if (telM)   telEnHistorial = telEnHistorial || telM[0].replace(/\D/g,'');
-        const limpio = r
-          .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,'')
-          .replace(/\+?[\d][\d\s\-\(\)]{6,14}/g,'')
-          .replace(/\b(mi nombre es|me llamo|soy|nombre|teléfono|telefono|celular|correo|email|número|numero|mi|es|y|el)\b/gi,'')
-          .replace(/\s+/g,' ').trim();
-        if (limpio.length >= 2) nombreEnHistorial = limpio;
+    const msgsUser = historial.filter(m => m.role === 'user').map(m => m.text || '');
+
+    for (const txt of msgsUser) {
+      if (telEnHistorial) break;
+      const emailM = txt.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+      const telM   = txt.match(/\+?[\d][\d\s\-\(\)]{5,14}/);
+      if (emailM) telEnHistorial = emailM[0];
+      else if (telM && telM[0].replace(/\D/g,'').length >= 7) telEnHistorial = telM[0].replace(/[\s\-\(\)]/g,'').trim();
+    }
+
+    for (const txt of msgsUser) {
+      if (nombreEnHistorial) break;
+      const mExp = txt.match(/(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)/i);
+      if (mExp) { nombreEnHistorial = mExp[1].trim(); break; }
+      const limpio = txt
+        .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '')
+        .replace(/\+?[\d][\d\s\-\(\)]{5,14}/g, '')
+        .replace(/\b(mi nombre es|me llamo|soy|nombre|teléfono|telefono|celular|correo|email|número|numero|mi|es|y|el)\b/gi, '')
+        .replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')
+        .replace(/\s+/g, ' ').trim();
+      const palabras = limpio.split(' ').filter(p => p.length >= 2);
+      if (palabras.length >= 1 && palabras.length <= 4 &&
+          !/quiero|agendar|interesa|buenos|buenas|hola|limpieza|blanquea|implante|ortodon|martes|lunes|miércoles|jueves|viernes|tarde|mañana/i.test(limpio)) {
+        nombreEnHistorial = palabras.join(' ');
       }
     }
-    // Fallback: buscar teléfono en cualquier mensaje del usuario del historial
-    if (!telEnHistorial) {
-      for (const msg of historial.filter(m => m.role === 'user')) {
-        const telM = (msg.text||'').match(/\+?[\d][\d\s\-\(\)]{6,14}/);
-        if (telM && telM[0].replace(/\D/g,'').length >= 7) { telEnHistorial = telM[0].replace(/\D/g,''); break; }
-      }
-    }
+
     const contextoDatosCapturados = (nombreEnHistorial || telEnHistorial)
       ? `DATOS YA CAPTURADOS EN ESTA CONVERSACIÓN — NO VOLVER A PEDIR:${nombreEnHistorial ? ` Nombre: ${nombreEnHistorial}.` : ''}${telEnHistorial ? ` Teléfono: ${telEnHistorial}.` : ''} Usa estos datos directamente al confirmar la cita.`
       : '';
