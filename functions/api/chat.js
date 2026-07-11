@@ -271,6 +271,31 @@ export async function onRequestPost(context) {
     // 2. Motor de Fechas — resolver fecha del mensaje antes de Groq
     const fechaResuelta = resolverFechaNatural(mensaje);
 
+    // 2b. Verificar modo manual — si el bot está pausado no responder con IA
+    let modoManualActivo = false;
+    if (sessionToken) {
+      try {
+        const mm = await env.producto_c_db.prepare(
+          `SELECT 1 FROM modos_manual WHERE numero = ? AND negocio_id = ? LIMIT 1`
+        ).bind(sessionToken, negocio?.id || 0).first();
+        if (mm) modoManualActivo = true;
+      } catch(e) {}
+    }
+
+    if (modoManualActivo) {
+      return Response.json({
+        success: true,
+        respuesta: 'En este momento un miembro de nuestro equipo está atendiendo tu consulta. En breve te responderemos. 😊',
+        mostrar_servicios: false,
+        mostrar_resumen: false,
+        cita_creada: null,
+        filtro_activado: false,
+        servicio: null,
+        fecha_resuelta: null,
+        servicios: []
+      }, { headers: corsHeaders });
+    }
+
     // 3. Paciente recurrente — buscar por sessionToken
     let pacienteRecurrente = null;
     if (sessionToken && historial.length === 0) {
@@ -576,7 +601,10 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
             const respNombre = (siguiente?.text || '').trim();
             // Nombre válido: corto (< 40 chars), no contiene verbos de servicio
             if (respNombre.length < 40 && !/quiero|agendar|cita|blanquea|limpieza|implante|ortodon/i.test(respNombre)) {
-              nombrePacienteWeb = respNombre;
+              // Limpiar frases como "Si mi nombre es Eduardo" → "Eduardo"
+              // o "Me llamo Eduardo Aizprua" → "Eduardo Aizprua"
+              const matchNombreLimpio = respNombre.match(/(?:si[,]?\s+)?(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?)/i);
+              nombrePacienteWeb = matchNombreLimpio ? matchNombreLimpio[1] : respNombre;
               break;
             }
           }
@@ -647,6 +675,9 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
                       [
                         { text: '✅ Confirmar Cita', callback_data: `confirmar:${citaIdTg}` },
                         { text: '❌ Rechazar/Cancelar', callback_data: `rechazar:${citaIdTg}` }
+                      ],
+                      [
+                        { text: '🛑 Pausar Bot Web', callback_data: `pausar:${sessionToken}:${negocio.id}:${citaIdTg}` }
                       ]
                     ]
                   }
