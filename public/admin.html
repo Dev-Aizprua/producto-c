@@ -2460,7 +2460,7 @@ async function cargarCitas(){
     if(!_todasCitas.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:#aaa;padding:32px">Sin reservas a\u00fan</td></tr>`;}
     else{tbody.innerHTML=_todasCitas.map(c=>`<tr>
       <td><strong>${c.cliente_nombre||'\u2014'}</strong></td>
-      <td>${c.canal==='whatsapp'&&c.cliente_tel ? c.cliente_tel : c.cliente_tel&&!c.cliente_tel.includes('-')&&c.cliente_tel.length<40 ? c.cliente_tel : '<span style="color:#64748b;font-size:11px;font-weight:600">Visitante Web</span>'}</td>
+      <td>${(() => { const t = c.cliente_tel; if (!t || t === 'web' || (t.includes('-') && t.length > 20)) return '<span style="color:#64748b;font-size:11px;font-weight:600">Visitante Web</span>'; return t; })()'}</td>
       <td>${c.servicio_nombre||'\u2014'}</td>
       <td>${c.fecha_cita||'\u2014'}</td>
       <td><strong>$${c.total||0}</strong></td>
@@ -2518,7 +2518,7 @@ function renderCitasMobile(citas){
       </div>
       <div class="cita-expand">
         <div class="cita-expand-grid">
-          <div class="cita-expand-item"><div class="cita-expand-lbl">Contacto</div><div class="cita-expand-val">${c.canal==='whatsapp'&&c.cliente_tel ? c.cliente_tel : c.cliente_tel&&!c.cliente_tel.includes('-')&&c.cliente_tel.length<40 ? c.cliente_tel : '<span style="color:#64748b;font-weight:600">Visitante Web</span>'}</div></div>
+          <div class="cita-expand-item"><div class="cita-expand-lbl">Contacto</div><div class="cita-expand-val">${(() => { const t = c.cliente_tel; if (!t || t === 'web' || (t.includes('-') && t.length > 20)) return '<span style="color:#64748b;font-weight:600">Visitante Web</span>'; return t; })()'}</div></div>
           <div class="cita-expand-item"><div class="cita-expand-lbl">Canal</div><div class="cita-expand-val">${c.canal==='whatsapp'?'\uD83D\uDCF1 WhatsApp':'\uD83C\uDF10 Web'}</div></div>
           <div class="cita-expand-item"><div class="cita-expand-lbl">Total</div><div class="cita-expand-val">$${c.total||0}</div></div>
           <div class="cita-expand-item"><div class="cita-expand-lbl">Registrada</div><div class="cita-expand-val">${formatFecha(c.created_at)}</div></div>
