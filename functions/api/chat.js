@@ -635,30 +635,34 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
     }
     if (crearCita && sessionToken && !citaActivaWeb && fechaFinal?.fecha && servicioFinal) {
       try {
-        // Extraer nombre del paciente del historial
-        // Extraer nombre: buscar la respuesta del usuario justo después
-        // de que Valeria preguntó el nombre ("¿me puedes indicar tu nombre?")
+        // Extraer nombre y teléfono del historial — mismo enfoque robusto
         let nombrePacienteWeb = 'Paciente Web';
-        for (let i = 0; i < historial.length - 1; i++) {
-          const msg = historial[i];
-          const siguiente = historial[i + 1];
-          if (msg.role === 'bot' && /nombre|llamas|llamo/i.test(msg.text || '')) {
-            const respNombre = (siguiente?.text || '').trim();
-            // Nombre válido: corto (< 40 chars), no contiene verbos de servicio
-            if (respNombre.length < 40 && !/quiero|agendar|cita|blanquea|limpieza|implante|ortodon/i.test(respNombre)) {
-              // Limpiar frases como "Si mi nombre es Eduardo" → "Eduardo"
-              // o "Me llamo Eduardo Aizprua" → "Eduardo Aizprua"
-              const matchNombreLimpio = respNombre.match(/(?:si[,]?\s+)?(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?)/i);
-              nombrePacienteWeb = matchNombreLimpio ? matchNombreLimpio[1] : respNombre;
-              break;
-            }
-          }
+        let telPacienteWeb    = sessionToken; // fallback al session token
+        const msgUsuarioCita  = historial.filter(m => m.role === 'user').map(m => m.text || '');
+
+        // Buscar teléfono o correo
+        for (const txt of msgUsuarioCita) {
+          const emailM = txt.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+          const telM   = txt.match(/\+?[\d][\d\s\-\(\)]{5,14}/);
+          if (emailM) { telPacienteWeb = emailM[0]; break; }
+          if (telM && telM[0].replace(/\D/g,'').length >= 7) { telPacienteWeb = telM[0].replace(/[\s\-\(\)]/g,'').trim(); break; }
         }
-        // Fallback: buscar patrón "me llamo / soy / mi nombre es"
-        if (nombrePacienteWeb === 'Paciente Web') {
-          const textoH = historial.map(m => m.text || '').join(' ');
-          const mn = textoH.match(/(?:me llamo|soy|mi nombre es)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?)/i);
-          if (mn) nombrePacienteWeb = mn[1];
+
+        // Buscar nombre
+        for (const txt of msgUsuarioCita) {
+          const mExp = txt.match(/(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)/i);
+          if (mExp) { nombrePacienteWeb = mExp[1].trim(); break; }
+          const limpio = txt
+            .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '')
+            .replace(/\+?[\d][\d\s\-\(\)]{5,14}/g, '')
+            .replace(/\b(mi nombre es|me llamo|soy|nombre|teléfono|telefono|celular|correo|email|número|numero|mi|es|y|el)\b/gi, '')
+            .replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')
+            .replace(/\s+/g, ' ').trim();
+          const palabras = limpio.split(' ').filter(p => p.length >= 2);
+          if (palabras.length >= 1 && palabras.length <= 4 &&
+              !/quiero|agendar|interesa|buenos|buenas|hola|limpieza|blanquea|implante|ortodon|martes|lunes|miércoles|jueves|viernes|tarde|mañana/i.test(limpio)) {
+            nombrePacienteWeb = palabras.join(' '); break;
+          }
         }
         const duracion = parseInt(servicioResumen.duracion) || 30;
         const disponible = await verificarDisponibilidadWeb(env, negocio.id, fechaFinal.fecha, fechaFinal.hora || '09:00', duracion);
@@ -669,7 +673,7 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
              fecha_cita, fecha_hora, total, estado_pago, metodo_pago, session_token, canal)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'web', ?, 'web')`
           ).bind(
-            negocio.id, servicioFinal.id, nombrePacienteWeb, sessionToken,
+            negocio.id, servicioFinal.id, nombrePacienteWeb, telPacienteWeb,
             fechaFinal.fecha, fechaFinal.hora || null,
             servicioFinal.precio, estadoCita, sessionToken
           ).run();
