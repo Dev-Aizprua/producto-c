@@ -2223,7 +2223,7 @@ async function cargarKPIs(){
     if(!ultimas.length){tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;color:#aaa;padding:24px">Sin reservas a\u00fan</td></tr>`;}
     else{tbody.innerHTML=ultimas.map(c=>`<tr>
       <td><strong>${c.servicio_nombre||'\u2014'}</strong></td>
-      <td>${c.fecha_cita||'\u2014'}</td>
+      <td>${c.fecha_cita||'\u2014'}${c.fecha_hora ? '<br><small style="color:#666">🕐 '+c.fecha_hora+'</small>' : ''}</td>
       <td><strong>$${c.total||0}</strong></td>
       <td>${badgePago(c.estado_pago)} ${badgeCanal(c.canal)}</td>
     </tr>`).join('');}
@@ -2244,7 +2244,7 @@ async function cargarKPIs(){
             <div class="reserva-info">
               <div class="reserva-nombre">${nombre} <span class="canal-icon">${canalIcon}</span></div>
               <div class="reserva-detalle"><i class="ti ti-tooth"></i> ${c.servicio_nombre||'\u2014'} \u00b7 $${c.total||0}</div>
-              <div class="reserva-detalle"><i class="ti ti-calendar"></i> ${c.fecha_cita||formatFecha(c.created_at)}</div>
+              <div class="reserva-detalle"><i class="ti ti-calendar"></i> ${c.fecha_cita||formatFecha(c.created_at)}${c.fecha_hora ? " 🕐 "+c.fecha_hora : ""}</div>
               <div class="reserva-acciones">
                 ${c.cliente_tel&&c.canal==='whatsapp'?`<a href="${waLink}" target="_blank"><button class="btn-wa-m"><i class="ti ti-brand-whatsapp" style="font-size:14px"></i></button></a>`:''}
                 <button class="btn-det-m" onclick="showTabMobile('citas')">Ver detalle</button>
@@ -2462,7 +2462,7 @@ async function cargarCitas(){
       <td><strong>${c.cliente_nombre||'\u2014'}</strong></td>
       <td>${(() => { const t = c.cliente_tel; if (!t || t === 'web' || (t.includes('-') && t.length > 20)) return '<span style="color:#64748b;font-size:11px;font-weight:600">Visitante Web</span>'; return t; })()}</td>
       <td>${c.servicio_nombre||'\u2014'}</td>
-      <td>${c.fecha_cita||'\u2014'}</td>
+      <td>${c.fecha_cita||'\u2014'}${c.fecha_hora ? '<br><small style="color:#666">🕐 '+c.fecha_hora+'</small>' : ''}</td>
       <td><strong>$${c.total||0}</strong></td>
       <td>${badgePago(c.estado_pago)}</td>
       <td>${badgeCanal(c.canal)}</td>
@@ -2512,7 +2512,7 @@ function renderCitasMobile(citas){
         <div class="cita-main">
           <div class="cita-cliente-row"><span class="cita-nombre-m">${nombre}</span><span class="cita-canal-m">${canalIcon}</span></div>
           <div class="cita-servicio-m"><i class="ti ti-tooth" style="font-size:11px;color:#aaa"></i> ${c.servicio_nombre||'\u2014'} &middot; $${c.total||0}</div>
-          <div class="cita-fecha-m"><i class="ti ti-calendar" style="font-size:11px"></i> ${c.fecha_cita||formatFecha(c.created_at)}</div>
+          <div class="cita-fecha-m"><i class="ti ti-calendar" style="font-size:11px"></i> ${c.fecha_cita||formatFecha(c.created_at)}${c.fecha_hora ? " 🕐 "+c.fecha_hora : ""}</div>
         </div>
         <div class="cita-right-m"><span class="badge-compact ${ecls}">${elbl}</span><i class="ti ti-chevron-right cita-chevron-m"></i></div>
       </div>

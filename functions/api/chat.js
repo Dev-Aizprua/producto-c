@@ -639,35 +639,35 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
     }
     if (crearCita && sessionToken && !citaActivaWeb && fechaFinal?.fecha && servicioFinal) {
       try {
-        // Extraer nombre y teléfono del historial — mismo enfoque robusto
+        // Fuente de verdad para nombre y teléfono: el chat ya guardado en D1
+        // que fue actualizado al inicio de la conversación con los datos correctos.
+        // Evita depender del slice(-6) del historial que puede no incluir el mensaje inicial.
         let nombrePacienteWeb = 'Paciente Web';
-        let telPacienteWeb    = sessionToken; // fallback al session token
-        const msgUsuarioCita  = historial.filter(m => m.role === 'user').map(m => m.text || '');
+        let telPacienteWeb    = sessionToken;
 
-        // Buscar teléfono o correo
-        for (const txt of msgUsuarioCita) {
-          const emailM = txt.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-          const telM   = txt.match(/\+?[\d][\d\s\-\(\)]{5,14}/);
-          if (emailM) { telPacienteWeb = emailM[0]; break; }
-          if (telM && telM[0].replace(/\D/g,'').length >= 7) { telPacienteWeb = telM[0].replace(/[\s\-\(\)]/g,'').trim(); break; }
-        }
-
-        // Buscar nombre
-        for (const txt of msgUsuarioCita) {
-          const mExp = txt.match(/(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)/i);
-          if (mExp) { nombrePacienteWeb = mExp[1].trim(); break; }
-          const limpio = txt
-            .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '')
-            .replace(/\+?[\d][\d\s\-\(\)]{5,14}/g, '')
-            .replace(/\b(mi nombre es|me llamo|soy|nombre|teléfono|telefono|celular|correo|email|número|numero|mi|es|y|el)\b/gi, '')
-            .replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')
-            .replace(/\s+/g, ' ').trim();
-          const palabras = limpio.split(' ').filter(p => p.length >= 2);
-          if (palabras.length >= 1 && palabras.length <= 4 &&
-              !/quiero|agendar|interesa|buenos|buenas|hola|limpieza|blanquea|implante|ortodon|martes|lunes|miércoles|jueves|viernes|tarde|mañana|confirmo|confirma|perfecto|entendido|claro|gracias/i.test(limpio)) {
-            nombrePacienteWeb = palabras.join(' '); break;
+        try {
+          const chatGuardado = await env.producto_c_db.prepare(
+            `SELECT cliente_nombre, cliente_tel FROM chats
+             WHERE session_token = ? AND negocio_id = ? ORDER BY id DESC LIMIT 1`
+          ).bind(sessionToken, negocio.id).first();
+          if (chatGuardado?.cliente_nombre && chatGuardado.cliente_nombre !== 'Visitante Web' && chatGuardado.cliente_nombre !== 'Paciente Web') {
+            nombrePacienteWeb = chatGuardado.cliente_nombre;
+          }
+          if (chatGuardado?.cliente_tel && !chatGuardado.cliente_tel.includes('-')) {
+            telPacienteWeb = chatGuardado.cliente_tel;
+          }
+        } catch(eChatLookup) {
+          console.log('[CITA_WEB] Error leyendo chat para nombre/tel:', eChatLookup.message);
+          // Fallback: intentar extraer del historial disponible
+          const msgsCita = historial.filter(m => m.role === 'user').map(m => m.text || '');
+          for (const txt of [...msgsCita, mensaje]) {
+            const mExp = txt.match(/(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)/i);
+            if (mExp) { nombrePacienteWeb = mExp[1].trim(); break; }
+            const telM = txt.match(/\+?[\d][\d\s\-\(\)]{5,14}/);
+            if (telM && telM[0].replace(/\D/g,'').length >= 7) telPacienteWeb = telM[0].replace(/[\s\-\(\)]/g,'').trim();
           }
         }
+        console.log('[CITA_WEB] nombre:', nombrePacienteWeb, '| tel:', telPacienteWeb);
         const duracion = parseInt(servicioResumen.duracion) || 30;
         const disponible = await verificarDisponibilidadWeb(env, negocio.id, fechaFinal.fecha, fechaFinal.hora || '09:00', duracion);
         if (disponible.disponible) {
