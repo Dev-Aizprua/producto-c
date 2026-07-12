@@ -650,7 +650,9 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
             `SELECT cliente_nombre, cliente_tel FROM chats
              WHERE session_token = ? AND negocio_id = ? ORDER BY id DESC LIMIT 1`
           ).bind(sessionToken, negocio.id).first();
-          if (chatGuardado?.cliente_nombre && chatGuardado.cliente_nombre !== 'Visitante Web' && chatGuardado.cliente_nombre !== 'Paciente Web') {
+          const esNombreInvalido = (n) => !n || ['Visitante Web','Paciente Web'].includes(n) ||
+            /^(buen|buenos|buenas|hola|días|dia|tardes|noches|gracias|ok|si|sí|listo|perfecto|hola buenos|buen día|buenas tardes|buenas noches)/i.test(n.trim());
+          if (chatGuardado?.cliente_nombre && !esNombreInvalido(chatGuardado.cliente_nombre)) {
             nombrePacienteWeb = chatGuardado.cliente_nombre;
           }
           if (chatGuardado?.cliente_tel && !chatGuardado.cliente_tel.includes('-')) {
@@ -791,7 +793,7 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
               .replace(/\s+/g, ' ').trim();
             const palabras = limpio.split(' ').filter(p => p.length >= 2);
             if (palabras.length >= 1 && palabras.length <= 4 &&
-                !/quiero|agendar|interesa|buenos|buenas|hola|limpieza|blanquea|implante|ortodon|martes|lunes|miércoles|jueves|viernes|tarde|mañana/i.test(limpio)) {
+                !/quiero|agendar|interesa|buen|buenas|buenos|hola|días|dia|tardes|tarde|noches|noche|gracias|confirmo|confirma|perfecto|entendido|claro|ok|listo|si|sí|limpieza|blanquea|implante|ortodon|martes|lunes|miércoles|jueves|viernes|mañana/i.test(limpio)) {
               nombreActualizado = palabras.join(' ');
             }
           }
