@@ -480,9 +480,15 @@ export async function onRequestPost(context) {
     // Requiere nombre + apellido (2+ palabras) — un solo nombre no se
     // considera dato completo. Antes se aceptaba con 1 sola palabra,
     // por lo que Valeria seguía adelante con solo el primer nombre.
+    // IMPORTANTE: excluye explícitamente los placeholders por defecto
+    // ("Paciente Web", "Visitante Web") porque casualmente tienen 2
+    // palabras y pasarían la validación como si fueran un nombre real.
     function esNombreCompleto(nombre) {
       if (!nombre) return false;
-      return nombre.trim().split(/\s+/).filter(Boolean).length >= 2;
+      const limpio = nombre.trim();
+      const placeholders = ['paciente web', 'paciente wa', 'visitante web'];
+      if (placeholders.includes(limpio.toLowerCase())) return false;
+      return limpio.split(/\s+/).filter(Boolean).length >= 2;
     }
 
     // Extraer nombre y teléfono del historial — escaneo directo de mensajes del usuario

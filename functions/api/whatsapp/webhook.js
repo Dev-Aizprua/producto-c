@@ -165,7 +165,7 @@ export async function onRequestPost(context) {
 
       if (duracion > 45) { // mensajes de voz hasta 45 segundos — Whisper los transcribe sin riesgo de alucinación
         await enviarMensaje(waToken, phoneNumberId, from,
-          "Solo proceso audios de hasta 20 segundos. ¿Puedes escribirme o enviar un audio más corto? 😊"
+          "Solo proceso audios de hasta 45 segundos. ¿Puedes escribirme o enviar un audio más corto? 😊"
         );
         return new Response("EVENT_RECEIVED", { status: 200 });
       }
@@ -444,12 +444,24 @@ export async function onRequestPost(context) {
     // ─── DETECCIÓN DIRECTA DE CONFIRMACIÓN ───────────────────
     // Si el paciente confirma Y el historial ya tiene los 3 datos,
     // generamos el pago directamente sin depender de Groq
-    const historialTexto = historial.map(h => h.content).join(" ").toLowerCase();
-
-    const servicioDetectado = servicios.find(s =>
-      textoLower.includes(s.nombre.toLowerCase()) ||
-      historialTexto.includes(s.nombre.toLowerCase())
-    );
+    // Detecta el servicio priorizando: 1) mensaje actual, 2) historial de
+    // más reciente a más antiguo. Antes se usaba servicios.find() con el
+    // orden fijo del catálogo, así que si el paciente cambiaba de servicio
+    // a mitad de la conversación (ej. pidió Limpieza y luego prefirió
+    // Ortodoncia), el sistema seguía detectando el servicio viejo si este
+    // aparecía antes en el catálogo — causando resúmenes/citas con el
+    // servicio equivocado.
+    function detectarServicioMasReciente() {
+      const enMensajeActual = servicios.find(s => textoLower.includes(s.nombre.toLowerCase()));
+      if (enMensajeActual) return enMensajeActual;
+      for (const h of [...historial].reverse()) {
+        const contenidoLower = (h.content || "").toLowerCase();
+        const encontrado = servicios.find(s => contenidoLower.includes(s.nombre.toLowerCase()));
+        if (encontrado) return encontrado;
+      }
+      return null;
+    }
+    const servicioDetectado = detectarServicioMasReciente();
 
     const palabrasConfirmacion = [
       "si", "sí", "dale", "listo", "perfecto", "confirmo", "confirmar",
@@ -513,7 +525,21 @@ export async function onRequestPost(context) {
       }
     }
 
-    const nombreEnHistorial = nombrePaciente && nombrePaciente !== "Paciente WA";
+    // Requiere nombre + apellido (2+ palabras) — un solo nombre no cuenta
+    // como dato completo para confirmar o crear la cita. Evita que Valeria
+    // avance con "Eduardo" solo cuando el paciente aún no dio su apellido.
+    // IMPORTANTE: excluye explícitamente el placeholder "Paciente WA"
+    // porque casualmente tiene 2 palabras y pasaría la validación como
+    // si fuera un nombre real (bug encontrado en pruebas del canal Web).
+    function esNombreCompleto(nombre) {
+      if (!nombre) return false;
+      const limpio = nombre.trim();
+      const placeholders = ['paciente web', 'paciente wa', 'visitante web'];
+      if (placeholders.includes(limpio.toLowerCase())) return false;
+      return limpio.split(/\s+/).filter(Boolean).length >= 2;
+    }
+
+    const nombreEnHistorial = nombrePaciente && nombrePaciente !== "Paciente WA" && esNombreCompleto(nombrePaciente);
 
     // Verificar que el bot ya presentó el resumen de confirmación
     // Evita disparar el link cuando Valeria apenas está recopilando datos
@@ -799,7 +825,7 @@ No se pudo regenerar el enlace — requiere atención manual.`
       try {
         citaActiva = await env.producto_c_db.prepare(
           `SELECT ci.id, ci.estado_pago, ci.fecha_cita, ci.total,
-                  s.nombre as servicio_nombre
+                  s.nombre as servicio_nombre, s.duracion as servicio_duracion
            FROM citas ci
            LEFT JOIN servicios s ON s.id = ci.servicio_id
            WHERE ci.negocio_id = ? AND ci.cliente_tel = ?
@@ -831,7 +857,7 @@ No se pudo regenerar el enlace — requiere atención manual.`
           const nuevoH = [...historial,
             { role: "user", content: textoConsolidado },
             { role: "assistant", content: respValeriaPuede },
-            { role: "system", content: `[REAGENDAMIENTO_ACTIVO:citaId=${citaActiva.id}|servicio=${citaActiva.servicio_nombre || ""}|fechaActual=${citaActiva.fecha_cita || ""}]` }
+            { role: "system", content: `[REAGENDAMIENTO_ACTIVO:citaId=${citaActiva.id}|servicio=${citaActiva.servicio_nombre || ""}|fechaActual=${citaActiva.fecha_cita || ""}|duracion=${parseInt(citaActiva.servicio_duracion) || 30}]` }
           ];
           const chatEx = await env.producto_c_db.prepare(
             `SELECT id FROM chats WHERE negocio_id = ? AND cliente_tel = ? AND completado = 0 LIMIT 1`
@@ -898,6 +924,8 @@ No se pudo regenerar el enlace — requiere atención manual.`
     if (reagendamientoActivo) {
       const matchCitaId = reagendamientoActivo.content.match(/citaId=(\d+)/);
       const citaId = matchCitaId ? matchCitaId[1] : null;
+      const matchDuracion = reagendamientoActivo.content.match(/duracion=(\d+)/);
+      const duracionReagendar = matchDuracion ? parseInt(matchDuracion[1]) : 30;
 
       // Resolver nueva fecha con Motor de Fechas
       const fechaNuevaResuelta = resolverFechaNatural(textoConsolidado);
@@ -905,20 +933,56 @@ No se pudo regenerar el enlace — requiere atención manual.`
 
       if (tieneFechaNueva && citaId) {
         const fechaNuevaTexto = fechaNuevaResuelta.texto;
-        const fechaNuevaISO = fechaNuevaResuelta.fecha;
+        const fechaNuevaISO   = fechaNuevaResuelta.fecha;
+        const horaNuevaISO    = fechaNuevaResuelta.hora;
+
+        // ─── RED DE SEGURIDAD: falta la hora ───────────────────
+        // Sin hora no podemos verificar choques — pedirla antes de tocar la cita
+        if (fechaNuevaISO && !horaNuevaISO) {
+          const respPedirHoraReagendar = `Perfecto, para el ${fechaNuevaResuelta.dia} ${fechaNuevaISO.split("-")[2]}. ¿A qué hora prefieres la cita? 😊`;
+          await marcarLeido(waToken, phoneNumberId, message.id);
+          await new Promise(r => setTimeout(r, 1500));
+          await enviarMensaje(waToken, phoneNumberId, from, respPedirHoraReagendar);
+          return new Response("EVENT_RECEIVED", { status: 200 });
+        }
+
+        // ─── VERIFICAR DISPONIBILIDAD (Agenda Real) ────────────
+        // Antes esto se saltaba por completo — permitía reagendar
+        // encima de un horario ya ocupado por otra cita.
+        if (fechaNuevaISO && horaNuevaISO) {
+          const disponibilidadReagendar = await verificarDisponibilidad(
+            env, negocioId, fechaNuevaISO, horaNuevaISO, duracionReagendar
+          );
+          if (!disponibilidadReagendar.disponible) {
+            const motivoReag = (disponibilidadReagendar.motivo || "").toLowerCase();
+            const respNoDisponibleReagendar = motivoReag.includes("no hay atenci") || motivoReag.includes("no configurad") || motivoReag.includes("ese d")
+              ? `Lo siento, ese día no tenemos atención. Nuestro horario es lunes a viernes. ¿Te gustaría elegir otro día? 😊`
+              : motivoReag.includes("ocupado") || motivoReag.includes("otra cita")
+              ? `Esa hora ya está reservada. ¿Puedes proponer otro horario para tu cambio? 😊`
+              : `Lo siento, ese horario no está disponible. ¿Te gustaría proponer otra fecha u hora? 😊`;
+
+            // El marcador REAGENDAMIENTO_ACTIVO se mantiene — el paciente
+            // sigue en proceso de reagendar, solo necesitamos otra fecha/hora
+            await marcarLeido(waToken, phoneNumberId, message.id);
+            await new Promise(r => setTimeout(r, 1500));
+            await enviarMensaje(waToken, phoneNumberId, from, respNoDisponibleReagendar);
+            return new Response("EVENT_RECEIVED", { status: 200 });
+          }
+        }
+
         try {
           await env.producto_c_db.prepare(
-            `UPDATE citas SET fecha_cita = ? WHERE id = ?`
-          ).bind(fechaNuevaISO || fechaNuevaTexto, citaId).run();
+            `UPDATE citas SET fecha_cita = ?, fecha_hora = ? WHERE id = ?`
+          ).bind(fechaNuevaISO || fechaNuevaTexto, horaNuevaISO || null, citaId).run();
         } catch(e) {}
 
         const respConfirmacion =
-          `Perfecto${primerNombrePaciente ? ` ${primerNombrePaciente}` : ""} 😊 He actualizado tu solicitud para el ${fechaNuevaTexto}.`;
+          `Perfecto${primerNombrePaciente ? ` ${primerNombrePaciente}` : ""} 😊 He actualizado tu cita para el ${fechaNuevaTexto}.`;
 
         if (negocio.telegram_chat_id && env.TELEGRAM_TOKEN) {
           try {
             await notificarTelegram(env.TELEGRAM_TOKEN, negocio.telegram_chat_id,
-              `🔄 <b>FECHA REAGENDADA</b>\n📞 +${from}${nombrePaciente ? ` (${nombrePaciente})` : ""}\n🆔 Cita #${citaId}\n📅 Nueva solicitud: ${textoConsolidado}\n\n<i>Valeria actualizó la fecha — confirmar disponibilidad.</i>`
+              `🔄 <b>FECHA REAGENDADA</b>\n📞 +${from}${nombrePaciente ? ` (${nombrePaciente})` : ""}\n🆔 Cita #${citaId}\n📅 Nueva fecha: ${fechaNuevaTexto}\n\n<i>Disponibilidad verificada automáticamente por Agenda Real.</i>`
             );
           } catch(e) {}
         }
@@ -1389,6 +1453,19 @@ Usa estas de forma natural (no todas juntas):
         (datosCrear.servicio || "").toLowerCase().includes(s.nombre.toLowerCase())
       );
 
+      // ─── RED DE SEGURIDAD: nombre completo ──────────────────
+      // Si Groq intenta crear la cita con solo un nombre (sin apellido),
+      // pedimos el apellido antes de registrar — evita citas con datos
+      // incompletos para el panel/contacto del paciente.
+      const nombreParaCrear = (datosCrear.nombre || nombrePaciente || "").trim();
+      if (!esNombreCompleto(nombreParaCrear)) {
+        const respPedirApellido = `Casi listo${primerNombrePaciente ? `, ${primerNombrePaciente}` : ""} 😊 ¿Me confirmas tu apellido para completar el registro de tu cita?`;
+        await marcarLeido(waToken, phoneNumberId, message.id);
+        await new Promise(r => setTimeout(r, 1500));
+        await enviarMensaje(waToken, phoneNumberId, from, respPedirApellido);
+        return new Response("EVENT_RECEIVED", { status: 200 });
+      }
+
       // Mismo blindaje que la ruta de detección directa: Motor de Fechas,
       // red de seguridad (fecha/hora faltante), Agenda Real y duplicados
       const chequeoCrear = await resolverYVerificarCita({
@@ -1438,6 +1515,15 @@ Usa estas de forma natural (no todas juntas):
       const montoFinal = parseFloat(datosGenerar.monto) || montoReserva || svcEncontrado?.precio || 0;
       let citaIdGenerar = null;
       const nombreCitaGenerar = datosGenerar.nombre || nombrePaciente || "Paciente WA";
+
+      // ─── RED DE SEGURIDAD: nombre completo ──────────────────
+      if (!esNombreCompleto(nombreCitaGenerar)) {
+        const respPedirApellidoPago = `Casi listo${primerNombrePaciente ? `, ${primerNombrePaciente}` : ""} 😊 ¿Me confirmas tu apellido para generar el enlace de pago de tu cita?`;
+        await marcarLeido(waToken, phoneNumberId, message.id);
+        await new Promise(r => setTimeout(r, 1500));
+        await enviarMensaje(waToken, phoneNumberId, from, respPedirApellidoPago);
+        return new Response("EVENT_RECEIVED", { status: 200 });
+      }
 
       // Mismo blindaje que la ruta de detección directa: Motor de Fechas,
       // red de seguridad (fecha/hora faltante), Agenda Real y duplicados
