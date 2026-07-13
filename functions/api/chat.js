@@ -296,6 +296,141 @@ export async function onRequestPost(context) {
       }, { headers: corsHeaders });
     }
 
+    // ─── REAGENDAMIENTO WEB ─────────────────────────────────────────────
+    // No existía antes — el paciente solo podía reagendar por WhatsApp.
+    // Mismo patrón que WA: se resuelve de forma determinista (sin Groq)
+    // para no arriesgar alucinaciones sobre disponibilidad real, usando
+    // un marcador [REAGENDAMIENTO_ACTIVO:...] guardado en el historial de D1.
+    const mensajeLowerReag = mensaje.toLowerCase();
+    const palabrasReagendamientoWeb = [
+      "reagendar", "reagendarme", "cambiar cita", "cambiar mi cita",
+      "mover cita", "mover mi cita", "cambiar la cita", "otra fecha",
+      "otro día", "otro dia", "otro horario", "cambiar fecha", "cambiar el día",
+      "reprogramar", "reprogramarme", "posponer"
+    ];
+    const quiereReagendarWeb = sessionToken && palabrasReagendamientoWeb.some(p => mensajeLowerReag.includes(p));
+
+    let chatExistenteReag = null;
+    let reagendamientoActivoWeb = null;
+    if (sessionToken) {
+      try {
+        chatExistenteReag = await env.producto_c_db.prepare(
+          `SELECT id, historial_json FROM chats WHERE session_token = ? AND negocio_id = ? AND completado = 0 LIMIT 1`
+        ).bind(sessionToken, negocio.id).first();
+        if (chatExistenteReag) {
+          const hReag = JSON.parse(chatExistenteReag.historial_json || '[]');
+          reagendamientoActivoWeb = hReag.find(h => h.role === 'system' && h.text?.startsWith('[REAGENDAMIENTO_ACTIVO:'));
+        }
+      } catch(e) {}
+    }
+
+    // ── Paso 1: detecta intención de reagendar y busca la cita activa ──
+    if (quiereReagendarWeb && !reagendamientoActivoWeb) {
+      let citaActivaWebReag = null;
+      try {
+        citaActivaWebReag = await env.producto_c_db.prepare(
+          `SELECT ci.id, ci.estado_pago, ci.fecha_cita, s.nombre as servicio_nombre, s.duracion as servicio_duracion
+           FROM citas ci LEFT JOIN servicios s ON s.id = ci.servicio_id
+           WHERE ci.negocio_id = ? AND ci.session_token = ?
+             AND ci.estado_pago IN ('esperando_pago','pago_por_verificar','confirmada')
+           ORDER BY ci.id DESC LIMIT 1`
+        ).bind(negocio.id, sessionToken).first();
+      } catch(e) {}
+
+      const respuestaReag = !citaActivaWebReag
+        ? `No encontré ninguna cita activa a tu nombre en este momento. Si deseas agendar una nueva cita, con gusto te ayudo. 😊`
+        : `Claro, puedo ayudarte con eso 😊 Tu cita actual es para ${citaActivaWebReag.servicio_nombre || 'tu servicio'} — ${citaActivaWebReag.fecha_cita || 'fecha pendiente'}. ¿Para qué fecha y hora prefieres reagendarla?`;
+
+      try {
+        const hActual = chatExistenteReag ? JSON.parse(chatExistenteReag.historial_json || '[]') : [];
+        const nuevoHReag = [
+          ...hActual,
+          { role: 'user', text: mensaje, ts: Date.now() },
+          { role: 'bot', text: respuestaReag, ts: Date.now() },
+          ...(citaActivaWebReag ? [{ role: 'system', text: `[REAGENDAMIENTO_ACTIVO:citaId=${citaActivaWebReag.id}|duracion=${parseInt(citaActivaWebReag.servicio_duracion) || 30}]`, ts: Date.now() }] : [])
+        ];
+        if (chatExistenteReag) {
+          await env.producto_c_db.prepare(`UPDATE chats SET historial_json = ?, fecha = ? WHERE id = ?`)
+            .bind(JSON.stringify(nuevoHReag), new Date().toISOString(), chatExistenteReag.id).run();
+        } else {
+          await env.producto_c_db.prepare(
+            `INSERT INTO chats (negocio_id, session_token, cliente_nombre, cliente_tel, historial_json, fecha, completado, canal) VALUES (?, ?, ?, ?, ?, ?, 0, 'web')`
+          ).bind(negocio.id, sessionToken, 'Visitante Web', 'web', JSON.stringify(nuevoHReag), new Date().toISOString()).run();
+        }
+      } catch(e) { console.log('Error guardando marcador reagendamiento web:', e.message); }
+
+      return Response.json({
+        success: true, respuesta: respuestaReag,
+        mostrar_servicios: false, mostrar_resumen: false, mostrar_tarjeta_servicio: false,
+        cita_creada: null, filtro_activado: false, servicio: null, fecha_resuelta: null, servicios: []
+      }, { headers: corsHeaders });
+    }
+
+    // ── Paso 2: ya hay un reagendamiento en curso — este mensaje trae la nueva fecha ──
+    if (reagendamientoActivoWeb) {
+      const matchCitaIdWeb   = reagendamientoActivoWeb.text.match(/citaId=(\d+)/);
+      const matchDuracionWeb = reagendamientoActivoWeb.text.match(/duracion=(\d+)/);
+      const citaIdWeb   = matchCitaIdWeb ? matchCitaIdWeb[1] : null;
+      const duracionWeb = matchDuracionWeb ? parseInt(matchDuracionWeb[1]) : 30;
+
+      const fechaNuevaWeb = resolverFechaNatural(mensaje);
+      let respuestaReag2   = null;
+      let limpiarMarcador  = false;
+
+      if (!fechaNuevaWeb) {
+        respuestaReag2 = `Disculpa, no logré identificar bien la fecha y hora que prefieres. ¿Me la puedes confirmar de nuevo? Por ejemplo: "el lunes a las 10am" 😊`;
+      } else if (!fechaNuevaWeb.hora) {
+        respuestaReag2 = `Perfecto, para el ${fechaNuevaWeb.dia} ${fechaNuevaWeb.fecha.split('-')[2]}. ¿A qué hora prefieres la cita? 😊`;
+      } else {
+        // Verificar disponibilidad real — antes esta ruta no existía en absoluto
+        const dispReag = await verificarDisponibilidadWeb(env, negocio.id, fechaNuevaWeb.fecha, fechaNuevaWeb.hora, duracionWeb);
+        if (!dispReag.disponible) {
+          const motivoReagWeb = (dispReag.motivo || '').toLowerCase();
+          respuestaReag2 = motivoReagWeb.includes('no hay atenci') || motivoReagWeb.includes('ese d')
+            ? `Lo siento, ese día no tenemos atención. Nuestro horario es lunes a viernes. ¿Te gustaría otro día? 😊`
+            : `Esa hora ya está reservada. ¿Puedes proponer otro horario para tu cambio? 😊`;
+          // El marcador se mantiene — seguimos esperando una fecha/hora disponible
+        } else {
+          try {
+            await env.producto_c_db.prepare(`UPDATE citas SET fecha_cita = ?, fecha_hora = ? WHERE id = ?`)
+              .bind(fechaNuevaWeb.fecha, fechaNuevaWeb.hora, citaIdWeb).run();
+          } catch(e) {}
+          respuestaReag2  = `Perfecto 😊 He actualizado tu cita para el ${fechaNuevaWeb.texto}.`;
+          limpiarMarcador = true;
+
+          try {
+            if (negocio.telegram_chat_id && env.TELEGRAM_TOKEN) {
+              await fetch(`https://api.telegram.org/bot${env.TELEGRAM_TOKEN}/sendMessage`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: negocio.telegram_chat_id, parse_mode: 'HTML',
+                  text: `🔄 <b>FECHA REAGENDADA — Canal Web</b>\n🆔 Cita #${citaIdWeb}\n📅 Nueva fecha: ${fechaNuevaWeb.texto}\n\n<i>Disponibilidad verificada automáticamente.</i>`
+                })
+              });
+            }
+          } catch(e) {}
+        }
+      }
+
+      try {
+        const hActual2 = chatExistenteReag ? JSON.parse(chatExistenteReag.historial_json || '[]') : [];
+        const hSinMarcador = limpiarMarcador
+          ? hActual2.filter(h => !(h.role === 'system' && h.text?.startsWith('[REAGENDAMIENTO_ACTIVO:')))
+          : hActual2;
+        const nuevoH2 = [...hSinMarcador, { role: 'user', text: mensaje, ts: Date.now() }, { role: 'bot', text: respuestaReag2, ts: Date.now() }];
+        if (chatExistenteReag) {
+          await env.producto_c_db.prepare(`UPDATE chats SET historial_json = ?, fecha = ? WHERE id = ?`)
+            .bind(JSON.stringify(nuevoH2), new Date().toISOString(), chatExistenteReag.id).run();
+        }
+      } catch(e) {}
+
+      return Response.json({
+        success: true, respuesta: respuestaReag2,
+        mostrar_servicios: false, mostrar_resumen: false, mostrar_tarjeta_servicio: false,
+        cita_creada: null, filtro_activado: false, servicio: null, fecha_resuelta: null, servicios: []
+      }, { headers: corsHeaders });
+    }
+
     // 3. Paciente recurrente — buscar por sessionToken
     let pacienteRecurrente = null;
     if (sessionToken && historial.length === 0) {
@@ -342,6 +477,14 @@ export async function onRequestPost(context) {
       ? `PACIENTE RECURRENTE: Ya conocemos a este paciente. Nombre: ${pacienteRecurrente.cliente_nombre}. Último servicio: ${pacienteRecurrente.ultimo_servicio || 'desconocido'} el ${pacienteRecurrente.fecha_cita || 'fecha desconocida'}. Salúdalo por su nombre y pregunta si viene por el mismo tratamiento o algo diferente. NO le pidas el nombre — ya lo tienes.`
       : '';
 
+    // Requiere nombre + apellido (2+ palabras) — un solo nombre no se
+    // considera dato completo. Antes se aceptaba con 1 sola palabra,
+    // por lo que Valeria seguía adelante con solo el primer nombre.
+    function esNombreCompleto(nombre) {
+      if (!nombre) return false;
+      return nombre.trim().split(/\s+/).filter(Boolean).length >= 2;
+    }
+
     // Extraer nombre y teléfono del historial — escaneo directo de mensajes del usuario
     let nombreEnHistorial = '';
     let telEnHistorial    = '';
@@ -358,7 +501,8 @@ export async function onRequestPost(context) {
     for (const txt of msgsUser) {
       if (nombreEnHistorial) break;
       const mExp = txt.match(/(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)/i);
-      if (mExp) { nombreEnHistorial = mExp[1].trim(); break; }
+      if (mExp && esNombreCompleto(mExp[1])) { nombreEnHistorial = mExp[1].trim(); break; }
+      if (mExp) continue; // nombre parcial (sin apellido) — no darlo por completo, seguir buscando
       const limpio = txt
         .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '')
         .replace(/\+?[\d][\d\s\-\(\)]{5,14}/g, '')
@@ -366,7 +510,7 @@ export async function onRequestPost(context) {
         .replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')
         .replace(/\s+/g, ' ').trim();
       const palabras = limpio.split(' ').filter(p => p.length >= 2);
-      if (palabras.length >= 1 && palabras.length <= 4 &&
+      if (palabras.length >= 2 && palabras.length <= 4 &&
           !/quiero|agendar|interesa|buenos|buenas|hola|limpieza|blanquea|implante|ortodon|martes|lunes|miércoles|jueves|viernes|tarde|mañana/i.test(limpio)) {
         nombreEnHistorial = palabras.join(' ');
       }
@@ -405,7 +549,7 @@ Ejemplos: Invisalign ≠ Ortodoncia. Blanqueamiento láser ≠ Blanqueamiento. C
 - NUNCA confirmes disponibilidad antes de que el sistema la verifique.
 
 ━━━ FLUJO DE AGENDAMIENTO ━━━
-1. Si es el PRIMER mensaje del paciente (historial vacío): saluda con calidez y pide nombre y teléfono en el mismo mensaje. Ejemplo: "¡Hola! Soy Valeria 😊 Antes de ayudarte, ¿me puedes indicar tu nombre y un número de teléfono o correo por si necesitamos confirmar algo?"
+1. Si es el PRIMER mensaje del paciente (historial vacío): saluda con calidez y pide nombre COMPLETO y teléfono en el mismo mensaje. Ejemplo: "¡Hola! Soy Valeria 😊 Antes de ayudarte, ¿me puedes indicar tu nombre completo y un número de teléfono o correo por si necesitamos confirmar algo?"
 2. Una vez que tengas nombre y teléfono/correo: entiende qué servicio le interesa
 3. Confirma fecha y hora con la fecha ya resuelta por el sistema
 4. Muestra resumen y pregunta ¿Confirmas la cita? — termina con [MOSTRAR_RESUMEN]
@@ -414,6 +558,7 @@ Ejemplos: Invisalign ≠ Ortodoncia. Blanqueamiento láser ≠ Blanqueamiento. C
 REGLAS DE CONTACTO:
 - Si el paciente es RECURRENTE (ya lo conocemos) NO le pidas nombre ni teléfono — ya los tienes.
 - Si el paciente da solo el nombre sin teléfono: agradece y pide el teléfono o correo en el siguiente mensaje.
+- Si el paciente da solo un nombre SIN apellido (ej. "Eduardo"): agradece y pide su apellido antes de continuar. Ejemplo: "Gracias Eduardo 😊 ¿Me confirmas tu apellido también?"
 - Si el paciente se niega a dar teléfono: acepta con amabilidad y continúa con el agendamiento.
 - NUNCA vuelvas a pedir nombre o teléfono si el paciente ya los proporcionó en esta conversación — búscalos en el historial.
 - ANTES de pedir confirmación de cita, revisa el historial. Si ya tienes nombre Y teléfono, procede directamente a confirmar la cita sin pedir nada más.
@@ -670,6 +815,21 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
           }
         }
         console.log('[CITA_WEB] nombre:', nombrePacienteWeb, '| tel:', telPacienteWeb);
+
+        // ─── RED DE SEGURIDAD: nombre completo ─────────────────
+        // Si por alguna razón llegamos aquí sin apellido (ej. Groq
+        // confirmó antes de que el paciente lo diera), pedimos el
+        // apellido en vez de registrar la cita con datos incompletos.
+        if (!esNombreCompleto(nombrePacienteWeb)) {
+          citaCreada = null;
+          respuesta = `Casi listo${nombrePacienteWeb !== 'Paciente Web' ? `, ${nombrePacienteWeb.split(' ')[0]}` : ''} 😊 ¿Me confirmas tu apellido para completar el registro de tu cita?`;
+          return Response.json({
+            success: true, respuesta,
+            mostrar_servicios: false, mostrar_resumen: false, mostrar_tarjeta_servicio: false,
+            cita_creada: null, filtro_activado: false, servicio: null, fecha_resuelta: null, servicios: []
+          }, { headers: corsHeaders });
+        }
+
         const duracion = parseInt(servicioResumen.duracion) || 30;
         const disponible = await verificarDisponibilidadWeb(env, negocio.id, fechaFinal.fecha, fechaFinal.hora || '09:00', duracion);
         if (disponible.disponible) {
@@ -781,10 +941,14 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
           }
 
           // Buscar nombre: primero patrón explícito, luego limpieza
+          // Requiere nombre + apellido (2+ palabras); un solo nombre no
+          // se guarda como cliente_nombre definitivo — sigue buscando en
+          // mensajes posteriores hasta encontrar el apellido.
           for (const txt of mensajesUsuario) {
             if (nombreActualizado) break;
             const mExp = txt.match(/(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)/i);
-            if (mExp) { nombreActualizado = mExp[1].trim(); break; }
+            if (mExp && esNombreCompleto(mExp[1])) { nombreActualizado = mExp[1].trim(); break; }
+            if (mExp) continue;
             const limpio = txt
               .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '')
               .replace(/\+?[\d][\d\s\-\(\)]{5,14}/g, '')
@@ -792,7 +956,7 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
               .replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')
               .replace(/\s+/g, ' ').trim();
             const palabras = limpio.split(' ').filter(p => p.length >= 2);
-            if (palabras.length >= 1 && palabras.length <= 4 &&
+            if (palabras.length >= 2 && palabras.length <= 4 &&
                 !/quiero|agendar|interesa|buen|buenas|buenos|hola|días|dia|tardes|tarde|noches|noche|gracias|confirmo|confirma|perfecto|entendido|claro|ok|listo|si|sí|limpieza|blanquea|implante|ortodon|martes|lunes|miércoles|jueves|viernes|mañana/i.test(limpio)) {
               nombreActualizado = palabras.join(' ');
             }
