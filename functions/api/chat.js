@@ -598,7 +598,18 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
     const groqRes = await fetch(GROQ_API, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: MODEL, messages: mensajesGroq, max_tokens: 500, temperature: 0.3 }),
+      body: JSON.stringify({
+        model: MODEL, messages: mensajesGroq, max_tokens: 700, temperature: 0.3,
+        // openai/gpt-oss-120b es un modelo de razonamiento — por defecto piensa
+        // con reasoning_effort "medium" y esos tokens de pensamiento interno se
+        // descuentan del mismo max_tokens que la respuesta visible. Con prompts
+        // largos (catálogo + reglas + filtros) el modelo podía gastar todo el
+        // presupuesto razonando y devolver contenido vacío (finish_reason:
+        // "length") — causa raíz de los "inconveniente técnico" repetidos.
+        // Valeria no necesita razonamiento profundo, es conversación
+        // estructurada, así que bajamos el esfuerzo y subimos el margen.
+        reasoning_effort: "low"
+      }),
     });
 
     if (!groqRes.ok) throw new Error(`Groq error: ${await groqRes.text()}`);

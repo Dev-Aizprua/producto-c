@@ -1282,11 +1282,21 @@ Usa estas de forma natural (no todas juntas):
           { role: "user", content: textoConsolidado }
         ],
         temperature: 0.3,
-        max_tokens: 400
+        max_tokens: 700,
+        // Mismo fix que en el canal Web: openai/gpt-oss-120b es un modelo de
+        // razonamiento que por defecto piensa con reasoning_effort "medium",
+        // y esos tokens de pensamiento interno se descuentan del mismo
+        // max_tokens que la respuesta visible — con max_tokens=400 el riesgo
+        // de respuesta vacía (finish_reason: length) era aún mayor que en Web.
+        reasoning_effort: "low"
       })
     });
 
     const groqData = await groqRes.json();
+    if (!groqData.choices?.[0]?.message?.content) {
+      console.log('[GROQ_WA] Respuesta vacía. finish_reason:', groqData.choices?.[0]?.finish_reason || 'desconocido',
+        '| error:', groqData.error?.message || null);
+    }
     let respuesta  = groqData.choices?.[0]?.message?.content
       || "Un momento, déjame verificar eso. 😊";
 
