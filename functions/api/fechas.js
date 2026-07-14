@@ -172,7 +172,14 @@ export function resolverFechaNatural(texto) {
 // "10:30" → "10:30"
 export function extraerHora(texto) {
   if (!texto) return null;
-  const lower = texto.toLowerCase();
+  // Se normalizan acentos aquí (antes solo se hacía en resolverFechaNatural,
+  // no en extraerHora). Bug encontrado en pruebas reales: "medio día"
+  // escrito con tilde Y espacio — como lo escribe cualquier persona — no
+  // coincidía con ninguna de las variantes que el código ya contemplaba
+  // ("mediodía" pegado, "mediodia" sin tilde, "medio dia" sin tilde).
+  // Con acentos normalizados, "medio día" y "medio dia" son la misma
+  // cadena, así que basta un solo patrón para cubrir todas las variantes.
+  const lower = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
   // Formato "X de la tarde / noche / mañana" — acepta pm, p.m, p. m.
   const matchTarde = lower.match(/(\d{1,2})(?::(\d{2}))?\s*(?:de la tarde|de la noche|p\.?\s*m\.?)/);
@@ -183,7 +190,7 @@ export function extraerHora(texto) {
     return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
   }
 
-  const matchManana = lower.match(/(\d{1,2})(?::(\d{2}))?\s*(?:de la mañana|a\.?\s*m\.?)/);
+  const matchManana = lower.match(/(\d{1,2})(?::(\d{2}))?\s*(?:de la manana|a\.?\s*m\.?)/);
   if (matchManana) {
     let h = parseInt(matchManana[1]);
     const m = matchManana[2] ? parseInt(matchManana[2]) : 0;
@@ -191,8 +198,9 @@ export function extraerHora(texto) {
     return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
   }
 
-  // Formato "mediodia" o "mediodia"
-  if (lower.includes("mediodía") || lower.includes("mediodia") || lower.includes("medio dia")) {
+  // Formato "mediodía" / "medio día" / "mediodia" / "medio dia" — con
+  // acentos ya normalizados arriba, un solo patrón cubre las 4 variantes
+  if (/medio\s*dia/.test(lower)) {
     return "12:00";
   }
 

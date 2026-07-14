@@ -30,12 +30,17 @@ function resolverFechaNatural(texto) {
   const NOMBRES_MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 
   function extraerHora(t) {
-    const l = t.toLowerCase();
+    // Bug encontrado en pruebas: "medio día" (con espacio y tilde, como
+    // lo escribe la gente normalmente) no se reconocía — solo se detectaba
+    // "mediodia" pegado y sin acentos. Por eso "mañana al medio día" se
+    // resolvía con fecha pero SIN hora, y esa hora faltante terminaba
+    // provocando que Groq inventara una hora distinta en su texto libre.
+    const l = t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const mT = l.match(/(\d{1,2})(?::(\d{2}))?\s*(?:de la tarde|de la noche|p\.?\s*m\.?)/);
     if (mT) { let h=parseInt(mT[1]); if(h<12)h+=12; return `${String(h).padStart(2,"0")}:${mT[2]||"00"}`; }
     const mM = l.match(/(\d{1,2})(?::(\d{2}))?\s*(?:de la ma[nñ]ana|a\.?\s*m\.?)/);
     if (mM) { let h=parseInt(mM[1]); if(h===12)h=0; return `${String(h).padStart(2,"0")}:${mM[2]||"00"}`; }
-    if (l.includes("mediodia")||l.includes("mediod")) return "12:00";
+    if (/medio\s*dia/.test(l)) return "12:00";
     const mYM = l.match(/(\d{1,2})\s*y\s*media/);
     if (mYM) { let h=parseInt(mYM[1]); if(/tarde|noche/.test(l)&&h<12)h+=12; else if(h<=7)h+=12; return `${String(h).padStart(2,"0")}:30`; }
     const mHM = l.match(/(\d{1,2}):(\d{2})/);
@@ -925,6 +930,26 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
           } catch(e) { console.log('Error Telegram web:', e.message); }
         }
       } catch(e) { console.log('Error creando cita web:', e.message); }
+    } else if (crearCita) {
+      // ─── RED DE SEGURIDAD CRÍTICA ───────────────────────────────────
+      // Encontrado en pruebas reales: cuando fechaFinal quedaba incompleto
+      // (ej. "medio día" sin reconocer la hora), este bloque se saltaba
+      // por completo — pero el texto de Groq quedaba intacto y decía
+      // "¡Cita confirmada! 🎉" aunque NO se guardó nada en D1. El paciente
+      // se iba creyendo que tenía una cita que no existe. Nunca dejamos
+      // pasar una confirmación falsa: si crearCita se activó pero algo
+      // falta, se lo decimos claro al paciente en vez de fingir éxito.
+      citaCreada = null;
+      mostrarResumen = false;
+      if (citaActivaWeb) {
+        respuesta = `Ya tienes una cita activa registrada. Si deseas agendar otra o cambiar la fecha de la actual, dime y con gusto te ayudo. 😊`;
+      } else if (!fechaFinal?.fecha || !fechaFinal?.hora) {
+        respuesta = `Antes de confirmar, ¿me puedes indicar de nuevo el día y la hora exacta que prefieres? Por ejemplo: "el jueves a las 3:00 pm" 😊`;
+      } else if (!servicioFinal) {
+        respuesta = `¿Me confirmas cuál de nuestros servicios te gustaría agendar? 😊`;
+      } else {
+        respuesta = `Disculpa, no logré completar el registro de tu cita. ¿Me puedes confirmar de nuevo el servicio, día y hora? 😊`;
+      }
     }
 
     // 11. Detectar carrusel general
