@@ -531,8 +531,18 @@ export async function onRequestPost(context) {
       ? `DATOS YA CAPTURADOS EN ESTA CONVERSACIÓN — NO VOLVER A PEDIR:${nombreEnHistorial ? ` Nombre: ${nombreEnHistorial}.` : ''}${telEnHistorial ? ` Teléfono: ${telEnHistorial}.` : ''} Usa estos datos directamente al confirmar la cita.`
       : '';
 
-    const fechaContexto = fechaResuelta
-      ? `FECHA DETECTADA EN EL MENSAJE: ${fechaResuelta.texto} (${fechaResuelta.fecha}${fechaResuelta.hora ? ` a las ${fechaResuelta.hora}` : ''}) — usa esta fecha exacta en tu respuesta, no calcules fechas tú mismo.`
+    // Fuente de la fecha para el contexto de Groq: prioriza lo resuelto en
+    // el mensaje ACTUAL, y si no hay, usa fecha_guardada (la que el
+    // frontend ya venía reenviando desde que se mostró el resumen, pero
+    // que antes solo se usaba al confirmar — no para recordarle a Groq la
+    // fecha en los turnos intermedios). Sin esto, en turnos donde el
+    // paciente solo da el teléfono o dice "confirmo" sin repetir la fecha,
+    // Groq tenía que "recordarla" sola a partir de la conversación y se
+    // equivocaba por un día (ej. escribía "15 de julio" cuando la fecha
+    // real, ya resuelta correctamente por el Motor de Fechas, era "14").
+    const fechaParaContexto = fechaResuelta || fecha_guardada;
+    const fechaContexto = fechaParaContexto
+      ? `FECHA DE LA CITA (ya determinada por el sistema, ÚSALA TAL CUAL EN TU RESPUESTA — no la recalcules ni la cambies): ${fechaParaContexto.texto} (${fechaParaContexto.fecha}${fechaParaContexto.hora ? ` a las ${fechaParaContexto.hora}` : ''})`
       : `Si el paciente menciona una fecha o día, inclúyela en tu respuesta tal como él la dijo.`;
 
     const systemPrompt = `Eres Valeria, la secretaria virtual premium de "${negocio.nombre}". Atiendes el chat de la clínica dental con un tono cálido, profesional y panameño. Eres eficiente y amable — una sola pregunta a la vez.
@@ -710,14 +720,22 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
       return null;
     }
 
-    if (respuesta.includes('[MOSTRAR_RESUMEN]')) {
-      respuesta = respuesta.replace('[MOSTRAR_RESUMEN]', '').trim();
+    // Antes se comparaba con el string exacto '[MOSTRAR_RESUMEN]' — en esta
+    // prueba Groq escribió "[ MOSTRAR_RESUMEN ]" (con espacios dentro de los
+    // corchetes) y esa comparación exacta falló: la etiqueta ni se detectó
+    // ni se limpió, y el paciente vio el texto crudo "[ MOSTRAR_RESUMEN ]"
+    // en el chat. Con una expresión regular que tolera espacios, cualquier
+    // variante de formato que Groq use se detecta y se limpia igual.
+    const tagMostrarResumen = /\[\s*MOSTRAR_RESUMEN\s*\]/i;
+    if (tagMostrarResumen.test(respuesta)) {
+      respuesta = respuesta.replace(tagMostrarResumen, '').trim();
       mostrarResumen = true;
       servicioResumen = detectarServicioEnContexto();
     }
 
-    if (respuesta.includes('[CREAR_CITA]')) {
-      respuesta = respuesta.replace('[CREAR_CITA]', '').trim();
+    const tagCrearCita = /\[\s*CREAR_CITA\s*\]/i;
+    if (tagCrearCita.test(respuesta)) {
+      respuesta = respuesta.replace(tagCrearCita, '').trim();
       crearCita = true;
       mostrarResumen = false; // No mostrar resumen de nuevo al confirmar — ya se mostró antes
       // Asegurar que tenemos servicio aunque Groq no lo repita en este mensaje
@@ -789,7 +807,11 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
     // paciente vea una fecha en el texto y otra distinta en la tarjeta
     // de resumen o en la confirmación final.
     if (fechaFinal?.texto && (mostrarResumen || crearCita)) {
-      const patronFechaEnTexto = /(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+\d{1,2}\s+de\s+\w+(?:\s+de\s+\d{4})?(?:\s+a\s+la[s]?\s+[\d:]+\s*(?:p\.?\s*m\.?|a\.?\s*m\.?)?)?/gi;
+      // El nombre del día ("lunes", "martes"...) es OPCIONAL en el patrón:
+      // en esta prueba Groq escribió "15 de julio de 2026 a las 12:00" sin
+      // nombre de día, y el patrón anterior (que lo exigía) no coincidió,
+      // dejando pasar la fecha incorrecta sin corregir.
+      const patronFechaEnTexto = /(?:(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+)?\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)(?:\s+de\s+\d{4})?(?:\s+a\s+la[s]?\s+[\d:]+\s*(?:p\.?\s*m\.?|a\.?\s*m\.?)?)?/gi;
       if (patronFechaEnTexto.test(respuesta)) {
         respuesta = respuesta.replace(patronFechaEnTexto, fechaFinal.texto);
       }
