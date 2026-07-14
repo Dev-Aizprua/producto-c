@@ -1303,9 +1303,11 @@ Usa estas de forma natural (no todas juntas):
     // ─── PROCESAR ETIQUETAS DE ACCIÓN ────────────────────────
     // Groq incluye etiquetas estructuradas — las procesamos antes de enviar
 
-    // Extraer datos de etiqueta
+    // Extraer datos de etiqueta — tolerante a espacios extra dentro de los
+    // corchetes (ej. "[ CREAR_CITA: nombre=X ]"), el mismo problema que
+    // encontramos en el canal Web con [MOSTRAR_RESUMEN].
     function extraerEtiqueta(texto, tipo) {
-      const regex = new RegExp(`\\[${tipo}:([^\\]]+)\\]`);
+      const regex = new RegExp(`\\[\\s*${tipo}\\s*:\\s*([^\\]]+)\\]`);
       const match = texto.match(regex);
       if (!match) return null;
       const datos = {};
@@ -1318,7 +1320,7 @@ Usa estas de forma natural (no todas juntas):
 
     // Limpiar etiqueta del texto visible al paciente
     function limpiarEtiquetas(texto) {
-      return texto.replace(/\[CREAR_CITA:[^\]]+\]/g, "").replace(/\[GENERAR_PAGO:[^\]]+\]/g, "").trim();
+      return texto.replace(/\[\s*CREAR_CITA\s*:[^\]]+\]/g, "").replace(/\[\s*GENERAR_PAGO\s*:[^\]]+\]/g, "").trim();
     }
 
     let citaCreada   = false;
