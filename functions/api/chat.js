@@ -763,6 +763,22 @@ WHATSAPP: ${negocio.whatsapp_destino || 'Consultar'}`;
     const servicioFinal = servicioResumen
       || (servicio_guardado ? servicios.find(s => s.id === servicio_guardado.id || s.nombre === servicio_guardado.nombre) : null);
 
+    // ─── CONSISTENCIA DE FECHA EN EL TEXTO DE GROQ ─────────────────────
+    // Groq a veces menciona en su texto libre una fecha distinta a la que
+    // el sistema realmente va a guardar (alucinación de fecha/día — el
+    // mismo problema documentado para WhatsApp). fechaFinal es la fuente
+    // de verdad (Motor de Fechas / fecha_guardada del frontend), así que
+    // si el texto de Valeria menciona una fecha con formato "día + fecha"
+    // que no coincide, la reemplazamos ANTES de mostrarla — evita que el
+    // paciente vea una fecha en el texto y otra distinta en la tarjeta
+    // de resumen o en la confirmación final.
+    if (fechaFinal?.texto && (mostrarResumen || crearCita)) {
+      const patronFechaEnTexto = /(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+\d{1,2}\s+de\s+\w+(?:\s+de\s+\d{4})?(?:\s+a\s+la[s]?\s+[\d:]+\s*(?:p\.?\s*m\.?|a\.?\s*m\.?)?)?/gi;
+      if (patronFechaEnTexto.test(respuesta)) {
+        respuesta = respuesta.replace(patronFechaEnTexto, fechaFinal.texto);
+      }
+    }
+
     // 9. Agenda Real — verificar disponibilidad si hay fecha y servicio
     let disponibilidadInfo = null;
     if (fechaFinal?.fecha && fechaFinal?.hora && servicioResumen) {
