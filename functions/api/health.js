@@ -41,9 +41,12 @@ export async function onRequestGet(context) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        // Migrado — llama-3.3-70b-versatile fue descontinuado por Groq.
+        // Mismo modelo que ya usan webhook.js y chat.js en producción.
+        model: "openai/gpt-oss-120b",
         messages: [{ role: "user", content: "ping" }],
-        max_tokens: 1
+        max_tokens: 1,
+        reasoning_effort: "low"
       })
     });
 
