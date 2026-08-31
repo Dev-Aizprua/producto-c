@@ -1300,6 +1300,36 @@ Usa estas de forma natural (no todas juntas):
     let respuesta  = groqData.choices?.[0]?.message?.content
       || "Un momento, déjame verificar eso. 😊";
 
+    // ─── RED DE SEGURIDAD: forzar la fecha real en el texto de Groq ──
+    // Bug encontrado en pruebas reales (viernes 27 ago → pidió "miércoles" →
+    // Groq escribió "miércoles 25 de agosto" en el Resumen, cuando la fecha
+    // correcta calculada por el Motor era "miércoles 1 de septiembre").
+    // El Motor de Fechas SÍ calcula bien (se verificó a mano), pero Groq
+    // redacta el texto visible con sus propias palabras y puede alucinar
+    // el día/mes aunque ya se le inyectó la fecha correcta en el prompt
+    // (ver FECHA SOLICITADA POR EL PACIENTE). Mismo problema que ya se
+    // corrigió en el canal Web (chat.js) — aquí aplicamos el equivalente:
+    // cualquier fecha con nombre de día que aparezca en la respuesta se
+    // reemplaza por el texto exacto que ya calculó el Motor, antes de
+    // enviarla al paciente. Así el paciente nunca ve una fecha distinta
+    // a la que realmente se va a guardar.
+    if (fechaResueltaHistorial) {
+      const regexFechaEnTexto = /(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+\d{1,2}\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)(\s+de\s+\d{4})?(\s+a\s+las\s+[\d:]+\s*(?:AM|PM|am|pm)?)?/i;
+      if (regexFechaEnTexto.test(respuesta)) {
+        const horaLegible = fechaResueltaHistorial.hora
+          ? (() => {
+              const [h, m] = fechaResueltaHistorial.hora.split(":").map(Number);
+              const sufijo = h >= 12 ? "PM" : "AM";
+              const h12 = h % 12 === 0 ? 12 : h % 12;
+              return ` a las ${h12}:${String(m).padStart(2, "0")} ${sufijo}`;
+            })()
+          : "";
+        const fechaCorrectaTexto = `${fechaResueltaHistorial.texto.split(" a las")[0]}${horaLegible}`;
+        respuesta = respuesta.replace(regexFechaEnTexto, fechaCorrectaTexto);
+        console.log("[FECHA_CORREGIDA_WA] Groq escribió una fecha distinta a la calculada. Corregido a:", fechaCorrectaTexto);
+      }
+    }
+
     // ─── PROCESAR ETIQUETAS DE ACCIÓN ────────────────────────
     // Groq incluye etiquetas estructuradas — las procesamos antes de enviar
 
